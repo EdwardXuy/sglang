@@ -3,18 +3,18 @@ import unittest
 from types import SimpleNamespace
 
 from sglang.srt.utils import kill_process_tree
-from sglang.test.ascend.performance.test_ascend_performance_utils import NIC_NAME
-from sglang.test.ascend.test_ascend_utils import QWEN3_NEXT_80B_A3B_INSTRUCT_WEIGHTS_PATH
-from sglang.test.run_eval import run_eval
+from sglang.test.ascend.test_ascend_utils import (
+    QWEN3_NEXT_80B_A3B_INSTRUCT_WEIGHTS_PATH,
+)
+from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.few_shot_gsm8k import run_eval as run_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
     CustomTestCase,
     popen_launch_server,
 )
-
-from sglang.test.ci.ci_register import register_npu_ci
 
 register_npu_ci(
     est_time=200,
@@ -43,25 +43,34 @@ class TestQwen3Next(CustomTestCase):
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=[
                 "--trust-remote-code",
-                "--attention-backend", "ascend",
-                "--device", "npu",
-                "--tp-size", 8,
-                "--mem-fraction-static", 0.8,
-                "--max-running-requests", 80,
-                "--watchdog-timeout", 9000,
-                "--disable-radix-cache",
-                "--disable-cuda-graph",
-                "--chunked-prefill-size", 1024,
-                "--max-prefill-tokens", 28672,
-                "--max-total-tokens", 450560,
-                "--moe-a2a-backend", "deepep",
-                "--deepep-mode", "low_latency",
+                "--attention-backend",
+                "ascend",
+                "--device",
+                "npu",
+                "--tp-size",
+                8,
+                "--mem-fraction-static",
+                0.8,
+                "--max-running-requests",
+                80,
+                "--watchdog-timeout",
+                9000,
+                 "--disable-radix-cache",
+                 "--disable-cuda-graph",
+                "--chunked-prefill-size",
+                1024,
+                "--max-prefill-tokens",
+                28672,
+                "--max-total-tokens",
+                450560,
+                "--moe-a2a-backend",
+                "deepep",
+                "--deepep-mode",
+                "low_latency",
             ],
             env={
                 "PYTORCH_NPU_ALLOC_CONF": "expandable_segments:True",
                 "STREAMS_PER_DEVICE": "32",
-                "HCCL_SOCKET_IFNAME": NIC_NAME,
-                "GLOO_SOCKET_IFNAME": NIC_NAME,
                 "HCCL_OP_EXPANSION_MODE": "AIV",
                 "HCCL_ALGO": "level0:NA;level1:ring",
                 "SGLANG_DEEPEP_NUM_MAX_DISPATCH_TOKENS_PER_RANK": "20",

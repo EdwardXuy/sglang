@@ -114,7 +114,7 @@ class TestNPUHierarchicalCache(CustomTestCase):
             * 8,
             "Mishka bought 3 pairs of shorts, 3 pairs of pants, and 3 pairs of shoes. One pair of shorts costs $16.50. One pair of pants costs $22.50 and one pair of shoes costs $42. How many dollars did Mishka spend on all the clothing items?"
             * 8,
-         ]
+        ]
         for text in texts:
             response = requests.post(
                 f"{DEFAULT_URL_FOR_TEST}/generate",
