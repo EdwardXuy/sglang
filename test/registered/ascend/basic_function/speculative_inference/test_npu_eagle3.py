@@ -16,7 +16,7 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
-register_npu_ci(est_time=400, suite="nightly-2-npu-a3", nightly=True)
+register_npu_ci(est_time=400, suite="nightly-1-npu-a3", nightly=True)
 
 
 class TestNpuEagle3(CustomTestCase):
@@ -53,7 +53,7 @@ class TestNpuEagle3(CustomTestCase):
             "--speculative-attention-mode",
             "decode",
             "--tp-size",
-            "4",
+            "1",
             "--mem-fraction-static",
             "0.7",
             "--disable-cuda-graph",
