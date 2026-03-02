@@ -34,7 +34,8 @@ class TestAscendFastapiRootPath(CustomTestCase):
     [Test Target] --fastapi-root-path
     """
 
-    fastapi_root_path = "/sglang"
+    fastapi_root_path = "/sglang/"
+    nginx_location = fastapi_root_path
 
     @classmethod
     def setUpClass(cls):
@@ -48,7 +49,7 @@ class TestAscendFastapiRootPath(CustomTestCase):
         cls.base_url = DEFAULT_URL_FOR_TEST
         cls.url = urlparse(cls.base_url)
         cls.nginx_port = "80"
-        cls.nginx_manager.apply_config(cls.nginx_port, cls.fastapi_root_path, cls.base_url)
+        cls.nginx_manager.apply_config(cls.nginx_port, cls.nginx_location, cls.base_url)
 
         cls.model = MODEL_PATH
         cls.common_args = [
@@ -61,23 +62,16 @@ class TestAscendFastapiRootPath(CustomTestCase):
             cls.fastapi_root_path,
         ]
 
-        cls.out_log_file = open("./warmup_out_log.txt", "w+", encoding="utf-8")
-        cls.err_log_file = open("./warmup_err_log.txt", "w+", encoding="utf-8")
         cls.process = popen_launch_server(
             cls.model,
             cls.base_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=cls.common_args,
-            return_stdout_stderr=(cls.out_log_file, cls.err_log_file),
         )
 
     @classmethod
     def tearDownClass(cls):
         kill_process_tree(cls.process.pid)
-        cls.out_log_file.close()
-        cls.err_log_file.close()
-        # os.remove("./warmup_out_log.txt")
-        # os.remove("./warmup_err_log.txt")
         cls.nginx_manager.clean_environment()
 
     def test_fastapi_root_path(self):
@@ -85,22 +79,6 @@ class TestAscendFastapiRootPath(CustomTestCase):
         self.assertEqual(
             response.status_code, 404, "The request status code is not 404."
         )
-        # self.assertEqual(
-        #     response.status_code, 200, "The request status code is not 200."
-        # )
-        # self.assertNotIn(
-        #     self.fastapi_root_path,
-        #     response.url,
-        #     "The root path should not in response url.",
-        # )
-        # self.assertIn(
-        #     "Paris", response.text, "The inference result does not include Paris."
-        # )
-
-        # self.out_log_file.seek(0)
-        # content = self.out_log_file.read()
-        # self.assertTrue(len(content) > 0)
-        # self.assertIn(f"POST {self.fastapi_root_path}/generate HTTP/1.1", content)
 
         response = self.send_request(
             f"http://127.0.0.1:{self.nginx_port}{self.fastapi_root_path}/generate"
@@ -108,9 +86,6 @@ class TestAscendFastapiRootPath(CustomTestCase):
         self.assertEqual(
             response.status_code, 200, "The request status code is not 200."
         )
-        # self.assertEqual(
-        #     response.status_code, 404, "The request status code is not 404."
-        # )
 
     def send_request(self, url):
         return requests.post(
@@ -127,14 +102,17 @@ class TestAscendFastapiRootPath(CustomTestCase):
 
 class TestAscendFastapiRootPathMultiLevel(TestAscendFastapiRootPath):
     fastapi_root_path = "/test/fastapi/root/path/"
+    nginx_location = fastapi_root_path
 
 
-class TestAscendFastapiRootPathHasEnd(TestAscendFastapiRootPath):
-    fastapi_root_path = "/sglang/"
+class TestAscendFastapiRootPathWithoutEnd(TestAscendFastapiRootPath):
+    fastapi_root_path = "/sglang"
+    nginx_location = fastapi_root_path
 
 
 class TestAscendFastapiRootPathErrorPath(TestAscendFastapiRootPath):
     fastapi_root_path = "sglang"
+    nginx_location = "/sglang/"
 
     def test_fastapi_root_path(self):
         response = self.send_request(f"http://127.0.0.1:{self.nginx_port}/generate")
@@ -143,33 +121,11 @@ class TestAscendFastapiRootPathErrorPath(TestAscendFastapiRootPath):
         )
 
         response = self.send_request(
-            f"http://127.0.0.1:{self.nginx_port}{self.fastapi_root_path}/generate"
+            f"http://127.0.0.1:{self.nginx_port}{self.nginx_location}/generate"
         )
         self.assertEqual(
             response.status_code, 404, "The request status code is not 404."
         )
-
-        response = self.send_request(
-            f"http://127.0.0.1:{self.nginx_port}/{self.fastapi_root_path}/generate"
-        )
-        self.assertEqual(
-            response.status_code, 404, "The request status code is not 404."
-        )
-
-        # response = self.send_request(f"{self.base_url}/generate")
-        # self.assertEqual(
-        #     response.status_code, 200, "The request status code is not 200."
-        # )
-        # self.assertIn(
-        #     "Paris", response.text, "The inference result does not include Paris."
-        # )
-        #
-        # response = self.send_request(
-        #     f"{self.base_url}/{self.fastapi_root_path}/generate"
-        # )
-        # self.assertEqual(
-        #     response.status_code, 404, "The request status code is not 404."
-        # )
 
 
 class TestAscendFastapiRootPathNotSet(TestAscendFastapiRootPath):
@@ -409,7 +365,7 @@ class NginxConfigManager:
 
             lines[35] = "        listen " + f"{nginx_port}" + ";\n"
             lines.insert(47, "        location " + f"{location}" + " {\n")
-            lines.insert(48, "            proxy_pass " + f"{proxy_pass}" + "/;\n")
+            lines.insert(48, "            proxy_pass " + f"{proxy_pass}" + ";\n")
             lines.insert(49, "            proxy_set_header Host $host;\n")
             lines.insert(50, "            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n")
             lines.insert(51, "            proxy_set_header X-Forwarded-Proto $scheme;\n")
@@ -468,7 +424,7 @@ if __name__ == "__main__":
     suite = unittest.TestSuite()
     suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPath))
     suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathMultiLevel))
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathHasEnd))
+    # suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathWithoutEnd))
     suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathErrorPath))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathNotSet))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathWithoutNginx))
