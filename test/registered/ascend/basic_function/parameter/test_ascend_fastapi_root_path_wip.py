@@ -7,7 +7,7 @@ from urllib.parse import urlparse
 import requests
 
 from sglang.srt.utils import kill_process_tree
-from sglang.test.ascend.test_ascend_utils import QWEN3_0_6B_WEIGHTS_PATH
+# from sglang.test.ascend.test_ascend_utils import QWEN3_0_6B_WEIGHTS_PATH as MODEL_PATH
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -46,11 +46,11 @@ class TestAscendFastapiRootPath(CustomTestCase):
         )
 
         cls.base_url = DEFAULT_URL_FOR_TEST
-        cls.nginx_manager.apply_config(cls.fastapi_root_path, cls.base_url)
+        cls.url = urlparse(cls.base_url)
+        cls.nginx_port = "80"
+        cls.nginx_manager.apply_config(cls.nginx_port, cls.fastapi_root_path, cls.base_url)
 
         cls.model = MODEL_PATH
-        cls.base_url = DEFAULT_URL_FOR_TEST
-        cls.url = urlparse(cls.base_url)
         cls.common_args = [
             "--trust-remote-code",
             "--mem-fraction-static",
@@ -377,13 +377,14 @@ class NginxConfigManager:
         if not os.path.exists(self.backup_conf_path):
             shutil.copy2(self.nginx_conf_path, self.backup_conf_path)
 
-    def apply_config(self, location, proxy_pass):
+    def apply_config(self, nginx_port, location, proxy_pass):
         self.backup_original_config()
 
         try:
             with open(self.nginx_conf_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
+            lines[35] = "        listen " + f"{nginx_port}" + ";\n"
             lines.insert(47, "        location " + f"{location}" + "/ {\n")
             lines.insert(48, "            proxy_pass " + f"{proxy_pass}" + "/;\n")
             lines.insert(49, "            proxy_set_header Host $host;\n")
