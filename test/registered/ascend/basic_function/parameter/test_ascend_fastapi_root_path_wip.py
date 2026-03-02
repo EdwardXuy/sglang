@@ -34,7 +34,7 @@ class TestAscendFastapiRootPath(CustomTestCase):
     [Test Target] --fastapi-root-path
     """
 
-    fastapi_root_path = "/sglang/"
+    fastapi_root_path = "/sglang"
     nginx_location = fastapi_root_path
 
     @classmethod
