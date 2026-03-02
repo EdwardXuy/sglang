@@ -468,10 +468,10 @@ if __name__ == "__main__":
     # unittest.main()
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPath))
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPath))
     suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathMultiLevel))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathHasEnd))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathErrorPath))
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathHasEnd))
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathErrorPath))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathNotSet))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathWithoutNginx))
 
