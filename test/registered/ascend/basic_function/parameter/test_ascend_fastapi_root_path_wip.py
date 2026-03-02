@@ -360,7 +360,6 @@ class NginxConfigManager:
                 "./configure",
                 "--prefix=" + self.nginx_path,
                 "--with-http_stub_status_module",
-                "--with-http_ssl_module",
                 "--with-pcre=/usr/local/pcre-" + self.pcre_version
             ],
             cwd=self.nginx_install_path,
@@ -385,13 +384,17 @@ class NginxConfigManager:
             with open(self.nginx_conf_path, "r", encoding="utf-8") as f:
                 lines = f.readlines()
 
-            lines.insert(47, "        location " + f"{location}" + " {\n")
+            lines.insert(47, "        location " + f"{location}" + "/ {\n")
             lines.insert(48, "            proxy_pass " + f"{proxy_pass}" + "/;\n")
             lines.insert(49, "            proxy_set_header Host $host;\n")
             lines.insert(50, "            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n")
             lines.insert(51, "            proxy_set_header X-Forwarded-Proto $scheme;\n")
             lines.insert(52, "        }\n")
             lines.insert(53, "\n")
+            lines.insert(54, "        location " + f"{location}" + " {\n")
+            lines.insert(55, "            return 301 " + f"{proxy_pass}" + "/;\n")
+            lines.insert(56, "        }\n")
+            lines.insert(57, "\n")
 
             with open(self.nginx_conf_path, "w", encoding="utf-8") as f:
                 f.writelines(lines)
@@ -440,5 +443,9 @@ if __name__ == "__main__":
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
     suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPath))
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPath))
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPath))
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPath))
+
     runner = unittest.TextTestRunner()
     runner.run(suite)

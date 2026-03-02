@@ -359,7 +359,6 @@ class NginxConfigManager:
                 "./configure",
                 "--prefix=" + self.nginx_path,
                 "--with-http_stub_status_module",
-                "--with-http_ssl_module",
                 "--with-pcre=/usr/local/pcre-" + self.pcre_version
             ],
             cwd=self.nginx_install_path,
