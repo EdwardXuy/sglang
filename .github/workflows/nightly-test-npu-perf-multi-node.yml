@@ -70,12 +70,10 @@ jobs:
         SGLANG_USE_MODELSCOPE: true
         HF_ENDPOINT: https://hf-mirror.com
     steps:
-      - name: Install system dependencies
+      - name: Install dependencies
         run: |
-          pip3 install -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple jinja2-cli
-
-      - name: Install kubernetes
-        run: |
+          pip3 install -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple jinja2
+          pip3 install -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple psutil
           # Install kubernetes
           pip3 install -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple kubernetes
           cp $KUBECTL /usr/local/sbin/
@@ -142,7 +140,7 @@ jobs:
           fi
 
           cd ${ASCEND_E2E_TEST_CONFIG_PATH}
-          CMD="python3 -u run_ascend_ci.py \
+          CMD="python3 -u run_npu_e2e_test.py \
             --env ci \
             --image ${{ inputs.image }} \
             --sglang-source-relative-path ${sglang_source_relative_path} \

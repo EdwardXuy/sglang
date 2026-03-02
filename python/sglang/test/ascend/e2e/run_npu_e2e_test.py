@@ -8,6 +8,7 @@ import subprocess
 import time
 import uuid
 
+import psutil
 import yaml
 from jinja2 import Template
 from kubernetes import client, config
@@ -15,7 +16,7 @@ from kubernetes.client.rest import ApiException
 
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    format="%(asctime)s - %(levelname)s - %(message)s",
     handlers=[logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
@@ -38,6 +39,7 @@ KUBE_YAML_TEMPLATE = {
 
 
 def get_unique_random_string(length: int = 16, add_random: bool = True) -> str:
+    """Generate a random string."""
     uuid_str = str(uuid.uuid4()).replace("-", "")
 
     if add_random:
@@ -54,6 +56,7 @@ def get_unique_random_string(length: int = 16, add_random: bool = True) -> str:
 
 
 def create_kube_yaml(kube_yaml_template, output_yaml, pod_context):
+    """Create a k8s config yaml file"""
     with open(kube_yaml_template, "r") as f:
         template = Template(f.read())
     kube_pod_yaml = template.render(pod_context)
@@ -63,6 +66,7 @@ def create_kube_yaml(kube_yaml_template, output_yaml, pod_context):
 
 
 def create_pod(yaml_file, namespace):
+    """Create a pod by k8s config yaml file"""
     with open(yaml_file, "r", encoding="utf-8") as f:
         yaml_docs = list(yaml.safe_load_all(f))
 
@@ -115,6 +119,7 @@ def create_pod(yaml_file, namespace):
 
 
 def delete_pod(yaml_file, namespace):
+    """Delete k8s pod by config yaml file"""
     with open(yaml_file, "r", encoding="utf-8") as f:
         yaml_docs = list(yaml.safe_load_all(f))
     for doc in yaml_docs:
@@ -150,11 +155,25 @@ def delete_pod(yaml_file, namespace):
             raise f"delete resource {kind} error: {e}"
 
 
+def check_parent_process():
+    """Check parent process is alive or not."""
+    try:
+        parent_pid = os.getppid()
+        psutil.Process(parent_pid)
+        return True
+    except psutil.NoSuchProcess:
+        return False
+
+
 def check_pods_ready(namespace, pod_name_key_str, timeout=300):
+    """Waiting for all k8s pods are ready"""
     logger.info("Waiting all pods to running...")
     start_time = time.time()
 
     while time.time() - start_time < timeout:
+        if not check_parent_process():
+            raise Exception("Parent process exited.")
+
         pods = core_api.list_namespaced_pod(namespace=namespace)
 
         if len(pods.items) == 0:
@@ -201,6 +220,7 @@ def check_pods_ready(namespace, pod_name_key_str, timeout=300):
 
 
 def create_or_update_configmap(cm_name: str, data: dict, namespace: str):
+    """Create a k8s configmap or update it if already exists"""
     cm_metadata = client.V1ObjectMeta(name=cm_name, namespace=namespace)
     configmap = client.V1ConfigMap(
         api_version="v1", kind="ConfigMap", metadata=cm_metadata, data=data
@@ -230,6 +250,7 @@ def create_or_update_configmap(cm_name: str, data: dict, namespace: str):
 
 
 def prepare_cm_data(namespace, pod_string):
+    """Prepare a configmap data: {pod_name: pod_ip} by the running pod's information."""
     pods = core_api.list_namespaced_pod(namespace=namespace)
     data = {}
     for pod in pods.items:
@@ -241,6 +262,7 @@ def prepare_cm_data(namespace, pod_string):
 
 
 def monitor_pod_logs(pod_name, namespace, timeout=LOCAL_TIMEOUT):
+    """Monitor the logs of the specified pod until the special pattern is matched or reaches its timeout."""
     # Build kubectl command
     cmd = ["kubectl", "logs", "-f", "-n", namespace, pod_name]
 
@@ -277,6 +299,9 @@ def monitor_pod_logs(pod_name, namespace, timeout=LOCAL_TIMEOUT):
                 raise Exception(
                     f"Timeout exceeded, the thread is {timeout} seconds long."
                 )
+
+            if not check_parent_process():
+                raise Exception("Parent process exited.")
 
             line = process.stdout.readline()
             if not line:
@@ -324,20 +349,34 @@ def monitor_pod_logs(pod_name, namespace, timeout=LOCAL_TIMEOUT):
                 process.kill()
 
 
-def run_ascend_e2e_test_case(
+def run_npu_e2e_test_case(
     docker_image_url: str,
     kube_name_space: str,
     kube_job_type: str,  # multi-pd-separation、multi-pd-mix、single
     kube_job_name_prefix: str,  # kube job prefix-name
     resource_info: dict,
-    # pd-separation: {"prefill_size": 1, "decode_size": 1, "router_size": 1}; pd-mix: {"node_size": 2; single: {"npu_size": 4}
     sglang_source_relative_path: str,
     metrics_data_file: str,
     test_case: str,
     sglang_is_in_ci=False,
     install_sglang_from_source=False,
-    env="debug",  # ["debug", "ci"]
+    env="debug",
 ):
+    """The method for running a npu e2e test case.
+    Args:
+        docker_image_url (str): the url of docker image for creating k8s pods.
+        kube_name_space (str): the namespace of the k8s.
+        kube_job_name_prefix (str): the prefix of the k8s job name which will be set as the prefix of the pod name.
+        resource_info (dict): the number of k8s nodes used by the testcase.
+            for pd-separation as: {"prefill_size": 1, "decode_size": 1, "router_size": 1};
+            for pd-mix as: {"node_size": 2; single: {"npu_size": 4}
+        sglang_source_relative_path (str): the relative path of the sglang source on shared-disk.
+        metrics_data_file (str): the output path of the metrics data file, only for performance testing.
+        test_case (str): the test case relative path in sglang source root path. like test/registered/...
+        sglang_is_in_ci (bool): whether running in CI environment.
+        install_sglang_from_source (bool): whether installing sglang from source or use docker image directly.
+        env (str): the environment to run the test on.  Choose one in ["debug", "ci"]
+    """
     random_str = get_unique_random_string(16, True)
 
     kube_config_map = f"sglang-configmap-{random_str}"
@@ -599,7 +638,7 @@ if __name__ == "__main__":
         },
     }
 
-    run_ascend_e2e_test_case(
+    run_npu_e2e_test_case(
         docker_image_url=docker_image_url,
         kube_name_space=kube_name_space,
         kube_job_type=kube_job_type,

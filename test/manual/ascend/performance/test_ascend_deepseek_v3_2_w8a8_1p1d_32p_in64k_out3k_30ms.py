@@ -1,7 +1,7 @@
 import unittest
 
-from sglang.test.ascend.e2e.test_ascend_multi_node_utils import NIC_NAME
-from sglang.test.ascend.e2e.test_ascend_performance_utils import (
+from sglang.test.ascend.e2e.test_npu_multi_node_utils import NIC_NAME
+from sglang.test.ascend.e2e.test_npu_performance_utils import (
     DEEPSEEK_V32_W8A8_MODEL_PATH,
     ROUND_ROBIN,
     TestAscendPerfMultiNodePdSepTestCaseBase,
@@ -16,9 +16,9 @@ MODEL_CONFIG = {
         "HCCL_BUFFSIZE": "1024",
         "DEEPEP_NORMAL_LONG_SEQ_ROUND": "5",
         "DEEPEP_NORMAL_LONG_SEQ_PER_ROUND_TOKENS": "512",
-        # "SGLANG_NPU_USE_MLAPO": "1",
+        "SGLANG_NPU_USE_MLAPO": "1",
         "DEEP_NORMAL_MODE_USE_INT8_QUANT": "1",
-        # "SGLANG_NPU_USE_MULTI_STREAM": "1",
+        "SGLANG_NPU_USE_MULTI_STREAM": "1",
         "HCCL_OP_EXPANSION_MODE": "AIV",
         "HCCL_SOCKET_IFNAME": NIC_NAME,
         "GLOO_SOCKET_IFNAME": NIC_NAME,
@@ -27,8 +27,8 @@ MODEL_CONFIG = {
         "SGLANG_SET_CPU_AFFINITY": "1",
         "PYTORCH_NPU_ALLOC_CONF": "expandable_segments:True",
         "STREAMS_PER_DEVICE": "32",
-        # "SGLANG_NPU_USE_MULTI_STREAM": "1",
-        # "SGLANG_NPU_USE_MLAPO": "1",
+        "SGLANG_NPU_USE_MULTI_STREAM": "1",
+        "SGLANG_NPU_USE_MLAPO": "1",
         "HCCL_OP_EXPANSION_MODE": "AIV",
         "SGLANG_SCHEDULER_SKIP_ALL_GATHER": "1",
         "TASK_QUEUE_ENABLE": "0",
