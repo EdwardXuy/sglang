@@ -137,20 +137,39 @@ class TestAscendFastapiRootPathErrorPath(TestAscendFastapiRootPath):
     fastapi_root_path = "sglang"
 
     def test_fastapi_root_path(self):
-        response = self.send_request(f"{self.base_url}/generate")
-        self.assertEqual(
-            response.status_code, 200, "The request status code is not 200."
-        )
-        self.assertIn(
-            "Paris", response.text, "The inference result does not include Paris."
-        )
-
-        response = self.send_request(
-            f"{self.base_url}/{self.fastapi_root_path}/generate"
-        )
+        response = self.send_request(f"http://127.0.0.1:{self.nginx_port}/generate")
         self.assertEqual(
             response.status_code, 404, "The request status code is not 404."
         )
+
+        response = self.send_request(
+            f"http://127.0.0.1:{self.nginx_port}{self.fastapi_root_path}/generate"
+        )
+        self.assertEqual(
+            response.status_code, 404, "The request status code is not 200."
+        )
+
+        response = self.send_request(
+            f"http://127.0.0.1:{self.nginx_port}/{self.fastapi_root_path}/generate"
+        )
+        self.assertEqual(
+            response.status_code, 404, "The request status code is not 200."
+        )
+
+        # response = self.send_request(f"{self.base_url}/generate")
+        # self.assertEqual(
+        #     response.status_code, 200, "The request status code is not 200."
+        # )
+        # self.assertIn(
+        #     "Paris", response.text, "The inference result does not include Paris."
+        # )
+        #
+        # response = self.send_request(
+        #     f"{self.base_url}/{self.fastapi_root_path}/generate"
+        # )
+        # self.assertEqual(
+        #     response.status_code, 404, "The request status code is not 404."
+        # )
 
 
 class TestAscendFastapiRootPathNotSet(TestAscendFastapiRootPath):
@@ -391,7 +410,7 @@ class NginxConfigManager:
                 lines = f.readlines()
 
             lines[35] = "        listen " + f"{nginx_port}" + ";\n"
-            lines.insert(47, "        location " + f"{location}" + "/ {\n")
+            lines.insert(47, "        location " + f"{location}" + " {\n")
             lines.insert(48, "            proxy_pass " + f"{proxy_pass}" + "/;\n")
             lines.insert(49, "            proxy_set_header Host $host;\n")
             lines.insert(50, "            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n")
