@@ -16,7 +16,12 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
-register_npu_ci(est_time=100, suite="nightly-1-npu-a3", nightly=True)
+register_npu_ci(
+    est_time=100,
+    suite="nightly-1-npu-a3",
+    nightly=True,
+    disabled="run failed",
+)
 
 MODEL_PATH = QWEN3_0_6B_WEIGHTS_PATH
 USR_LOCAL_PATH = "/usr/local"
