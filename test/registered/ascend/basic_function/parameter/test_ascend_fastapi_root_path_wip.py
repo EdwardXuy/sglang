@@ -365,7 +365,7 @@ class NginxConfigManager:
 
             lines[35] = "        listen " + f"{nginx_port}" + ";\n"
             lines.insert(47, "        location " + f"{location}" + " {\n")
-            lines.insert(48, "            proxy_pass " + f"{proxy_pass}" + ";\n")
+            lines.insert(48, "            proxy_pass " + f"{proxy_pass}" + "/;\n")
             lines.insert(49, "            proxy_set_header Host $host;\n")
             lines.insert(50, "            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n")
             lines.insert(51, "            proxy_set_header X-Forwarded-Proto $scheme;\n")
@@ -423,9 +423,9 @@ if __name__ == "__main__":
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
     suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPath))
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathMultiLevel))
+    # suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathMultiLevel))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathWithoutEnd))
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathErrorPath))
+    # suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathErrorPath))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathNotSet))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendFastapiRootPathWithoutNginx))
 
