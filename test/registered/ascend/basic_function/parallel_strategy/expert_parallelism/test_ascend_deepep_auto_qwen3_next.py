@@ -4,7 +4,8 @@ from types import SimpleNamespace
 
 # from sglang.test.ascend.test_ascend_utils import QWEN3_NEXT_80B_A3B_INSTRUCT_WEIGHTS_PATH
 from sglang.srt.utils import kill_process_tree
-from sglang.test.ascend.performance.test_ascend_performance_utils import NIC_NAME
+# from sglang.test.ascend.performance.test_ascend_performance_utils import NIC_NAME
+
 from sglang.test.run_eval import run_eval
 from sglang.test.few_shot_gsm8k import run_eval as run_gsm8k
 from sglang.test.test_utils import (
@@ -18,6 +19,19 @@ from sglang.test.ci.ci_register import register_npu_ci
 
 register_npu_ci(est_time=200, suite="nightly-8-npu-a3", nightly=True)
 
+import psutil
+import socket
+def get_nic_name():
+    """ Return the network interface name corresponding to IP addresses starting with 172. or 192. """
+    for nic, addrs in psutil.net_if_addrs().items():
+        for addr in addrs:
+            if addr.family == socket.AF_INET and (addr.address.startswith("172.") or addr.address.startswith("192.")):
+                print("The nic name matched is {}".format(nic))
+                return nic
+    return None
+
+nic = get_nic_name()
+NIC_NAME = "lo" if nic is None else nic
 
 class TestQwen3Next(CustomTestCase):
     """
@@ -31,7 +45,8 @@ class TestQwen3Next(CustomTestCase):
     @classmethod
     def setUpClass(cls):
         # cls.model = QWEN3_NEXT_80B_A3B_INSTRUCT_WEIGHTS_PATH
-        cls.model = "/root/.cache/modelscope/hub/models/Qwen/Qwen3-Next-80B-A3B-Instruct"
+        # cls.model = "/root/.cache/modelscope/hub/models/Qwen/Qwen3-Next-80B-A3B-Instruct"
+        cls.model = "/home/weights/Qwen3-Next-80B-A3B-Instruct-WAA8"
         cls.base_url = DEFAULT_URL_FOR_TEST
         cls.process = popen_launch_server(
             cls.model,
@@ -51,7 +66,7 @@ class TestQwen3Next(CustomTestCase):
                 "--max-total-tokens", 450560,
                 "--moe-a2a-backend", "deepep",
                 "--deepep-mode", "auto",
-                # "--quantization", "modelslim",
+                "--quantization", "modelslim",
                 "--chunked-prefill-size", -1,
             ],
             env={
