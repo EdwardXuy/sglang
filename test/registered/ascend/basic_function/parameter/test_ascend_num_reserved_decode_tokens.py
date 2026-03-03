@@ -49,8 +49,6 @@ class TestNumReservedDecodeTokens(TestDisaggregationBase):
         prefill_args = [
             "--disaggregation-mode",
             "prefill",
-            "--disaggregation-decode-tp",
-            "2",
             "--disaggregation-transfer-backend",
             "ascend",
             "--disable-cuda-graph",
