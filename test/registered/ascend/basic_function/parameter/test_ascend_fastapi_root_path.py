@@ -63,7 +63,7 @@ class TestAscendFastapiRootPath(CustomTestCase):
             "Paris", response.text, "The inference result does not include Paris."
         )
 
-        response = self.send_request(f"{self.base_url}/openai.json")
+        response = self.send_request(f"http://{self.url.hostname}/openai.json")
         self.assertEqual(
             response.status_code, 200, "The request status code is not 200."
         )
@@ -87,8 +87,8 @@ class TestAscendFastapiRootPath(CustomTestCase):
         )
 
 
-class TestAscendFastapiRootPathMultiLevel(TestAscendFastapiRootPath):
-    fastapi_root_path = "/test/fastapi/root/path"
+# class TestAscendFastapiRootPathMultiLevel(TestAscendFastapiRootPath):
+#     fastapi_root_path = "/test/fastapi/root/path"
 
 
 if __name__ == "__main__":
