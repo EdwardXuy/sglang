@@ -19,6 +19,11 @@ from sglang.test.test_utils import (
 
 register_npu_ci(est_time=400, suite="nightly-4-npu-a3", nightly=True)
 
+CONFIG_YAML_PATH = (
+    "/home/y30082119/mysglang/test/registered/ascend/basic_function/parameter/config.yaml"
+)
+CONFIG_VALID_YAML_PATH = "/home/y30082119/mysglang/test/registered/ascend/basic_function/parameter/config_valid.yaml"
+
 
 class TestConfig(CustomTestCase):
     """Testcase: Verify set --config parameter, can identify the set config and inference request is successfully processed.
