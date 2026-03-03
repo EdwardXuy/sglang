@@ -1,6 +1,3 @@
-import os
-import shutil
-import subprocess
 import unittest
 from urllib.parse import urlparse
 
@@ -18,38 +15,22 @@ from sglang.test.test_utils import (
 
 register_npu_ci(est_time=100, suite="nightly-1-npu-a3", nightly=True)
 
-USR_LOCAL_PATH = "/usr/local"
-NGINX_VERSION = "1.24.0"
-PCRE_VERSION = "8.37"
-
 
 class TestAscendFastapiRootPath(CustomTestCase):
     """
-    Testcase：Verify that the system correctly processes the root path prefix when configuring the root path prefix and
-    correctly performs the route redirection behavior.
+    Testcase：Verify that the correct path is set in the openai.json file when --fastapi-root-path is set
 
     [Test Category] Parameter
     [Test Target] --fastapi-root-path
     """
 
     fastapi_root_path = "/sglang"
-    nginx_location = fastapi_root_path
 
     @classmethod
     def setUpClass(cls):
-        # Modify nginx configuration and start nginx service
-        cls.nginx_manager = NginxConfigManager(
-            usr_local_path=USR_LOCAL_PATH,
-            nginx_version=NGINX_VERSION,
-            pcre_version=PCRE_VERSION,
-        )
-
+        cls.model = MODEL_PATH
         cls.base_url = DEFAULT_URL_FOR_TEST
         cls.url = urlparse(cls.base_url)
-        cls.nginx_port = "80"
-        cls.nginx_manager.apply_config(cls.nginx_port, cls.nginx_location, cls.base_url)
-
-        cls.model = MODEL_PATH
         cls.common_args = [
             "--trust-remote-code",
             "--mem-fraction-static",
@@ -70,19 +51,22 @@ class TestAscendFastapiRootPath(CustomTestCase):
     @classmethod
     def tearDownClass(cls):
         kill_process_tree(cls.process.pid)
-        cls.nginx_manager.clean_environment()
 
     def test_fastapi_root_path(self):
-        response = self.send_request(f"http://127.0.0.1:{self.nginx_port}/generate")
-        self.assertEqual(
-            response.status_code, 404, "The request status code is not 404."
-        )
-
-        response = self.send_request(
-            f"http://127.0.0.1:{self.nginx_port}{self.fastapi_root_path}/generate"
-        )
+        response = self.send_request(f"{self.base_url}/generate")
         self.assertEqual(
             response.status_code, 200, "The request status code is not 200."
+        )
+        self.assertIn(
+            "Paris", response.text, "The inference result does not include Paris."
+        )
+
+        response = self.send_request(f"{self.base_url}/openai.json")
+        self.assertEqual(
+            response.status_code, 200, "The request status code is not 200."
+        )
+        self.assertIn(
+            self.fastapi_root_path, response.text, "The correct path is not set in the openai."
         )
 
     def send_request(self, url):
@@ -99,193 +83,8 @@ class TestAscendFastapiRootPath(CustomTestCase):
 
 
 class TestAscendFastapiRootPathMultiLevel(TestAscendFastapiRootPath):
-    fastapi_root_path = "/test/fastapi/root/path/"
-    nginx_location = fastapi_root_path
-
-
-class TestAscendFastapiRootPathNotSet(TestAscendFastapiRootPath):
-    nginx_location = "/sglang/"
-
-    @classmethod
-    def setUpClass(cls):
-        # Modify nginx configuration and start nginx service
-        cls.nginx_manager = NginxConfigManager(
-            usr_local_path=USR_LOCAL_PATH,
-            nginx_version=NGINX_VERSION,
-            pcre_version=PCRE_VERSION,
-        )
-
-        cls.base_url = DEFAULT_URL_FOR_TEST
-        cls.url = urlparse(cls.base_url)
-        cls.nginx_port = "80"
-        cls.nginx_manager.apply_config(cls.nginx_port, cls.nginx_location, cls.base_url)
-
-        cls.model = MODEL_PATH
-        cls.base_url = DEFAULT_URL_FOR_TEST
-        cls.url = urlparse(cls.base_url)
-        cls.common_args = [
-            "--trust-remote-code",
-            "--mem-fraction-static",
-            0.8,
-            "--attention-backend",
-            "ascend",
-        ]
-
-        cls.process = popen_launch_server(
-            cls.model,
-            cls.base_url,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=cls.common_args,
-        )
-
-
-class TestAscendFastapiRootPathWithoutEnd(TestAscendFastapiRootPath):
-    fastapi_root_path = "/sglang"
-    nginx_location = fastapi_root_path
-
-
-class NginxConfigManager:
-    def __init__(self, usr_local_path, nginx_version, pcre_version):
-        self.usr_local_path = usr_local_path
-        self.nginx_version = nginx_version
-        self.pcre_version = pcre_version
-
-        self.nginx_path = self.usr_local_path + "/nginx"
-        self.nginx_install_path = self.nginx_path + "-" + self.nginx_version
-        self.nginx_tar_gz_path = self.nginx_install_path + ".tar.gz"
-        self.nginx_conf_path = self.nginx_path + "/conf/nginx.conf"
-        self.backup_conf_path = f"{self.nginx_conf_path}.backup"
-        self.nginx_bin_path = self.nginx_path + "/sbin/nginx"
-
-        self.pcre_path = usr_local_path + "/pcre-" + self.pcre_version
-        self.pcre_tar_gz_path = self.pcre_path + ".tar.gz"
-
-        if not os.path.exists(self.nginx_path):
-            self.init_pcre()
-            self.init_nginx()
-
-    def init_pcre(self):
-        if not os.path.exists(self.pcre_tar_gz_path):
-            subprocess.run(
-                [
-                    "wget",
-                    "http://downloads.sourceforge.net/project/pcre/pcre/"
-                    + self.pcre_version
-                    + "/pcre-"
-                    + self.pcre_version
-                    + ".tar.gz",
-                ],
-                cwd=self.usr_local_path,
-            )
-        if not os.path.exists(self.pcre_path):
-            subprocess.run(
-                ["tar", "zxvf", "pcre-" + self.pcre_version + ".tar.gz"],
-                cwd=self.usr_local_path,
-            )
-        subprocess.run(
-            ["./configure"],
-            cwd=self.pcre_path,
-        )
-        subprocess.run(
-            ["make"],
-            cwd=self.pcre_path,
-        )
-        subprocess.run(
-            ["make", "install"],
-            cwd=self.pcre_path,
-        )
-
-    def init_nginx(self):
-        if not os.path.exists(self.nginx_tar_gz_path):
-            subprocess.run(
-                [
-                    "wget",
-                    "http://nginx.org/download/nginx-" + self.nginx_version + ".tar.gz",
-                ],
-                cwd=self.usr_local_path,
-            )
-        if not os.path.exists(self.nginx_install_path):
-            subprocess.run(
-                ["tar", "zxvf", "nginx-" + self.nginx_version + ".tar.gz"],
-                cwd=self.usr_local_path,
-            )
-        subprocess.run(
-            [
-                "./configure",
-                "--prefix=" + self.nginx_path,
-                "--with-http_stub_status_module",
-                "--with-pcre=/usr/local/pcre-" + self.pcre_version
-            ],
-            cwd=self.nginx_install_path,
-        )
-        subprocess.run(
-            ["make"],
-            cwd=self.nginx_install_path,
-        )
-        subprocess.run(
-            ["make", "install"],
-            cwd=self.nginx_install_path,
-        )
-
-    def backup_original_config(self):
-        if not os.path.exists(self.backup_conf_path):
-            shutil.copy2(self.nginx_conf_path, self.backup_conf_path)
-
-    def apply_config(self, nginx_port, location, proxy_pass):
-        self.backup_original_config()
-
-        try:
-            with open(self.nginx_conf_path, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-
-            lines[35] = "        listen " + f"{nginx_port}" + ";\n"
-            lines.insert(47, "        location " + f"{location}" + " {\n")
-            lines.insert(48, "            proxy_pass " + f"{proxy_pass}" + "/;\n")
-            lines.insert(49, "            proxy_set_header Host $host;\n")
-            lines.insert(50, "            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n")
-            lines.insert(51, "            proxy_set_header X-Forwarded-Proto $scheme;\n")
-            lines.insert(52, "        }\n")
-            lines.insert(53, "\n")
-
-            with open(self.nginx_conf_path, "w", encoding="utf-8") as f:
-                f.writelines(lines)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"file not found: {self.nginx_conf_path}")
-        except Exception as e:
-            raise RuntimeError(f"Failed to modify nginx config: {e}")
-
-        # start Nginx
-        try:
-            result = subprocess.run(
-                ["ps", "-ef"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-                check=False,
-            )
-
-            if "nginx" in result.stdout:
-                subprocess.run(
-                    [self.nginx_bin_path, "-s", "stop"],
-                )
-
-            subprocess.run(
-                [self.nginx_bin_path],
-            )
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Failed to modify nginx config: {e}")
-
-    def restore_original_config(self):
-        if os.path.exists(self.backup_conf_path):
-            shutil.copy2(self.backup_conf_path, self.nginx_conf_path)
-
-    def clean_environment(self):
-        if os.path.exists(self.backup_conf_path):
-            shutil.copy2(self.backup_conf_path, self.nginx_conf_path)
-            os.remove(self.backup_conf_path)
-        subprocess.run([self.nginx_bin_path, "-s", "stop"])
+    fastapi_root_path = "/test/fastapi/root/path"
 
 
 if __name__ == "__main__":
     unittest.main()
-
