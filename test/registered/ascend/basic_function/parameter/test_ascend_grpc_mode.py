@@ -9,8 +9,7 @@ import requests
 
 from sglang.srt.utils import kill_process_tree
 
-# from sglang.test.ascend.test_ascend_utils import QWEN3_8B_WEIGHTS_PATH as MODEL_PATH
-MODEL_PATH = "/home/weights/Qwen3-8B"
+from sglang.test.ascend.test_ascend_utils import QWEN3_8B_WEIGHTS_PATH as MODEL_PATH
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -22,8 +21,9 @@ from sglang.test.test_utils import (
 
 register_npu_ci(est_time=300, suite="nightly-1-npu-a3", nightly=True)
 
-PYTHON_PATH = "/home/l30081563/sglang/python"
+PYTHON_PATH = "/__w/sglang/sglang/python"
 COMPILE_PROTO_PATH = "/sglang/srt/grpc"
+
 
 class TestAscendGrpcModePDMixed(CustomTestCase):
     """
@@ -167,8 +167,7 @@ class TestAscendGrpcModePDDisaggregation(CustomTestCase):
         cls.start_decode()
 
         cls.launch_lb()
-        # TODO
-        # Block until ready
+        # Polling to query health status is not applicable in gRPC mode.
         sleep(200)
 
     @classmethod
@@ -294,20 +293,14 @@ class TestAscendGrpcModePDDisaggregation(CustomTestCase):
         )
 
 
-
 if __name__ == "__main__":
-    subprocess.run(
-        [
-            "python3",
-            "compile_proto.py",
-        ],
-        cwd=PYTHON_PATH + COMPILE_PROTO_PATH,
-        text=True,
-        check=True,
-    )
-    # unittest.main()
-    loader = unittest.TestLoader()
-    suite = unittest.TestSuite()
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendGrpcModePDMixed))
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+    # subprocess.run(
+    #     [
+    #         "python3",
+    #         "compile_proto.py",
+    #     ],
+    #     cwd=PYTHON_PATH + COMPILE_PROTO_PATH,
+    #     text=True,
+    #     check=True,
+    # )
+    unittest.main()
