@@ -4,7 +4,7 @@ import unittest
 import requests
 
 from sglang.srt.utils import kill_process_tree
-from sglang.test.ascend.test_ascend_utils import popen_launch_server
+# from sglang.test.ascend.test_ascend_utils import popen_launch_server
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -28,12 +28,11 @@ class TestAscendConfig(CustomTestCase):
     [Test Target] --config
     """
 
-    model = None
     config = CONFIG_YAML_PATH
 
     @classmethod
     def setUpClass(cls):
-        # cls.model = MODEL_PATH
+        cls.model = MODEL_PATH
         cls.base_url = DEFAULT_URL_FOR_TEST
         # cls.url = urlparse(cls.base_url)
         cls.other_args = [
