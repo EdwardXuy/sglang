@@ -22,7 +22,7 @@ from sglang.test.test_utils import (
 
 register_npu_ci(est_time=300, suite="nightly-1-npu-a3", nightly=True)
 
-PYTHON_PATH = "/usr/local/python3.11.14/lib/python3.11/site-packages"
+PYTHON_PATH = "/home/l30081563/sglang/python"
 COMPILE_PROTO_PATH = "/sglang/srt/grpc"
 
 class TestAscendGrpcModePDMixed(CustomTestCase):
