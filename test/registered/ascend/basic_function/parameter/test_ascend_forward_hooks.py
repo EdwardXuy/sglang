@@ -6,8 +6,8 @@ import requests
 
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ascend.test_ascend_utils import (
+    HOOK_FUNCTION_PATH,
     QWEN3_32B_WEIGHTS_PATH,
-    HOOK_FUNCTION_PATH
 )
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
@@ -61,7 +61,7 @@ class TestSetForwardHooks(CustomTestCase):
     [Test Target] --forward-hooks
     """
 
-    hook_function_path=HOOK_FUNCTION_PATH
+    hook_function_path = HOOK_FUNCTION_PATH
     model = QWEN3_32B_WEIGHTS_PATH
     hooks_spec = [
         {

@@ -32,13 +32,15 @@ class TestAscendGrpcModePDMixed(CustomTestCase):
     @classmethod
     def setUpClass(cls):
         subprocess.run(
-            ["pip",
-             "install",
-             "grpcio==1.78.1",
-             "grpcio-health-checking==1.78.1",
-             "grpcio-reflection==1.78.1",
-             "protobuf==6.33.1",
-             "--force-reinstall", ],
+            [
+                "pip",
+                "install",
+                "grpcio==1.78.1",
+                "grpcio-health-checking==1.78.1",
+                "grpcio-reflection==1.78.1",
+                "protobuf==6.33.1",
+                "--force-reinstall",
+            ],
         )
 
         cls.model = MODEL_PATH
