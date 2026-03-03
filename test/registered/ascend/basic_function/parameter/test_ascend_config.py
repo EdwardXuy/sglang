@@ -151,36 +151,57 @@ class TestAscendConfig(CustomTestCase):
 #             )
 
 
-# class TestConfigFileModeValidation(TestConfig):
-#     """Testcase: Verify set --config non yaml file format the service start fail.
-#
-#     [Test Category] Parameter
-#     [Test Target] --config
-#     """
-#
-#     test_cases = [
-#         "config.ini",
-#         "config.txt",
-#         "config.xml",
-#     ]
-#     for config in test_cases:
-#
-#         @classmethod
-#         def _build_other_args(cls):
-#             return [
-#                 "--config",
-#                 cls.config,
-#             ]
-#
-#         def test_config(self):
-#             with self.assertRaises(Exception) as ctx:
-#                 self._launch_server()
-#             self.assertIn(
-#                 "Server process exited with code 1. Check server logs for errors.",
-#                 str(ctx.exception),
-#             )
-#
-#
+class TestAscendConfigInValidConfigFileType(CustomTestCase):
+    """Testcase: Verify set --config non yaml file format the service start fail.
+
+    [Test Category] Parameter
+    [Test Target] --config
+    """
+
+    invalid_config_file_list = [
+        "config.ini",
+        "config.txt",
+        "config.xml",
+    ]
+
+    # for config in test_cases:
+
+    @classmethod
+    def setUpClass(cls):
+        cls.model = MODEL_PATH
+        cls.base_url = DEFAULT_URL_FOR_TEST
+
+    @classmethod
+    def tearDownClass(cls):
+        pass
+
+    def test_config(self):
+        for config in self.invalid_config_file_list:
+            try:
+            # with self.assertRaises(Exception) as ctx:
+                self.other_args = [
+                    "--config",
+                    config,
+                ]
+                self.process = popen_launch_server(
+                    self.model,
+                    self.base_url,
+                    timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+                    other_args=self.other_args,
+                )
+            except Exception as e:
+                self.assertIn(
+                    "Server process exited with code 1. Check server logs for errors.",
+                    str(e),
+                )
+                continue
+            finally:
+                kill_process_tree(self.process.pid)
+
+
+
+
+
 # class TestConfigParamValidation(TestConfig):
 #     """Testcase: Verify set exception param in config file the service start fail.
 #
