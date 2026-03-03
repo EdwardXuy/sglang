@@ -299,7 +299,7 @@ if __name__ == "__main__":
     subprocess.run(
         [
             "python3",
-            "sglang_scheduler.proto.py",
+            "compile_proto.py",
         ],
         cwd=PYTHON_PATH + COMPILE_PROTO_PATH,
         text=True,
