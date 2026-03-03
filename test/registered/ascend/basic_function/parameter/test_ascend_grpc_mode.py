@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 import requests
 
 from sglang.srt.utils import kill_process_tree
+
 # from sglang.test.ascend.test_ascend_utils import QWEN3_8B_WEIGHTS_PATH as MODEL_PATH
 MODEL_PATH = "/home/weights/Qwen3-8B"
 from sglang.test.ci.ci_register import register_npu_ci
@@ -33,13 +34,15 @@ class TestAscendGrpcModePDMixed(CustomTestCase):
     @classmethod
     def setUpClass(cls):
         subprocess.run(
-            ["pip",
-             "install",
-             "grpcio==1.78.1",
-             "grpcio-health-checking==1.78.1",
-             "grpcio-reflection==1.78.1",
-             "protobuf==6.33.1",
-             "--force-reinstall", ],
+            [
+                "pip",
+                "install",
+                "grpcio==1.78.1",
+                "grpcio-health-checking==1.78.1",
+                "grpcio-reflection==1.78.1",
+                "protobuf==6.33.1",
+                "--force-reinstall",
+            ],
         )
 
         cls.model = MODEL_PATH
@@ -300,6 +303,32 @@ class TestAscendGrpcModePDDisaggregation(CustomTestCase):
             "Paris", response.text, "The inference result does not include Paris."
         )
 
+class TestAscendGrpcModeDep(CustomTestCase):
+    """
+    Testcase：Verify that gRPC requests are correctly received and process when gRPC mode is enabled.
+
+    [Test Category] Parameter
+    [Test Target] --grpc-mode
+    """
+
+    @classmethod
+    def test_grpc_mode(cls):
+        subprocess.run(
+            [
+                "pip",
+                "install",
+                "grpcio==1.78.1",
+                "grpcio-health-checking==1.78.1",
+                "grpcio-reflection==1.78.1",
+                "protobuf==6.33.1",
+                "--force-reinstall",
+            ],
+        )
 
 if __name__ == "__main__":
     unittest.main()
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendGrpcModeDep))
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
