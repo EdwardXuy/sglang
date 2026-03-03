@@ -67,7 +67,7 @@ class TestAscendFastapiRootPath(CustomTestCase):
         # sleep(600)
 
 
-        response = self.send_request(requests.get(f"{self.base_url}/openapi.json"))
+        response = requests.get(f"{self.base_url}/openapi.json")
         self.assertEqual(
             response.status_code, 200, "The request status code is not 200."
         )
