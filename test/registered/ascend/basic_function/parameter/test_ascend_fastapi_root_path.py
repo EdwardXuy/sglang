@@ -1,4 +1,5 @@
 import unittest
+from time import sleep
 from urllib.parse import urlparse
 
 import requests
@@ -69,6 +70,9 @@ class TestAscendFastapiRootPath(CustomTestCase):
         self.assertIn(
             self.fastapi_root_path, response.text, "The correct path is not set in the openai."
         )
+
+        print("验证推理功能和配置文件正确，手动验证浏览器功能正确")
+        sleep(600)
 
     def send_request(self, url):
         return requests.post(
