@@ -325,8 +325,20 @@ class TestAscendGrpcModeDep(CustomTestCase):
             ],
         )
 
+        subprocess.run(
+            [
+                "pip",
+                "install",
+                "grpcio==1.78.1",
+                "grpcio-health-checking==1.78.1",
+                "grpcio-reflection==1.78.1",
+                "protobuf==6.33.1",
+                "--force-reinstall",
+            ],
+        )
+
 if __name__ == "__main__":
-    unittest.main()
+    # unittest.main()
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
     suite.addTests(loader.loadTestsFromTestCase(TestAscendGrpcModeDep))
