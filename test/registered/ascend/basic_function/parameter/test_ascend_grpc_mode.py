@@ -313,14 +313,7 @@ class TestAscendGrpcModeDep(CustomTestCase):
 
     @classmethod
     def test_grpc_mode(cls):
-        subprocess.run(
-            [
-                "wget",
-                "--no-check-certificate",
-                "https://raw.githubusercontent.com/sgl-project/sglang/main/python/sglang/srt/grpc/sglang_scheduler.proto",
-            ],
-            cwd="/usr/local/python3.11.14/lib/python3.11/site-packages/sglang/srt/grpc"
-        )
+
 
         subprocess.run(
             [
@@ -332,6 +325,27 @@ class TestAscendGrpcModeDep(CustomTestCase):
                 "protobuf==6.33.1",
                 "--force-reinstall",
             ],
+        )
+
+        subprocess.run(
+            [
+                "wget",
+                "--no-check-certificate",
+                "https://raw.githubusercontent.com/sgl-project/sglang/main/python/sglang/srt/grpc/sglang_scheduler.proto.py",
+            ],
+            cwd="/usr/local/python3.11.14/lib/python3.11/site-packages/sglang/srt/grpc",
+            text=True,
+            check=True,
+        )
+
+        subprocess.run(
+            [
+                "python3",
+                "sglang_scheduler.proto.py",
+            ],
+            cwd="/usr/local/python3.11.14/lib/python3.11/site-packages/sglang/srt/grpc",
+            text=True,
+            check=True,
         )
 
 if __name__ == "__main__":
