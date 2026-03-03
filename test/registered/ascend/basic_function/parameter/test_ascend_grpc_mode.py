@@ -8,7 +8,8 @@ from urllib.parse import urlparse
 import requests
 
 from sglang.srt.utils import kill_process_tree
-from sglang.test.ascend.test_ascend_utils import QWEN3_8B_WEIGHTS_PATH as MODEL_PATH
+# from sglang.test.ascend.test_ascend_utils import QWEN3_8B_WEIGHTS_PATH as MODEL_PATH
+MODEL_PATH = "/home/weights/Qwen3-8B"
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
