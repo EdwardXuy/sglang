@@ -195,6 +195,7 @@ class TestAscendConfigInValidConfigFileType(CustomTestCase):
                     "Server process exited with code 1. Check server logs for errors.",
                     str(e),
                 )
+                print(e)
             finally:
                 if process:
                     kill_process_tree(process.pid)
@@ -222,4 +223,9 @@ class TestAscendConfigInValidConfigFileType(CustomTestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    # unittest.main()
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendConfigInValidConfigFileType))
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
