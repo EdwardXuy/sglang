@@ -319,6 +319,7 @@ class TestAscendGrpcModeDep(CustomTestCase):
                 "--no-check-certificate",
                 "https://raw.githubusercontent.com/sgl-project/sglang/main/python/sglang/srt/grpc/sglang_scheduler.proto",
             ],
+            cwd=""
         )
 
         subprocess.run(
