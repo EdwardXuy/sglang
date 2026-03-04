@@ -124,6 +124,15 @@ def create_pod(yaml_file, namespace):
                 apps_api.create_namespaced_deployment(namespace=namespace, body=doc)
                 logger.info(f"Deployment {doc['metadata']['name']} is created")
 
+            elif kind == "StatefulSet" and api_version == "apps/v1":
+                apps_api = client.AppsV1Api()
+                apps_api.create_namespaced_stateful_set(namespace=namespace, body=doc)
+                logger.info(f"StatefulSet {doc['metadata']['name']} is created")
+
+            elif kind == "Service" and api_version == "v1":
+                core_api.create_namespaced_service(namespace=namespace, body=doc)
+                logger.info(f"Service {doc['metadata']['name']} is created")
+
             else:
                 raise f"Unrecognized kind: {kind}/{api_version}"
         except ApiException as e:
@@ -173,6 +182,30 @@ def delete_pod(yaml_file, namespace):
                     ),
                 )
                 logger.info(f"Deployment {deployment_name} is deleted.")
+
+            elif kind == "StatefulSet" and api_version == "apps/v1":
+                statefulset_name = doc["metadata"]["name"]
+                apps_api = client.AppsV1Api()
+                apps_api.delete_namespaced_stateful_set(
+                    name=statefulset_name,
+                    namespace=namespace,
+                    body=client.V1DeleteOptions(
+                        grace_period_seconds=0, propagation_policy="Foreground"
+                    ),
+                )
+                logger.info(f"StatefulSet {statefulset_name} is deleted.")
+
+            elif kind == "Service" and api_version == "v1":
+                service_name = doc["metadata"]["name"]
+                core_api.delete_namespaced_service(
+                    name=service_name,
+                    namespace=namespace,
+                    body=client.V1DeleteOptions(
+                        grace_period_seconds=0, propagation_policy="Foreground"
+                    ),
+                )
+                logger.info(f"Service {service_name} is deleted.")
+
             else:
                 raise f"Unrecognized kind: {kind}/{api_version}"
         except ApiException as e:
