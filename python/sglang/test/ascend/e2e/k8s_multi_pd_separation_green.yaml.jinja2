@@ -14,7 +14,7 @@ metadata:
 spec:
   replicas: {{ prefill_size }}
   selector:
-    matchLables:
+    matchLabels:
       app: sgl-ascend
       task: prefill
   template:
@@ -95,7 +95,7 @@ metadata:
 spec:
   replicas: {{ decode_size }}
   selector:
-    matchLables:
+    matchLabels:
       app: sgl-ascend
       task: decode
   template:
@@ -176,7 +176,7 @@ metadata:
 spec:
   replicas: {{ router_size }}
   selector:
-    matchLables:
+    matchLabels:
       app: sgl-ascend
       task: router
   template:
