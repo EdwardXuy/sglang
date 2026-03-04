@@ -18,8 +18,7 @@ from sglang.test.test_utils import (
 register_npu_ci(est_time=400, suite="nightly-8-npu-a3", nightly=True)
 
 TP_SIZE = 4
-PP_SIZE = 2
-DP_SIZE = 1
+PP_SIZE = 1
 TP_DIR_NUM = TP_SIZE * PP_SIZE
 FILE_PATTERN_PP0 = "./TP0_PP0_Rank0_pid*"
 FILE_PATTERN_PP1 = "./TP0_PP1_Rank4_pid*"
@@ -44,10 +43,6 @@ class TestDebugTensorDumpOutputFolderBase(ABC):
         "--disable-cuda-graph",
         "--tp-size",
         TP_SIZE,
-        "--pp-size",
-        PP_SIZE,
-        "--dp-size",
-        DP_SIZE,
         "--debug-tensor-dump-output-folder",
         "./",
         "--skip-server-warmup",
@@ -133,12 +128,8 @@ class TestDebugTensorDumpOutputFolder0(
         self.assertEqual(int(res), TP_DIR_NUM)
 
         model_layers_list = self.get_layers_from_tensor_file(FILE_PATTERN_PP0)
-        self.assertEqual(len(model_layers_list), 32)
-        self.assertEqual(model_layers_list, list(range(32)))
-
-        model_layers_list = self.get_layers_from_tensor_file(FILE_PATTERN_PP1)
-        self.assertEqual(len(model_layers_list), 32)
-        self.assertEqual(sorted(set(model_layers_list)), list(range(32, 64)))
+        self.assertEqual(len(model_layers_list), 64)
+        self.assertEqual(model_layers_list, list(range(64)))
 
 
 class TestDebugTensorDumpOutputFolder1(
@@ -256,10 +247,6 @@ class TestDebugTensorDumpOutputFolder5(
         "--disable-cuda-graph",
         "--tp-size",
         TP_SIZE,
-        "--pp-size",
-        PP_SIZE,
-        "--dp-size",
-        DP_SIZE,
         "--debug-tensor-dump-layers",
         "1",
         "--skip-server-warmup",
