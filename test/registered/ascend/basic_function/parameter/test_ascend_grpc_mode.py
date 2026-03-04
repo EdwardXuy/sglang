@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 import requests
 
 from sglang.srt.utils import kill_process_tree
+
 from sglang.test.ascend.test_ascend_utils import QWEN3_8B_WEIGHTS_PATH as MODEL_PATH
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
@@ -18,7 +19,7 @@ from sglang.test.test_utils import (
     popen_with_error_check,
 )
 
-register_npu_ci(est_time=300, suite="nightly-1-npu-a3", nightly=True)
+register_npu_ci(est_time=300, suite="nightly-2-npu-a3", nightly=True)
 
 PYTHON_PATH = "/__w/sglang/sglang/python"
 COMPILE_PROTO_PATH = "/sglang/srt/grpc"
@@ -194,8 +195,6 @@ class TestAscendGrpcModePDDisaggregation(CustomTestCase):
             "0.4",
             "--tp-size",
             "1",
-            "--base-gpu-id",
-            12,
             "--grpc-mode",
             "--disaggregation-transfer-backend",
             "ascend",
@@ -232,7 +231,7 @@ class TestAscendGrpcModePDDisaggregation(CustomTestCase):
             "--tp-size",
             "1",
             "--base-gpu-id",
-            14,
+            1,
             "--grpc-mode",
             "--disaggregation-transfer-backend",
             "ascend",
