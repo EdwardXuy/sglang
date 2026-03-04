@@ -291,13 +291,15 @@ class TestAscendGrpcModePDDisaggregation(CustomTestCase):
 
 
 if __name__ == "__main__":
-    # subprocess.run(
-    #     [
-    #         "python3",
-    #         "compile_proto.py",
-    #     ],
-    #     cwd=PYTHON_PATH + COMPILE_PROTO_PATH,
-    #     text=True,
-    #     check=True,
-    # )
+    subprocess.run(
+        [
+            "pip",
+            "install",
+            "grpcio==1.78.1",
+            "grpcio-health-checking==1.78.1",
+            "grpcio-reflection==1.78.1",
+            "protobuf==6.33.1",
+            "--force-reinstall",
+        ],
+    )
     unittest.main()
