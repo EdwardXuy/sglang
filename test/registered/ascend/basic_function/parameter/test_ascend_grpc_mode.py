@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 import requests
 
 from sglang.srt.utils import kill_process_tree
+
 from sglang.test.ascend.test_ascend_utils import QWEN3_8B_WEIGHTS_PATH as MODEL_PATH
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
@@ -20,6 +21,9 @@ from sglang.test.test_utils import (
 
 register_npu_ci(est_time=300, suite="nightly-1-npu-a3", nightly=True)
 
+PYTHON_PATH = "/__w/sglang/sglang/python"
+COMPILE_PROTO_PATH = "/sglang/srt/grpc"
+
 
 class TestAscendGrpcModePDMixed(CustomTestCase):
     """
@@ -31,18 +35,6 @@ class TestAscendGrpcModePDMixed(CustomTestCase):
 
     @classmethod
     def setUpClass(cls):
-        subprocess.run(
-            [
-                "pip",
-                "install",
-                "grpcio==1.78.1",
-                "grpcio-health-checking==1.78.1",
-                "grpcio-reflection==1.78.1",
-                "protobuf==6.33.1",
-                "--force-reinstall",
-            ],
-        )
-
         cls.model = MODEL_PATH
         cls.grpc_base_url = f"grpc://127.0.0.1:30111"
         cls.grpc_url = urlparse(cls.grpc_base_url)
@@ -175,8 +167,7 @@ class TestAscendGrpcModePDDisaggregation(CustomTestCase):
         cls.start_decode()
 
         cls.launch_lb()
-        # TODO
-        # Block until ready
+        # Polling to query health status is not applicable in gRPC mode.
         sleep(200)
 
     @classmethod
@@ -303,4 +294,13 @@ class TestAscendGrpcModePDDisaggregation(CustomTestCase):
 
 
 if __name__ == "__main__":
+    # subprocess.run(
+    #     [
+    #         "python3",
+    #         "compile_proto.py",
+    #     ],
+    #     cwd=PYTHON_PATH + COMPILE_PROTO_PATH,
+    #     text=True,
+    #     check=True,
+    # )
     unittest.main()
