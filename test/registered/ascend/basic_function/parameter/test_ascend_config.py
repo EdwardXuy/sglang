@@ -37,18 +37,6 @@ class TestAscendConfig(CustomTestCase):
         cls.base_url = DEFAULT_URL_FOR_TEST
 
         # TODO：或许应该在这里生成config文件
-        # cls.url = urlparse(cls.base_url)
-        # cls.other_args = [
-        #     "--config",
-        #     cls.config,
-        # ]
-        #
-        # cls.process = popen_launch_server(
-        #     cls.model,
-        #     cls.base_url,
-        #     timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-        #     other_args=cls.other_args,
-        # )
         command = [
             "python3",
             "-m",
