@@ -20,6 +20,7 @@ spec:
   policies:
     - event: PodEvicted
       action: RestartJob
+  queue: default
   tasks:
   - name: "sglang-prefill"
     replicas: {{ prefill_size }}
@@ -60,12 +61,27 @@ spec:
           command: ["/bin/bash", "-c"]
           args:
             - |
+               {% if env in ["ci", "debug"] %}
                bash /root/sglang/python/sglang/test/ascend/e2e/run_npu_testcase.sh {{ test_case }}
+               {% endif %}
+               {% if env == "green" %}
+               bash /root/sglang/python/sglang/test/ascend/e2e/run_npu_testcase_green.sh {{ test_case }}
+               {% endif %}
           resources:
             requests:
+              {% if env in ["ci", "debug"] %}
               huawei.com/ascend-1980: 16
+              {% endif %}
+              {% if env == "green" %}
+              huawei.com/Ascend910: 16
+              {% endif %}
             limits:
+              {% if env in ["ci", "debug"] %}
               huawei.com/ascend-1980: 16
+              {% endif %}
+              {% if env == "green" %}
+              huawei.com/Ascend910: 16
+              {% endif %}
           volumeMounts:
           - name: ascend-driver
             mountPath: /usr/local/Ascend/driver
@@ -79,9 +95,16 @@ spec:
             mountPath: /root/sglang
             subPath: {{ sglang_source_relative_path }}
         volumes:
+        {% if env in ["ci", "debug"] %}
         - name: share
           persistentVolumeClaim:
             claimName: sglang-guiyang004
+        {% endif %}
+        {% if env == "green" %}
+        - name: share
+          hostPath:
+            path: /home
+        {% endif %}
         - name: ascend-driver
           hostPath:
             path: /usr/local/Ascend/driver
@@ -96,9 +119,15 @@ spec:
             effect: "NoSchedule"
         {% endif %}
         nodeSelector:
+          {% if env in ["ci", "debug"] %}
           accelerator/huawei-npu: ascend-snt9c
+          {% endif %}
           {% if env == "debug" %}
-          nodestatus: debug
+          node-status: debug
+          {% endif %}
+          {% if env == "green" %}
+          accelerator: huawei-Ascend910
+          accelerator-type: module-a3-16
           {% endif %}
         restartPolicy: OnFailure
   - name: "sglang-decode"
@@ -140,12 +169,27 @@ spec:
           command: ["/bin/bash", "-c"]
           args:
             - |
+               {% if env in ["ci", "debug"] %}
                bash /root/sglang/python/sglang/test/ascend/e2e/run_npu_testcase.sh {{ test_case }}
+               {% endif %}
+               {% if env == "green" %}
+               bash /root/sglang/python/sglang/test/ascend/e2e/run_npu_testcase_green.sh {{ test_case }}
+               {% endif %}
           resources:
             requests:
+              {% if env in ["ci", "debug"] %}
               huawei.com/ascend-1980: 16
+              {% endif %}
+              {% if env == "green" %}
+              huawei.com/Ascend910: 16
+              {% endif %}
             limits:
+              {% if env in ["ci", "debug"] %}
               huawei.com/ascend-1980: 16
+              {% endif %}
+              {% if env == "green" %}
+              huawei.com/Ascend910: 16
+              {% endif %}
           volumeMounts:
           - name: ascend-driver
             mountPath: /usr/local/Ascend/driver
@@ -159,9 +203,16 @@ spec:
             mountPath: /root/sglang
             subPath: {{ sglang_source_relative_path }}
         volumes:
+        {% if env in ["ci", "debug"] %}
         - name: share
           persistentVolumeClaim:
             claimName: sglang-guiyang004
+        {% endif %}
+        {% if env == "green" %}
+        - name: share
+          hostPath:
+            path: /home
+        {% endif %}
         - name: ascend-driver
           hostPath:
             path: /usr/local/Ascend/driver
@@ -176,9 +227,15 @@ spec:
             effect: "NoSchedule"
         {% endif %}
         nodeSelector:
+          {% if env in ["ci", "debug"] %}
           accelerator/huawei-npu: ascend-snt9c
+          {% endif %}
           {% if env == "debug" %}
-          nodestatus: debug
+          node-status: debug
+          {% endif %}
+          {% if env == "green" %}
+          accelerator: huawei-Ascend910
+          accelerator-type: module-a3-16
           {% endif %}
         restartPolicy: OnFailure
   - name: "sglang-router"
@@ -222,7 +279,12 @@ spec:
           command: ["/bin/bash", "-c"]
           args:
             - |
+               {% if env in ["ci", "debug"] %}
                bash /root/sglang/python/sglang/test/ascend/e2e/run_npu_testcase.sh {{ test_case }}
+               {% endif %}
+               {% if env == "green" %}
+               bash /root/sglang/python/sglang/test/ascend/e2e/run_npu_testcase_green.sh {{ test_case }}
+               {% endif %}
           resources:
             requests:
               cpu: "4"
@@ -241,9 +303,16 @@ spec:
             mountPath: /root/sglang
             subPath: {{ sglang_source_relative_path }}
         volumes:
+        {% if env in ["ci", "debug"] %}
         - name: share
           persistentVolumeClaim:
             claimName: sglang-guiyang004
+        {% endif %}
+        {% if env == "green" %}
+        - name: share
+          hostPath:
+            path: /home
+        {% endif %}
         - name: ascend-driver
           hostPath:
             path: /usr/local/Ascend/driver
@@ -258,8 +327,14 @@ spec:
             effect: "NoSchedule"
         {% endif %}
         nodeSelector:
+          {% if env in ["ci", "debug"] %}
           accelerator/huawei-npu: ascend-snt9c
+          {% endif %}
           {% if env == "debug" %}
-          nodestatus: debug
+          node-status: debug
+          {% endif %}
+          {% if env == "green" %}
+          accelerator: huawei-Ascend910
+          accelerator-type: module-a3-16
           {% endif %}
         restartPolicy: OnFailure

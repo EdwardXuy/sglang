@@ -328,7 +328,7 @@ def monitor_pod_logs(
                         if match_state == len(patterns):
                             if pattern_ok.match(line):
                                 is_success = True
-                            logger.info("\nDetected complete test completion pattern!")
+                            logger.info("Detected complete test completion pattern!")
                             match_event.set()
                     else:
                         match_state = 0

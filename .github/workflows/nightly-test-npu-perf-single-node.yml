@@ -45,7 +45,7 @@ jobs:
           npu-smi info
 
       - name: Run test
-        timeout-minutes: 300
+        timeout-minutes: 120
         env:
           SGLANG_USE_MODELSCOPE: true
           HF_ENDPOINT: https://hf-mirror.com
@@ -86,7 +86,7 @@ jobs:
           echo "numa_balancing: $(cat /proc/sys/kernel/numa_balancing)"
           echo "sched_migration_cost_ns: $(cat /proc/sys/kernel/sched_migration_cost_ns)"
 
-          # export SGLANG_SET_CPU_AFFINITY=1
+          export SGLANG_SET_CPU_AFFINITY=1
           echo "SGLANG_SET_CPU_AFFINITY: $SGLANG_SET_CPU_AFFINITY"
 
           install_sglang_from_source=${{ inputs.install_sglang_from_source }}
@@ -116,7 +116,7 @@ jobs:
           echo "Log path: ${log_path}"
 
           echo "Running test case ${test_case}"
-          python3 -u ${test_case} 2>&1 | tee -a ${log_path}/${tc_name}.log
+          python3 -u ${test_case}
           echo "Finished test case ${test_case}"
 
           plog_path="/root/ascend/log/debug/plog"
