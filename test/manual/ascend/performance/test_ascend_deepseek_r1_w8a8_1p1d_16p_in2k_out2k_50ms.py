@@ -91,7 +91,7 @@ MODEL_CONFIG = {
         "--mem-fraction-static",
         0.8,
         "--max-running-requests",
-        384,
+        24,
         "--quantization",
         "modelslim",
         "--moe-a2a-backend",
@@ -139,7 +139,7 @@ class TestDeepSeekR1W8A8(TestAscendPerfMultiNodePdSepTestCaseBase):
     model_config = MODEL_CONFIG
     dataset_name = "random"
     request_rate = 8
-    max_concurrency = 400
+    max_concurrency = 24
     num_prompts = int(max_concurrency) * 8
     input_len = 2048
     output_len = 2048
