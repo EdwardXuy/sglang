@@ -47,6 +47,10 @@ SERVER_INITIALIZATION_DELAY = 30
 
 
 def get_nic_name():
+    return "enp196s0f0"
+
+
+def get_nic_name2():
     """
     Automatically identify the optimal network interface for SGLang multi-machine deployment
     Returns: str - Valid network interface name; None - No valid interface found
