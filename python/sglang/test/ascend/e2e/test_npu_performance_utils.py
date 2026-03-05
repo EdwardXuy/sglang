@@ -249,8 +249,8 @@ def run_bench_serving(
 class TestAscendPerformanceTestCaseBase(CustomTestCase):
     model = None
     backend = "sglang"
-    dataset_name = None
-    dataset_path = None
+    dataset_name = "random"
+    dataset_path = "/tmp/ShareGPT_V3_unfiltered_cleaned_split.json"
     other_args = None
     timeout = DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH
     envs = None
@@ -353,8 +353,8 @@ class TestAscendPerformanceTestCaseBase(CustomTestCase):
 class TestAscendPerfMultiNodePdMixTestCaseBase(CustomTestCase):
     model_config = None
     backend = "sglang"
-    dataset_name = None
-    dataset_path = None
+    dataset_name = "random"
+    dataset_path = "/tmp/ShareGPT_V3_unfiltered_cleaned_split.json"
     request_rate = None
     max_concurrency = None
     num_prompts = None
@@ -469,7 +469,8 @@ class TestAscendPerfMultiNodePdMixTestCaseBase(CustomTestCase):
 class TestAscendPerfMultiNodePdSepTestCaseBase(CustomTestCase):
     model_config = None
     backend = "sglang"
-    dataset_name = None
+    dataset_name = "random"
+    dataset_path = "/tmp/ShareGPT_V3_unfiltered_cleaned_split.json"
     request_rate = None
     max_concurrency = None
     num_prompts = None
