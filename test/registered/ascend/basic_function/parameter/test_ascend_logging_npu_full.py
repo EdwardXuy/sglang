@@ -439,7 +439,7 @@ class BaseTestRequestLogger:
             os.environ[key] = value
 
         cls.process = popen_launch_server(
-            "Qwen/Qwen3-0.6B",
+            MODEL_PATH,
             DEFAULT_URL_FOR_TEST,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=other_args,
