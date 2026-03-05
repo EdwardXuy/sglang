@@ -12,7 +12,8 @@ from pathlib import Path
 import requests
 
 from sglang.srt.utils import kill_process_tree
-from sglang.test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
+# from sglang.test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH as MODEL_PATH
+MODEL_PATH = "/home/weights/Llama-3.1-1B-Instruct"
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -31,7 +32,7 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
     [Test Target] All Logging parameters on NPU
     """
 
-    model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
+    model = MODEL_PATH
     base_url = DEFAULT_URL_FOR_TEST
     test_prompt = "What is the capital of France?"
     expected_output = "Paris"
