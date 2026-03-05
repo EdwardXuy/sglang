@@ -435,68 +435,69 @@ class TestAscendLoggingNPUBucket(TestAscendLoggingNPUFullBase):
 #         kill_process_tree(self.process.pid)
 #         self.process = None
 #
-# def test_11_prompt_tokens_buckets_default(self):
-#     """Test prompt-tokens-buckets with default."""
-#     print("\n=== Test 11: prompt-tokens-buckets default ===")
-#
-#     try:
-#         self.process = self._launch_server_with_logging(
-#             enable_metrics=True,
-#             collect_tokens_histogram=True,
-#             prompt_tokens_buckets=["default"],
-#         )
-#         time.sleep(5)
-#
-#         result = self._send_inference_request()
-#         print(f"✓ prompt-tokens-buckets default test passed, result: {result[:50]}...")
-#
-#         metrics_content = self._check_metrics_endpoint()
-#         self.assertIn("sglang_prompt_tokens_bucket", metrics_content)
-#     finally:
-#         kill_process_tree(self.process.pid)
-#         self.process = None
-#
-# def test_12_prompt_tokens_buckets_tse(self):
-#     """Test prompt-tokens-buckets with tse."""
-#     print("\n=== Test 12: (prompt-tokens-buckets tse ===")
-#
-#     try:
-#         self.process = self._launch_server_with_logging(
-#             enable_metrics=True,
-#             collect_tokens_histogram=True,
-#             prompt_tokens_buckets=["tse", "512", "2", "8"],
-#         )
-#         time.sleep(5)
-#
-#         result = self._send_inference_request()
-#         print(f"✓ prompt-tokens-buckets tse test passed, result: {result[:50]}...")
-#
-#         metrics_content = self._check_metrics_endpoint()
-#         self.assertIn("sglang_prompt_tokens_bucket", metrics_content)
-#     finally:
-#         kill_process_tree(self.process.pid)
-#         self.process = None
-#
-# def test_13_prompt_tokens_buckets_custom(self):
-#     """Test prompt-tokens-buckets with custom."""
-#     print("\n=== Test 13: prompt-tokens-buckets custom ===")
-#
-#     try:
-#         self.process = self._launch_server_with_logging(
-#             enable_metrics=True,
-#             collect_tokens_histogram=True,
-#             prompt_tokens_buckets=["custom", "100", "500", "1000", "5000"],
-#         )
-#         time.sleep(5)
-#
-#         result = self._send_inference_request()
-#         print(f"✓ prompt-tokens-buckets custom test passed, result: {result[:50]}...")
-#
-#         metrics_content = self._check_metrics_endpoint()
-#         self.assertIn("sglang_prompt_tokens_bucket", metrics_content)
-#     finally:
-#         kill_process_tree(self.process.pid)
-#         self.process = None
+class TestAscendLoggingNPUCollectTokensHistogram(TestAscendLoggingNPUFullBase):
+    def test_11_prompt_tokens_buckets_default(self):
+        """Test prompt-tokens-buckets with default."""
+        print("\n=== Test 11: prompt-tokens-buckets default ===")
+
+        try:
+            self.process = self._launch_server_with_logging(
+                enable_metrics=True,
+                collect_tokens_histogram=True,
+                prompt_tokens_buckets=["default"],
+            )
+            time.sleep(5)
+
+            result = self._send_inference_request()
+            print(f"✓ prompt-tokens-buckets default test passed, result: {result[:50]}...")
+
+            metrics_content = self._check_metrics_endpoint()
+            self.assertIn("sglang_prompt_tokens_bucket", metrics_content)
+        finally:
+            kill_process_tree(self.process.pid)
+            self.process = None
+
+    def test_12_prompt_tokens_buckets_tse(self):
+        """Test prompt-tokens-buckets with tse."""
+        print("\n=== Test 12: (prompt-tokens-buckets tse ===")
+
+        try:
+            self.process = self._launch_server_with_logging(
+                enable_metrics=True,
+                collect_tokens_histogram=True,
+                prompt_tokens_buckets=["tse", "512", "2", "8"],
+            )
+            time.sleep(5)
+
+            result = self._send_inference_request()
+            print(f"✓ prompt-tokens-buckets tse test passed, result: {result[:50]}...")
+
+            metrics_content = self._check_metrics_endpoint()
+            self.assertIn("sglang_prompt_tokens_bucket", metrics_content)
+        finally:
+            kill_process_tree(self.process.pid)
+            self.process = None
+
+    def test_13_prompt_tokens_buckets_custom(self):
+        """Test prompt-tokens-buckets with custom."""
+        print("\n=== Test 13: prompt-tokens-buckets custom ===")
+
+        try:
+            self.process = self._launch_server_with_logging(
+                enable_metrics=True,
+                collect_tokens_histogram=True,
+                prompt_tokens_buckets=["custom", "100", "500", "1000", "5000"],
+            )
+            time.sleep(5)
+
+            result = self._send_inference_request()
+            print(f"✓ prompt-tokens-buckets custom test passed, result: {result[:50]}...")
+
+            metrics_content = self._check_metrics_endpoint()
+            self.assertIn("sglang_prompt_tokens_bucket", metrics_content)
+        finally:
+            kill_process_tree(self.process.pid)
+            self.process = None
 #
 # def test_14_generation_tokens_buckets_variations(self):
 #     """Test generation-tokens-buckets variations."""
@@ -729,8 +730,8 @@ if __name__ == "__main__":
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsLevel))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsFormat))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsTarget))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUMetric))
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUMetric))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUCrashDumpFolder))
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUBucket))
+    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUBucket))
     runner = unittest.TextTestRunner()
     runner.run(suite)
