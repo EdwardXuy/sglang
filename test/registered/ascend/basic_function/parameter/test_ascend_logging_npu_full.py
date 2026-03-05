@@ -57,7 +57,7 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
         log_level="info",
         log_level_http=None,
         log_requests=False,
-        log_requests_level=2,
+        log_requests_level=None,
         log_requests_format="text",
         log_requests_target=None,
         enable_metrics=False,
@@ -97,6 +97,10 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
             "--tp-size",
             str(tp_size),
         ]
+
+        if log_level is not None:
+            other_args.extend(["--log-level", log_level])
+
 
         if log_level_http is not None:
             other_args.extend(["--log-level-http", log_level_http])
@@ -393,68 +397,80 @@ class TestAscendLogRequests(TestAscendLoggingNPUFullBase):
         keyword_start = "out={'text': '"
         keyword_end = "', 'output_ids'"
         for i in [0, 1, 2, 3]:
-            other_args = [
-                "--log-requests-level",
-                i,
-                "--log-requests",
-                "--attention-backend",
-                "ascend",
-                "--disable-cuda-graph",
-            ]
             out_log_file = open(out_log_name, "w+", encoding="utf-8")
             err_log_file = open(err_log_name, "w+", encoding="utf-8")
-            process = popen_launch_server(
-                MODEL_PATH,
-                DEFAULT_URL_FOR_TEST,
-                timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-                other_args=other_args,
-                return_stdout_stderr=(out_log_file, err_log_file),
+            process = self._launch_server_with_logging(
+                log_requests=True,
+                log_requests_level=i,
+                out_log_file=out_log_file,
+                err_log_file=err_log_file,
+            ) if i != 2 else self._launch_server_with_logging(
+                log_requests=True,
+                out_log_file=out_log_file,
+                err_log_file=err_log_file,
             )
+            #
+            # other_args = [
+            #     "--log-requests-level",
+            #     i,
+            #     "--log-requests",
+            #     "--attention-backend",
+            #     "ascend",
+            #     "--disable-cuda-graph",
+            # ]
+            # out_log_file = open(out_log_name, "w+", encoding="utf-8")
+            # err_log_file = open(err_log_name, "w+", encoding="utf-8")
+            # process = popen_launch_server(
+            #     MODEL_PATH,
+            #     DEFAULT_URL_FOR_TEST,
+            #     timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            #     other_args=other_args,
+            #     return_stdout_stderr=(out_log_file, err_log_file),
+            # )
 
             try:
-                response = requests.get(f"{DEFAULT_URL_FOR_TEST}/health_generate")
-                self.assertEqual(response.status_code, 200)
+                self._send_inference_request()
+                # response = requests.get(f"{DEFAULT_URL_FOR_TEST}/health_generate")
+                # self.assertEqual(response.status_code, 200)
 
                 max_new_token = 2500 if i >= 2 else 100
 
                 response = requests.post(
-                    f"{DEFAULT_URL_FOR_TEST}/generate",
+                    f"{self.base_url}/generate",
                     json={
-                        "text": "just return me a string with of 5000 characters",
+                        "text": f"just return me a string with of 5000 characters",
                         "sampling_params": {"temperature": 0, "max_new_tokens": max_new_token},
                     },
                 )
                 self.assertEqual(response.status_code, 200)
                 out_log_file.seek(0)
                 content = out_log_file.read()
-                print("====================content-start===============================")
-                print(f"{i=}")
-                print(f"{content=}")
-                print("====================content-end===============================")
+                # print("====================content-start===============================")
+                # print(f"{i=}")
+                # print(f"{content=}")
+                # print("====================content-end===============================")
 
                 self.assertTrue(len(content) > 0)
                 self.assertIsNotNone(re.search(message[str(i)], content))
                 if i >= 2:
                     lines = get_lines_with_keyword(out_log_name, keyword_Finish)
                     Finish_message = lines[0]["content"]
-                    start_index = Finish_message.find(keyword_start) + len(
-                        keyword_start
-                    )
+                    start_index = Finish_message.find(keyword_start) + len(keyword_start)
                     end_index = Finish_message.find(keyword_end)
                     out_text = Finish_message[start_index:end_index]
                     out_text_length = len(out_text)
-                    print("out_text_length is ", out_text_length)
-                    print("out text is ", out_text)
+                    # print("out_text_length is ", out_text_length)
+                    # print("out text is ", out_text)
                     out_text_length_n = len(out_text.replace("\\n", " "))
                     if i == 2:
-                        print(i)
-                        print(out_text)
+                        # print(i)
+                        # print(out_text)
                         self.assertIn("' ... '", out_text)
                         self.assertTrue(out_text_length_n - len("' ... '") == 2048)
-                        print("out_text_length_n is ", out_text_length_n)
+                        # print("out_text_length_n is ", out_text_length_n)
                     else:
-                        print(i)
-                        print(out_text)
+                        # print(i)
+                        # print(out_text)
                         self.assertNotIn("' ... '", out_text)
                         self.assertTrue(out_text_length > 2048)
 
