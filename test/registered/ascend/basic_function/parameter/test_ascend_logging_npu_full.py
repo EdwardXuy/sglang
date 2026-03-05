@@ -75,6 +75,10 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
         crash_dump_folder=None,
         tp_size=1,
         uvicorn_access_log_exclude_prefixes=None,
+        show_time_cost=None,
+        tokenizer_metrics_custom_labels_header=None,
+        tokenizer_metrics_allowed_custom_labels=None,
+        kv_events_config=None,
     ):
         """Launch server with logging parameters."""
 
@@ -141,13 +145,20 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
         if crash_dump_folder is not None:
             other_args.extend(["--crash-dump-folder", crash_dump_folder])
 
-        if crash_dump_folder is not None:
-            other_args.extend(["--crash-dump-folder", crash_dump_folder])
-
         if uvicorn_access_log_exclude_prefixes is not None:
             other_args.extend(["--uvicorn-access-log-exclude-prefixes", uvicorn_access_log_exclude_prefixes])
 
+        if show_time_cost is not None:
+            other_args.extend(["--show-time-cost", show_time_cost])
 
+        if tokenizer_metrics_custom_labels_header is not None:
+            other_args.extend(["--tokenizer-metrics-custom-labels-header", tokenizer_metrics_custom_labels_header])
+
+        if tokenizer_metrics_allowed_custom_labels is not None:
+            other_args.extend(["--tokenizer-metrics-allowed-custom-labels", tokenizer_metrics_allowed_custom_labels])
+
+        if kv_events_config is not None:
+            other_args.extend(["--kv-events-config", kv_events_config])
 
         process = popen_launch_server(
             self.model,
@@ -219,12 +230,12 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
 # TODO --uvicorn-access-log-exclude-prefixes 排除以这些前缀开头的uvicorn访问日志
 # TestAscendLoggingNPUCrashDumpFolder TODO  注入错误
 # --crash-dump-folder 崩溃转储路径
-# TODO --show-time0cost 打印阶段耗时
-# TODO --tokenizer-metrics-for-all-schedulers、--tokenizer-metrics-allowed-custom-labels
+# TODO --show-time-cost 打印阶段耗时
+# TODO --tokenizer-metrics-custom-labels-header、--tokenizer-metrics-allowed-custom-labels
 # 指定用于传递自定义标签以获取分词器指标的HTTP头， 允许用于分词器指标的自定义标签
 # TODO --kv-events-config
 
-
+# TODO 验证方式、删减
 class TestAscendLoggingNPULevel(TestAscendLoggingNPUFullBase):
     def test_log_level(self):
         level_list = ["info", "debug", "warning", "error", "critical"]
@@ -257,7 +268,7 @@ class TestAscendLoggingNPULevel(TestAscendLoggingNPUFullBase):
             finally:
                 self._safe_kill_process()
 
-
+# TODO 验证方式
 class TestAscendLoggingNPURequestsLevel(TestAscendLoggingNPUFullBase):
     def test_log_requests_level(self):
         """Test all log-requests-level values."""
@@ -313,6 +324,8 @@ class TestAscendLoggingNPURequestsFormat(TestAscendLoggingNPUFullBase):
             self.assertGreater(len(log_files), 0)
 
             file_content = log_files[0].read_text()
+            print("============json.loads(file_content)=========================")
+            print(json.loads(file_content))
             json_lines = [line for line in file_content.splitlines() if line.strip().startswith("{")]
             self.assertGreater(len(json_lines), 0)
 
@@ -651,14 +664,14 @@ if __name__ == "__main__":
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsLevel))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsFormat))
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsFormat))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsTarget))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUMetric))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUCollectTokensHistogram))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUDecodeLogInterval))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUGCWarningThresholdSecs))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUEnableRequestTimeStatsLogging))
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUEnableTrace))
+    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUEnableTrace))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUCrashDumpFolder))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUBucket))
     runner = unittest.TextTestRunner()
