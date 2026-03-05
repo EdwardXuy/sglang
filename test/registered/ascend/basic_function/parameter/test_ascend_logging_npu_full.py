@@ -92,8 +92,6 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
             "--attention-backend",
             "ascend",
             "--disable-cuda-graph",
-            "--log-level",
-            log_level,
             "--tp-size",
             str(tp_size),
         ]
