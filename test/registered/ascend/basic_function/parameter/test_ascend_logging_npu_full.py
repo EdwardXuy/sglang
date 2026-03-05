@@ -415,10 +415,13 @@ class TestLogRequests(TestAscendLoggingNPUFullBase):
                     },
                 )
                 self.assertEqual(response.status_code, 200)
-                err_log_file.seek(0)
-                content = err_log_file.read()
-                print(i)
-                print(content)
+                out_log_file.seek(0)
+                content = out_log_file.read()
+                print("====================content-start===============================")
+                print(f"{i=}")
+                print(f"{content=}")
+                print("====================content-end===============================")
+
                 self.assertTrue(len(content) > 0)
                 self.assertIsNotNone(re.search(message[str(i)], content))
                 if i >= 2:
