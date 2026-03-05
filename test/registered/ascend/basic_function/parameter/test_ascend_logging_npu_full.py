@@ -74,8 +74,10 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
         otlp_traces_endpoint="localhost:4317",
         crash_dump_folder=None,
         tp_size=1,
+        uvicorn_access_log_exclude_prefixes=None,
     ):
         """Launch server with logging parameters."""
+
         other_args = [
             "--trust-remote-code",
             "--mem-fraction-static",
@@ -139,6 +141,14 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
         if crash_dump_folder is not None:
             other_args.extend(["--crash-dump-folder", crash_dump_folder])
 
+        if crash_dump_folder is not None:
+            other_args.extend(["--crash-dump-folder", crash_dump_folder])
+
+        if uvicorn_access_log_exclude_prefixes is not None:
+            other_args.extend(["--uvicorn-access-log-exclude-prefixes", uvicorn_access_log_exclude_prefixes])
+
+
+
         process = popen_launch_server(
             self.model,
             self.base_url,
@@ -191,7 +201,7 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
 # TestAscendLoggingNPURequestsTarget
 # --log-requests-target TODO 多级路径
 # TestAscendLoggingNPUMetric
-# --enable-metrics、--enable-metrics-for-all- TODO 是否需要启用dp_attention
+# --enable-metrics、--enable-metrics-for-all-schedulers TODO 是否需要启用dp_attention
 # TestAscendLoggingNPUBucket TODO 观测点
 # --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
 # 请求到达到首个token生成-响应时间；token输出间隔-生成速度稳定性；请求到达到完整返回时间-整体服务性能
@@ -212,6 +222,7 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
 # TODO --show-time0cost 打印阶段耗时
 # TODO --tokenizer-metrics-for-all-schedulers、--tokenizer-metrics-allowed-custom-labels
 # 指定用于传递自定义标签以获取分词器指标的HTTP头， 允许用于分词器指标的自定义标签
+# TODO --kv-events-config
 
 
 class TestAscendLoggingNPULevel(TestAscendLoggingNPUFullBase):
@@ -312,6 +323,7 @@ class TestAscendLoggingNPURequestsFormat(TestAscendLoggingNPUFullBase):
         finally:
             self._safe_kill_process()
 
+
 # TODO 多级目录
 class TestAscendLoggingNPURequestsTarget(TestAscendLoggingNPUFullBase):
     def test_06_log_requests_target_variations(self):
@@ -400,10 +412,11 @@ class TestAscendLoggingNPUCollectTokensHistogram(TestAscendLoggingNPUFullBase):
         print("\n=== Test 11: prompt-tokens-buckets default ===")
 
         prompt_tokens_bucket_list = [["default"], ["tse", "512", "2", "8"], ["custom", "100", "500", "1000", "5000"]]
-        generation_tokens_buckets_list = [["custom", "100", "500", "1000", "5000"], ["tse", "512", "2", "8"], ["default"]]
+        generation_tokens_buckets_list = [["custom", "100", "500", "1000", "5000"], ["tse", "512", "2", "8"],
+                                          ["default"]]
 
-
-        for prompt_tokens_bucket, generation_tokens_buckets in zip(prompt_tokens_bucket_list, generation_tokens_buckets_list):
+        for prompt_tokens_bucket, generation_tokens_buckets in zip(prompt_tokens_bucket_list,
+                                                                   generation_tokens_buckets_list):
 
             try:
                 self.process = self._launch_server_with_logging(
@@ -422,6 +435,7 @@ class TestAscendLoggingNPUCollectTokensHistogram(TestAscendLoggingNPUFullBase):
             finally:
                 kill_process_tree(self.process.pid)
                 self.process = None
+
 
 class TestAscendLoggingNPUDecodeLogInterval(TestAscendLoggingNPUFullBase):
     def test_15_decode_log_interval(self):
@@ -443,6 +457,7 @@ class TestAscendLoggingNPUDecodeLogInterval(TestAscendLoggingNPUFullBase):
             kill_process_tree(self.process.pid)
             self.process = None
 
+
 class TestAscendLoggingNPUGCWarningThresholdSecs(TestAscendLoggingNPUFullBase):
     def test_18_gc_warning_threshold_secs(self):
         """Test gc-warning-threshold-secs."""
@@ -459,6 +474,7 @@ class TestAscendLoggingNPUGCWarningThresholdSecs(TestAscendLoggingNPUFullBase):
         finally:
             kill_process_tree(self.process.pid)
             self.process = None
+
 
 class TestAscendLoggingNPUEnableRequestTimeStatsLogging(TestAscendLoggingNPUFullBase):
     def test_16_enable_request_time_stats_logging(self):
@@ -477,6 +493,8 @@ class TestAscendLoggingNPUEnableRequestTimeStatsLogging(TestAscendLoggingNPUFull
             kill_process_tree(self.process.pid)
             self.process = None
 
+
+# TODO install OTLP collector
 class TestAscendLoggingNPUEnableTrace(TestAscendLoggingNPUFullBase):
     def test_17_enable_trace(self):
         """Test enable-trace (requires OTLP collector)."""
@@ -485,7 +503,7 @@ class TestAscendLoggingNPUEnableTrace(TestAscendLoggingNPUFullBase):
         try:
             self.process = self._launch_server_with_logging(
                 enable_trace=True,
-                otlp_traces_endpoint="127.0.0.1:4317",
+                otlp_traces_endpoint="localhost:4317",
             )
             time.sleep(5)
 
@@ -497,7 +515,6 @@ class TestAscendLoggingNPUEnableTrace(TestAscendLoggingNPUFullBase):
             if self.process:
                 kill_process_tree(self.process.pid)
                 self.process = None
-
 
 
 # TODO: 注入崩溃
