@@ -35,12 +35,12 @@ script_path = os.path.dirname(os.path.abspath(__file__))
 KUBE_JOB_SINGLE = "single"
 KUBE_JOB_MULTI_PD_MIX = "multi-pd-mix"
 KUBE_JOB_MULTI_PD_SEPARATION = "multi-pd-separation"
-KUBE_JOB_SINGLE_GREEN = "single-green"
 KUBE_JOB_MULTI_PD_MIX_GREEN = "multi-pd-mix-green"
 KUBE_JOB_MULTI_PD_SEPARATION_GREEN = "multi-pd-separation-green"
 KUBE_YAML_TEMPLATE = {
     KUBE_JOB_SINGLE: f"{script_path}/k8s_single.yaml.jinja2",
     KUBE_JOB_MULTI_PD_MIX: f"{script_path}/k8s_multi_pd_mix.yaml.jinja2",
+    KUBE_JOB_MULTI_PD_MIX_GREEN: f"{script_path}/k8s_multi_pd_mix_green.yaml.jinja2",
     KUBE_JOB_MULTI_PD_SEPARATION: f"{script_path}/k8s_multi_pd_separation.yaml.jinja2",
     KUBE_JOB_MULTI_PD_SEPARATION_GREEN: f"{script_path}/k8s_multi_pd_separation_green.yaml.jinja2",
 }
@@ -547,13 +547,8 @@ def run_npu_e2e_test_case(
                 "install_sglang_from_source": install_sglang_from_source,
                 "env": env,
             }
-            kube_yaml_template = (
-                KUBE_YAML_TEMPLATE.get(KUBE_JOB_SINGLE_GREEN)
-                if env == "green"
-                else KUBE_YAML_TEMPLATE.get(kube_job_type)
-            )
             create_kube_yaml(
-                kube_yaml_template=kube_yaml_template,
+                kube_yaml_template=KUBE_YAML_TEMPLATE.get(kube_job_type),
                 output_yaml=kube_yaml_file,
                 pod_context=k8s_context,
             )
@@ -572,13 +567,11 @@ def run_npu_e2e_test_case(
                 "install_sglang_from_source": install_sglang_from_source,
                 "env": env,
             }
-            kube_yaml_template = (
-                KUBE_YAML_TEMPLATE.get(KUBE_JOB_MULTI_PD_MIX_GREEN)
-                if env == "green"
-                else KUBE_YAML_TEMPLATE.get(kube_job_type)
+            template_key = (
+                KUBE_JOB_MULTI_PD_MIX_GREEN if env == "green" else kube_job_type
             )
             create_kube_yaml(
-                kube_yaml_template=kube_yaml_template,
+                kube_yaml_template=KUBE_YAML_TEMPLATE.get(template_key),
                 output_yaml=kube_yaml_file,
                 pod_context=k8s_context,
             )
@@ -599,13 +592,11 @@ def run_npu_e2e_test_case(
                 "install_sglang_from_source": install_sglang_from_source,
                 "env": env,
             }
-            kube_yaml_template = (
-                KUBE_YAML_TEMPLATE.get(KUBE_JOB_MULTI_PD_SEPARATION_GREEN)
-                if env == "green"
-                else KUBE_YAML_TEMPLATE.get(kube_job_type)
+            template_key = (
+                KUBE_JOB_MULTI_PD_SEPARATION_GREEN if env == "green" else kube_job_type
             )
             create_kube_yaml(
-                kube_yaml_template=kube_yaml_template,
+                kube_yaml_template=template_key,
                 output_yaml=kube_yaml_file,
                 pod_context=k8s_context,
             )

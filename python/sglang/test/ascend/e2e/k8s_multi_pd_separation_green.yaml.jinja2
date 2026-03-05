@@ -13,7 +13,7 @@ metadata:
   namespace: {{ name_space }}
 spec:
   replicas: {{ prefill_size }}
-  serviceName: sglang-prefill-headless
+  serviceName: {{ kube_job_name }}-sglang-prefill-headless
   selector:
     matchLabels:
       app: sgl-ascend
@@ -91,7 +91,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sglang-prefill-headless
+  name: {{ kube_job_name }}-sglang-prefill-headless
   namespace: {{ name_space }}
 spec:
   clusterIP: None
@@ -110,7 +110,7 @@ metadata:
   namespace: {{ name_space }}
 spec:
   replicas: {{ decode_size }}
-  serviceName: sglang-decode-headless
+  serviceName: {{ kube_job_name }}-sglang-decode-headless
   selector:
     matchLabels:
       app: sgl-ascend
@@ -188,7 +188,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sglang-decode-headless
+  name: {{ kube_job_name }}-sglang-decode-headless
   namespace: {{ name_space }}
 spec:
   clusterIP: None
@@ -207,7 +207,7 @@ metadata:
   namespace: {{ name_space }}
 spec:
   replicas: {{ router_size }}
-  serviceName: sglang-router-headless
+  serviceName: {{ kube_job_name }}-sglang-router-headless
   selector:
     matchLabels:
       app: sgl-ascend
@@ -285,7 +285,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: sglang-router-headless
+  name: {{ kube_job_name }}-sglang-router-headless
   namespace: {{ name_space }}
 spec:
   clusterIP: None
