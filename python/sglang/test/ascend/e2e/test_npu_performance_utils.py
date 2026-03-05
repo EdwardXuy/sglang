@@ -332,13 +332,13 @@ class TestAscendPerformanceTestCaseBase(CustomTestCase):
             "model_path": self.model,
             "backend": self.backend,
             "dataset_name": self.dataset_name,
+            "dataset_path": self.dataset_path,
             "request_rate": self.request_rate,
             "max_concurrency": self.max_concurrency,
             "num_prompts": self.num_prompts,
             "input_len": self.input_len,
             "output_len": self.output_len,
             "random_range_ratio": self.random_range_ratio,
-            "dataset_path": self.dataset_path,
         }
         logger.info(f"Starting benchmark with parameters: {bench_params}")
 
@@ -449,6 +449,7 @@ class TestAscendPerfMultiNodePdMixTestCaseBase(CustomTestCase):
             "model_path": self.model_config.get("model_path"),
             "backend": self.backend,
             "dataset_name": self.dataset_name,
+            "dataset_path": self.dataset_path,
             "request_rate": self.request_rate,
             "max_concurrency": self.max_concurrency,
             "num_prompts": self.num_prompts,
@@ -582,6 +583,7 @@ class TestAscendPerfMultiNodePdSepTestCaseBase(CustomTestCase):
             "model_path": self.model_config.get("model_path"),
             "backend": self.backend,
             "dataset_name": self.dataset_name,
+            "dataset_path": self.dataset_path,
             "request_rate": self.request_rate,
             "max_concurrency": self.max_concurrency,
             "num_prompts": self.num_prompts,
