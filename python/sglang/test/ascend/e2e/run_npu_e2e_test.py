@@ -596,7 +596,7 @@ def run_npu_e2e_test_case(
                 KUBE_JOB_MULTI_PD_SEPARATION_GREEN if env == "green" else kube_job_type
             )
             create_kube_yaml(
-                kube_yaml_template=template_key,
+                kube_yaml_template=KUBE_YAML_TEMPLATE.get(template_key),
                 output_yaml=kube_yaml_file,
                 pod_context=k8s_context,
             )
