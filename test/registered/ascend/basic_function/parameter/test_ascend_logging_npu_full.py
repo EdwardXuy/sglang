@@ -939,7 +939,7 @@ if __name__ == "__main__":
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsLevel))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLogRequests))
 
-    suite.addTests(loader.loadTestsFromTestCase(TestRequestLoggerText))
+    # suite.addTests(loader.loadTestsFromTestCase(TestRequestLoggerText))
     suite.addTests(loader.loadTestsFromTestCase(TestRequestLoggerJson))
 
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsFormat))
