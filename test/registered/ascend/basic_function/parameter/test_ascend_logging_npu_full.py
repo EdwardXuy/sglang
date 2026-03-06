@@ -533,7 +533,7 @@ class TestAscendLogging(TestAscendLoggingNPUFullBase):
                 expected_prompt_tokens_bucket = self.my_tse_bucket
                 expected_generation_tokens_bucket = self.my_tse_bucket
 
-            if i == 1:
+            if i == 2:
                 other_args.extend(["--tokenizer-metrics-custom-labels-header", self.labels_header])
                 other_args.extend(["--tokenizer-metrics-allowed-custom-labels", self.my_label])
 
@@ -592,7 +592,7 @@ class TestAscendLogging(TestAscendLoggingNPUFullBase):
                         expected_generation_tokens_bucket=expected_generation_tokens_bucket,
                     )
 
-                if i == 1:
+                if i == 2:
                     response = requests.post(
                         f"{self.base_url}/generate",
 
