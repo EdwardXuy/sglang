@@ -451,7 +451,7 @@ class TestAscendLogging(TestAscendLoggingNPUFullBase):
                 expected_prompt_tokens_bucket = my_tokens_bucket
                 expected_generation_tokens_bucket = my_tokens_bucket
             elif i == 2:
-                other_args.extend(["--generation-tokens-buckets"] + ["tse"] + my_tse_set)
+                other_args.extend(["--prompt-tokens-buckets"] + ["tse"] + my_tse_set)
                 other_args.extend(["--generation-tokens-buckets"] + ["tse"] + my_tse_set)
                 expected_prompt_tokens_bucket = my_tse_bucket
                 expected_generation_tokens_bucket = my_tse_bucket
