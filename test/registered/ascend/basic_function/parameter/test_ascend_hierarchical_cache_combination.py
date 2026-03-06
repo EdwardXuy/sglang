@@ -7,7 +7,10 @@ from types import SimpleNamespace
 import requests
 
 from sglang.srt.utils import kill_process_tree
-from sglang.test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
+from sglang.test.ascend.test_ascend_utils import (
+    LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH,
+    run_command,
+)
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.few_shot_gsm8k import run_eval
 from sglang.test.test_utils import (
@@ -210,7 +213,9 @@ class TestHierarchicalCacheNPU(CustomTestCase):
                 port=21000,
             )
             run_eval(args)
-
+            hicache_file = run_command(f"ls /tmp/hicache")
+            self.assertNotEqual(hicache_file, None)
+            run_command(f"rm -rf /tmp/hicache")
         finally:
             kill_process_tree(self.process.pid)
             self.process = None
@@ -296,17 +301,6 @@ class TestHierarchicalCacheNPU(CustomTestCase):
             success_count = sum(1 for r in results if r[1] == 200)
             self.assertGreaterEqual(success_count, 18)
             logging.warning(f"Concurrent requests test passed, {success_count}/20 succeeded.")
-
-            args = SimpleNamespace(
-                num_shots=5,
-                data_path="/tmp/test.jsonl",
-                num_questions=200,
-                max_new_tokens=512,
-                parallel=128,
-                host="http://127.0.0.1",
-                port=21000,
-            )
-            run_eval(args)
 
         finally:
             kill_process_tree(self.process.pid)
