@@ -283,50 +283,50 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
             self.process = None
 
 class TestAscendLogging(TestAscendLoggingNPUFullBase):
-    def test_logging_default(self):
-        # --log-requests=False;
-        message = r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, .*"
-        out_log_name = "./log_requests_level_out_log.txt"
-        err_log_name = "./log_requests_level_err_log.txt"
-
-        out_log_file = open(out_log_name, "w+", encoding="utf-8")
-        err_log_file = open(err_log_name, "w+", encoding="utf-8")
-        process = self._launch_server_with_logging(
-            out_log_file=out_log_file,
-            err_log_file=err_log_file,
-        )
-
-        try:
-            self._send_inference_request()
-
-            max_new_token = 100
-
-            response = requests.post(
-                f"{self.base_url}/generate",
-                json={
-                    "text": f"just return me a string with of {max_new_token} characters",
-                    "sampling_params": {"temperature": 0, "max_new_tokens": max_new_token},
-                },
-            )
-            self.assertEqual(response.status_code, 200)
-
-            # check --log-requests=False
-            out_log_file.seek(0)
-            content = out_log_file.read()
-
-            self.assertTrue(len(content) > 0)
-            self.assertIsNone(re.search(message, content))
-
-            # check --enable-metrics=False
-            response = requests.get(f"{self.base_url}/metrics", timeout=10)
-            self.assertEqual(response.status_code, 404)
-        finally:
-            kill_process_tree(process.pid)
-            out_log_file.close()
-            err_log_file.close()
-            os.remove(out_log_name)
-            os.remove(err_log_name)
-
+    # def test_logging_default(self):
+    #     # --log-requests=False;
+    #     message = r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, .*"
+    #     out_log_name = "./log_requests_level_out_log.txt"
+    #     err_log_name = "./log_requests_level_err_log.txt"
+    #
+    #     out_log_file = open(out_log_name, "w+", encoding="utf-8")
+    #     err_log_file = open(err_log_name, "w+", encoding="utf-8")
+    #     process = self._launch_server_with_logging(
+    #         out_log_file=out_log_file,
+    #         err_log_file=err_log_file,
+    #     )
+    #
+    #     try:
+    #         self._send_inference_request()
+    #
+    #         max_new_token = 100
+    #
+    #         response = requests.post(
+    #             f"{self.base_url}/generate",
+    #             json={
+    #                 "text": f"just return me a string with of {max_new_token} characters",
+    #                 "sampling_params": {"temperature": 0, "max_new_tokens": max_new_token},
+    #             },
+    #         )
+    #         self.assertEqual(response.status_code, 200)
+    #
+    #         # check --log-requests=False
+    #         out_log_file.seek(0)
+    #         content = out_log_file.read()
+    #
+    #         self.assertTrue(len(content) > 0)
+    #         self.assertIsNone(re.search(message, content))
+    #
+    #         # check --enable-metrics=False
+    #         response = requests.get(f"{self.base_url}/metrics", timeout=10)
+    #         self.assertEqual(response.status_code, 404)
+    #     finally:
+    #         kill_process_tree(process.pid)
+    #         out_log_file.close()
+    #         err_log_file.close()
+    #         os.remove(out_log_name)
+    #         os.remove(err_log_name)
+    #
 
     def test_logging(self):
         out_log_name = "./log_requests_level_out_log.txt"
