@@ -79,6 +79,9 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
     [Test Target] All Logging parameters on NPU
     """
 
+    # Note:
+    # During the test, a fixed-length string needs to be returned.
+    # The returned value of the same prompt may vary depending on the model
     model = MODEL_PATH
     base_url = DEFAULT_URL_FOR_TEST
     test_prompt = "What is the capital of France?"
@@ -283,50 +286,50 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
             self.process = None
 
 class TestAscendLogging(TestAscendLoggingNPUFullBase):
-    # def test_logging_default(self):
-    #     # --log-requests=False;
-    #     message = r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, .*"
-    #     out_log_name = "./log_requests_level_out_log.txt"
-    #     err_log_name = "./log_requests_level_err_log.txt"
-    #
-    #     out_log_file = open(out_log_name, "w+", encoding="utf-8")
-    #     err_log_file = open(err_log_name, "w+", encoding="utf-8")
-    #     process = self._launch_server_with_logging(
-    #         out_log_file=out_log_file,
-    #         err_log_file=err_log_file,
-    #     )
-    #
-    #     try:
-    #         self._send_inference_request()
-    #
-    #         max_new_token = 100
-    #
-    #         response = requests.post(
-    #             f"{self.base_url}/generate",
-    #             json={
-    #                 "text": f"just return me a string with of {max_new_token} characters",
-    #                 "sampling_params": {"temperature": 0, "max_new_tokens": max_new_token},
-    #             },
-    #         )
-    #         self.assertEqual(response.status_code, 200)
-    #
-    #         # check --log-requests=False
-    #         out_log_file.seek(0)
-    #         content = out_log_file.read()
-    #
-    #         self.assertTrue(len(content) > 0)
-    #         self.assertIsNone(re.search(message, content))
-    #
-    #         # check --enable-metrics=False
-    #         response = requests.get(f"{self.base_url}/metrics", timeout=10)
-    #         self.assertEqual(response.status_code, 404)
-    #     finally:
-    #         kill_process_tree(process.pid)
-    #         out_log_file.close()
-    #         err_log_file.close()
-    #         os.remove(out_log_name)
-    #         os.remove(err_log_name)
-    #
+    def test_logging_default(self):
+        # --log-requests=False;
+        message = r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, .*"
+        out_log_name = "./log_requests_level_out_log.txt"
+        err_log_name = "./log_requests_level_err_log.txt"
+
+        out_log_file = open(out_log_name, "w+", encoding="utf-8")
+        err_log_file = open(err_log_name, "w+", encoding="utf-8")
+        process = self._launch_server_with_logging(
+            out_log_file=out_log_file,
+            err_log_file=err_log_file,
+        )
+
+        try:
+            self._send_inference_request()
+
+            max_new_token = 100
+
+            response = requests.post(
+                f"{self.base_url}/generate",
+                json={
+                    "text": f"just return me a string with of {max_new_token} characters",
+                    "sampling_params": {"temperature": 0, "max_new_tokens": max_new_token},
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+
+            # check --log-requests=False
+            out_log_file.seek(0)
+            content = out_log_file.read()
+
+            self.assertTrue(len(content) > 0)
+            self.assertIsNone(re.search(message, content))
+
+            # check --enable-metrics=False
+            response = requests.get(f"{self.base_url}/metrics", timeout=10)
+            self.assertEqual(response.status_code, 404)
+        finally:
+            kill_process_tree(process.pid)
+            out_log_file.close()
+            err_log_file.close()
+            os.remove(out_log_name)
+            os.remove(err_log_name)
+
 
     def test_logging(self):
         out_log_name = "./log_requests_level_out_log.txt"
@@ -374,8 +377,7 @@ class TestAscendLogging(TestAscendLoggingNPUFullBase):
             "100.0", "200.0", "400.0", "600.0",
             "1200.0", "1800.0", "2400.0",
         ]
-        # for i in [0, 1, 2, 3]:
-        for i in [2, 3]:
+        for i in [0, 1, 2, 3]:
             other_args = [
                 "--trust-remote-code",
                 "--mem-fraction-static",
@@ -729,27 +731,27 @@ class TestAscendLoggingNPUMetric(TestAscendLoggingNPUFullBase):
 
 
 class TestAscendLoggingNPUMetricWip(TestAscendLoggingNPUFullBase):
-    # def test_08_enable_metrics_for_all_schedulers(self):
-    #     """Test enable-metrics-for-all-schedulers with TP2."""
-    #     print("\n=== Test 08: enable-metrics-for-all-schedulers (TP2) ===")
-    #
-    #     try:
-    #         self.process = self._launch_server_with_logging(
-    #             enable_metrics=True,
-    #             enable_metrics_for_all_schedulers=True,
-    #             tp_size=2,
-    #         )
-    #         # time.sleep(8)
-    #
-    #         result = self._send_inference_request()
-    #         # print(f"✓ enable-metrics-for-all-schedulers test passed, result: {result[:50]}...")
-    #
-    #         metrics_content = self._check_metrics_endpoint()
-    #         self.assertIn('tp_rank="0"', metrics_content)
-    #         self.assertIn('tp_rank="1"', metrics_content)
-    #     finally:
-    #         self._safe_kill_process()
-    #
+    def test_08_enable_metrics_for_all_schedulers(self):
+        """Test enable-metrics-for-all-schedulers with TP2."""
+        print("\n=== Test 08: enable-metrics-for-all-schedulers (TP2) ===")
+
+        try:
+            self.process = self._launch_server_with_logging(
+                enable_metrics=True,
+                enable_metrics_for_all_schedulers=True,
+                tp_size=2,
+            )
+            # time.sleep(8)
+
+            result = self._send_inference_request()
+            # print(f"✓ enable-metrics-for-all-schedulers test passed, result: {result[:50]}...")
+
+            metrics_content = self._check_metrics_endpoint()
+            self.assertIn('tp_rank="0"', metrics_content)
+            self.assertIn('tp_rank="1"', metrics_content)
+        finally:
+            self._safe_kill_process()
+
     def test_metrics_2(self):
         """Test enable-metrics-for-all-schedulers with TP2."""
         print("\n=== Test 02: test_metrics_2 ===")
