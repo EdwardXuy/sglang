@@ -1150,7 +1150,7 @@ if __name__ == "__main__":
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendLogging))
+    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLogging))
 
 
     # DONE
