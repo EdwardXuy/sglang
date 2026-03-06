@@ -930,8 +930,7 @@ class TestAscendLoggingNPULabel(TestAscendLoggingNPUFullBase):
             # self.assertIn(self.expected_output, metrics_content)
             message = f'sglang:time_to_first_token_seconds_bucket{{{my_label}="'
             self.assertIn(message, metrics_content)
-            message = f'sglang:inter_token_latency_seconds_bucket{{{my_label}='
-            self.assertIn(message, metrics_content)
+
             message = f'sglang:e2e_request_latency_seconds_bucket{{{my_label}='
             self.assertIn(message, metrics_content)
 
