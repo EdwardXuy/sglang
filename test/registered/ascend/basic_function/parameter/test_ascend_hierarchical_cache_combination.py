@@ -1,3 +1,4 @@
+import logging
 import unittest
 import time
 import threading
@@ -8,7 +9,7 @@ import requests
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
 from sglang.test.ci.ci_register import register_npu_ci
-from sglang.test.run_eval import run_eval
+from sglang.test.few_shot_gsm8k import run_eval
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
@@ -145,7 +146,7 @@ class TestHierarchicalCacheNPU(CustomTestCase):
 
     def test_001_combined_params(self):
         """Test Hicache with combined parameters."""
-        print("\n=== Test 001: Combined Parameters ===")
+        logging.info("\n=== Test 001: Combined Parameters ===")
         self.process = self._launch_server_with_hicache(
             hicache_ratio=1.0,
             hicache_write_policy="write_back",
@@ -183,7 +184,7 @@ class TestHierarchicalCacheNPU(CustomTestCase):
 
     def test_002_combined_params(self):
         """Test Hicache with combined parameters."""
-        print("\n=== Test 002: Combined Parameters ===")
+        logging.info("\n=== Test 002: Combined Parameters ===")
         self.process = self._launch_server_with_hicache(
             hicache_ratio=2.0,
             hicache_write_policy="write_through",
@@ -197,16 +198,16 @@ class TestHierarchicalCacheNPU(CustomTestCase):
         try:
             time.sleep(5)
             result = self._test_basic_inference()
-            print(f"√ Combined parameters test passed, result: {result[:50]}...")
+            logging.info(f"√ Combined parameters test passed, result: {result[:50]}...")
         finally:
             kill_process_tree(self.process.pid)
             self.process = None
 
     def test_003_combined_params(self):
         """Test Hicache with combined parameters."""
-        print("\n=== Test 003: Combined Parameters ===")
+        logging.info("\n=== Test 003: Combined Parameters ===")
         self.process = self._launch_server_with_hicache(
-            hicache_size=5,
+            hicache_size=80,
             hicache_write_policy="write_through_selective",
             hicache_io_backend="kernel_ascend",
             hicache_mem_layout="page_first_direct",
@@ -215,16 +216,16 @@ class TestHierarchicalCacheNPU(CustomTestCase):
         try:
             time.sleep(5)
             result = self._test_basic_inference()
-            print(f"√ Combined parameters test passed, result: {result[:50]}...")
+            logging.info(f"√ Combined parameters test passed, result: {result[:50]}...")
         finally:
             kill_process_tree(self.process.pid)
             self.process = None
 
     def test_004_combined_params(self):
         """Test Hicache with combined parameters."""
-        print("\n=== Test 004: Combined Parameters ===")
+        logging.info("\n=== Test 004: Combined Parameters ===")
         self.process = self._launch_server_with_hicache(
-            hicache_size=2,
+            hicache_size=100,
             hicache_write_policy="write_through",
             hicache_io_backend="direct",
             hicache_mem_layout="page_first_kv_split",
@@ -234,14 +235,14 @@ class TestHierarchicalCacheNPU(CustomTestCase):
         try:
             time.sleep(5)
             result = self._test_basic_inference()
-            print(f"√ Combined parameters test passed, result: {result[:50]}...")
+            logging.info(f"√ Combined parameters test passed, result: {result[:50]}...")
         finally:
             kill_process_tree(self.process.pid)
             self.process = None
 
     def test_005_long_sequence(self):
         """Test Hicache with long sequence."""
-        print("\n=== Test 005: Long sequence (2000 + tokens) ===")
+        logging.info("\n=== Test 005: Long sequence (2000 + tokens) ===")
         self.process = self._launch_server_with_hicache(
             hicache_ratio=2.0,
             hicache_write_policy="write_back",
@@ -266,14 +267,14 @@ class TestHierarchicalCacheNPU(CustomTestCase):
             )
             self.assertEqual(response.status_code, 200)
             self.assertGreater(len(response.text), 50)
-            print(f"√ Long sequence test passed, result length: {len(response.text)}")
+            logging.info(f"√ Long sequence test passed, result length: {len(response.text)}")
         finally:
             kill_process_tree(self.process.pid)
             self.process = None
 
     def test_006_concurrent_requests(self):
         """Test Hicache with concurrent requests."""
-        print("\n=== Test 006: Concurrent Requests (20) ===")
+        logging.info("\n=== Test 006: Concurrent Requests (20) ===")
         self.process = self._launch_server_with_hicache()
 
         try:
@@ -293,9 +294,7 @@ class TestHierarchicalCacheNPU(CustomTestCase):
                 host="http://127.0.0.1",
                 port=21000,
             )
-            metrics = run_eval(args)
-
-            print(f"*************metrics={metrics['accuracy']}")
+            run_eval(args)
 
         finally:
             kill_process_tree(self.process.pid)
