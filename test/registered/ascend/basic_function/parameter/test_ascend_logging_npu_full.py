@@ -91,7 +91,8 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
         enable_trace=False,
         otlp_traces_endpoint="localhost:4317",
         crash_dump_folder=None,
-        tp_size=1,
+        tp_size=None,
+        dp_size=None,
         uvicorn_access_log_exclude_prefixes=None,
         show_time_cost=None,
         tokenizer_metrics_custom_labels_header=None,
@@ -109,9 +110,13 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
             "--attention-backend",
             "ascend",
             "--disable-cuda-graph",
-            "--tp-size",
-            str(tp_size),
         ]
+
+        if tp_size:
+            other_args.extend(["--tp-size", str(tp_size)])
+
+        if dp_size:
+            other_args.extend(["--dp-size", str(dp_size)])
 
         if log_level is not None:
             other_args.extend(["--log-level", log_level])
@@ -487,6 +492,7 @@ class TestAscendLoggingNPUMetric(TestAscendLoggingNPUFullBase):
                 enable_metrics=True,
                 # enable_metrics_for_all_schedulers=True,
                 tp_size=2,
+                dp_size=2
             )
             # time.sleep(8)
 
@@ -515,6 +521,7 @@ class TestAscendLoggingNPUMetric(TestAscendLoggingNPUFullBase):
                 enable_metrics=True,
                 enable_metrics_for_all_schedulers=True,
                 tp_size=2,
+                dp_size=2,
                 bucket_time_to_first_token=[0.1, 0.5, 1.0, 2.0, 5.0],
                 bucket_inter_token_latency=[0.01, 0.05, 0.1, 0.5],
                 bucket_e2e_request_latency=[0.1, 0.5, 1.0, 2.0, 5.0],
