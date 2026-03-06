@@ -351,8 +351,9 @@ class TestAscendLogging(TestAscendLoggingNPUFullBase):
         keyword_end = "', 'output_ids'"
 
         # --enable-metrics
+        # 实际使用两次服务 i=[0, 1, 2]
         # --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
-        # 实际使用两次服务 i=0、1
+        # 实际使用两次服务 i=[0, 1]
         # --enable-metrics=True, i=0 使用默认桶边界, i=1 使用自定义桶边界
         my_bucket_list = ["0.1", "0.5", "1.0", "5.0", "10.0"]
         # --bucket-time-to-first-token
@@ -845,31 +846,94 @@ class TestAscendLoggingNPUCollectTokensHistogram(TestAscendLoggingNPUFullBase):
     def test_11_prompt_tokens_buckets_default(self):
         """Test prompt-tokens-buckets with default."""
         print("\n=== Test 11: prompt-tokens-buckets default ===")
+        default_tokens_bucket = [
+            "100.0", "300.0", "500.0", "700.0",
+            "1000.0", "1500.0", "2000.0", "3000.0", "4000.0", "5000.0", "6000.0", "7000.0", "8000.0", "9000.0",
+            "10000.0", "12000.0", "15000.0", "20000.0", "22000.0", "25000.0",
+            "30000.0", "35000.0", "40000.0", "66000.0", "99000.0",
+            "132000.0", "300000.0", "600000.0", "900000.0",
+            "1.1e+06",
+        ]
+        my_tokens_bucket_list = [
+            "100.0", "1000.0", "10000.0", "100000.0", "300000.0", "600000.0", "900000.0",
+        ]
+        # --prompt-tokens-buckets
+        default_prompt_tokens_bucket = default_tokens_bucket
+        # --generation-tokens-buckets
+        default_generation_tokens_bucket = default_tokens_bucket
 
-        prompt_tokens_bucket_list = [["default"], ["tse", "512", "2", "8"], ["custom", "100", "500", "1000", "5000"]]
+        prompt_tokens_bucket = "default"
         generation_tokens_buckets_list = [["custom", "100", "500", "1000", "5000"], ["tse", "512", "2", "8"],
                                           ["default"]]
 
-        for prompt_tokens_bucket, generation_tokens_buckets in zip(prompt_tokens_bucket_list,
-                                                                   generation_tokens_buckets_list):
+        other_args = [
+            "--trust-remote-code",
+            "--mem-fraction-static",
+            "0.8",
+            "--attention-backend",
+            "ascend",
+            "--disable-cuda-graph",
+        ]
+        other_args.extend(["--enable-metrics"])
+        other_args.extend(["--collect-tokens-histogram"])
 
-            try:
-                self.process = self._launch_server_with_logging(
-                    enable_metrics=True,
-                    collect_tokens_histogram=True,
-                    prompt_tokens_buckets=prompt_tokens_bucket,
-                    generation_tokens_buckets=generation_tokens_buckets,
-                )
-                time.sleep(5)
 
-                result = self._send_inference_request()
-                print(f"✓ prompt-tokens-buckets default test passed, result: {result[:50]}...")
+        try:
+            process = popen_launch_server(
+                self.model,
+                self.base_url,
+                timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+                other_args=other_args,
+                # return_stdout_stderr=(out_log_file, err_log_file),
+            )
+            time.sleep(5)
 
-                # metrics_content = self._check_metrics_endpoint()
-                # self.assertIn("sglang_prompt_tokens_bucket", metrics_content)
-            finally:
-                kill_process_tree(self.process.pid)
-                self.process = None
+            result = self._send_inference_request()
+            print(f"✓ prompt-tokens-buckets default test passed, result: {result[:50]}...")
+
+            response = requests.get(f"{self.base_url}/metrics", timeout=10)
+            self.assertEqual(response.status_code, 200)
+            metrics_content = response.text
+            for le in default_prompt_tokens_bucket:
+                message = f'sglang:prompt_tokens_histogram_bucket{{le="{le}",model_name="{MODEL_PATH}"}}'
+                self.assertIn(message, metrics_content)
+            for le in default_generation_tokens_bucket:
+                message = f'sglang:generation_tokens_histogram_buckets{{le="{le}",model_name="{MODEL_PATH}"}}'
+                self.assertIn(message, metrics_content)
+            return metrics_content
+
+            # metrics_content = self._check_metrics_endpoint()
+            # self.assertIn("sglang_prompt_tokens_bucket", metrics_content)
+        finally:
+            kill_process_tree(self.process.pid)
+            self.process = None
+
+
+
+        # prompt_tokens_bucket_list = [["default"], ["tse", "512", "2", "8"], ["custom", "100", "500", "1000", "5000"]]
+        # generation_tokens_buckets_list = [["custom", "100", "500", "1000", "5000"], ["tse", "512", "2", "8"],
+        #                                   ["default"]]
+        #
+        # for prompt_tokens_bucket, generation_tokens_buckets in zip(prompt_tokens_bucket_list,
+        #                                                            generation_tokens_buckets_list):
+        #
+        #     try:
+        #         self.process = self._launch_server_with_logging(
+        #             enable_metrics=True,
+        #             collect_tokens_histogram=True,
+        #             prompt_tokens_buckets=prompt_tokens_bucket,
+        #             generation_tokens_buckets=generation_tokens_buckets,
+        #         )
+        #         time.sleep(5)
+        #
+        #         result = self._send_inference_request()
+        #         print(f"✓ prompt-tokens-buckets default test passed, result: {result[:50]}...")
+        #
+        #         # metrics_content = self._check_metrics_endpoint()
+        #         # self.assertIn("sglang_prompt_tokens_bucket", metrics_content)
+        #     finally:
+        #         kill_process_tree(self.process.pid)
+        #         self.process = None
 
 
 class TestAscendLoggingNPUDecodeLogInterval(TestAscendLoggingNPUFullBase):
