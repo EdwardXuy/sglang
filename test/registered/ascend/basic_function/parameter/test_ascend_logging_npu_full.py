@@ -510,9 +510,9 @@ class TestAscendLoggingNPUMetric(TestAscendLoggingNPUFullBase):
                 tp_size=2,
                 enable_dp_attention=True,
                 dp_size=2,
-                # bucket_time_to_first_token=[0.1, 0.5, 1.0, 2.0, 5.0],
-                # bucket_inter_token_latency=[0.01, 0.05, 0.1, 0.5],
-                # bucket_e2e_request_latency=[0.1, 0.5, 1.0, 2.0, 5.0],
+                bucket_time_to_first_token=[0.1, 0.5, 1.0, 2.0, 5.0],
+                bucket_inter_token_latency=[0.01, 0.05, 0.1, 0.5],
+                bucket_e2e_request_latency=[0.1, 0.5, 1.0, 2.0, 5.0],
             )
             # time.sleep(8)
 
