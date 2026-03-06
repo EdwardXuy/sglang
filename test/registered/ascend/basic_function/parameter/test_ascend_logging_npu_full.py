@@ -35,6 +35,8 @@ register_npu_ci(est_time=7200, suite="stage-b-test-npu")
 # --log-level、 --log-level-http
 # 已有用例覆盖基本功能
 
+
+
 # 求助开发，李果
 # --log-requests-target TODO 多级路径
 
@@ -43,6 +45,30 @@ register_npu_ci(est_time=7200, suite="stage-b-test-npu")
 # sglang/test/registered/utils/test_request_logger.py
 # --log-requests-format（测试参数取值json，TestAscendLoggingNPULevel 覆盖默认值text）
 
+# 开发定位中
+# TestAscendLoggingNPUMetric
+# --enable-metrics、--enable-metrics-for-all-schedulers TODO 基础、详细监控指标
+# --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
+# 请求到达到首个token生成-响应时间；token输出间隔-生成速度稳定性；请求到达到完整返回时间-整体服务性能
+
+# TestAscendLoggingNPUCollectTokensHistogram TODO 观测点
+# --collect-tokens-histogram、--prompt-tokens-buckets、--generation-tokens-buckets
+# TestAscendLoggingNPUDecodeLogInterval
+# --decode-log-interval TODO 观测点
+# TestAscendLoggingNPUGCWarningThresholdSecs
+# --gc-warning-threshold-secs
+# TestAscendLoggingNPUEnableRequestTimeStatsLogging
+# --enable-request-time-stats-logging
+# TestAscendLoggingNPUEnableTrace
+# --enable-trace、 --otlp-traces-endpoint
+
+# TODO --uvicorn-access-log-exclude-prefixes 排除以这些前缀开头的uvicorn访问日志
+# TestAscendLoggingNPUCrashDumpFolder TODO  注入错误
+# --crash-dump-folder 崩溃转储路径
+# TODO --show-time-cost 打印阶段耗时
+# TODO --tokenizer-metrics-custom-labels-header、--tokenizer-metrics-allowed-custom-labels
+# 指定用于传递自定义标签以获取分词器指标的HTTP头， 允许用于分词器指标的自定义标签
+# TODO --kv-events-config
 
 class TestAscendLoggingNPUFullBase(CustomTestCase):
     """Comprehensive test for all Logging parameters on NPU environment.
@@ -242,32 +268,7 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
             self.process = None
 
 
-# TestAscendLoggingNPUMetric
-# --enable-metrics、--enable-metrics-for-all-schedulers TODO 基础、详细监控指标
-# --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
 
-
-# TestAscendLoggingNPUBucket TODO 观测点
-# --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
-# 请求到达到首个token生成-响应时间；token输出间隔-生成速度稳定性；请求到达到完整返回时间-整体服务性能
-# TestAscendLoggingNPUCollectTokensHistogram TODO 观测点
-# --collect-tokens-histogram、--prompt-tokens-buckets、--generation-tokens-buckets
-# TestAscendLoggingNPUDecodeLogInterval
-# --decode-log-interval TODO 观测点
-# TestAscendLoggingNPUGCWarningThresholdSecs
-# --gc-warning-threshold-secs
-# TestAscendLoggingNPUEnableRequestTimeStatsLogging
-# --enable-request-time-stats-logging
-# TestAscendLoggingNPUEnableTrace
-# --enable-trace、 --otlp-traces-endpoint
-
-# TODO --uvicorn-access-log-exclude-prefixes 排除以这些前缀开头的uvicorn访问日志
-# TestAscendLoggingNPUCrashDumpFolder TODO  注入错误
-# --crash-dump-folder 崩溃转储路径
-# TODO --show-time-cost 打印阶段耗时
-# TODO --tokenizer-metrics-custom-labels-header、--tokenizer-metrics-allowed-custom-labels
-# 指定用于传递自定义标签以获取分词器指标的HTTP头， 允许用于分词器指标的自定义标签
-# TODO --kv-events-config
 
 # TODO 验证方式、删减
 class TestAscendLoggingNPULevel(TestAscendLoggingNPUFullBase):
@@ -522,9 +523,9 @@ class TestAscendLoggingNPUMetric(TestAscendLoggingNPUFullBase):
                 enable_metrics_for_all_schedulers=True,
                 tp_size=2,
                 dp_size=2,
-                bucket_time_to_first_token=[0.1, 0.5, 1.0, 2.0, 5.0],
-                bucket_inter_token_latency=[0.01, 0.05, 0.1, 0.5],
-                bucket_e2e_request_latency=[0.1, 0.5, 1.0, 2.0, 5.0],
+                # bucket_time_to_first_token=[0.1, 0.5, 1.0, 2.0, 5.0],
+                # bucket_inter_token_latency=[0.01, 0.05, 0.1, 0.5],
+                # bucket_e2e_request_latency=[0.1, 0.5, 1.0, 2.0, 5.0],
             )
             # time.sleep(8)
 
