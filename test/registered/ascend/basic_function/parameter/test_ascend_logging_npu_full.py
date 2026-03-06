@@ -877,6 +877,9 @@ class TestAscendLoggingNPUCollectTokensHistogram(TestAscendLoggingNPUFullBase):
         other_args.extend(["--enable-metrics"])
         other_args.extend(["--collect-tokens-histogram"])
 
+        expected_prompt_tokens_bucket = default_prompt_tokens_bucket
+        expected_generation_tokens_bucket = default_generation_tokens_bucket
+
         self.process = popen_launch_server(
             self.model,
             self.base_url,
@@ -884,6 +887,8 @@ class TestAscendLoggingNPUCollectTokensHistogram(TestAscendLoggingNPUFullBase):
             other_args=other_args,
             # return_stdout_stderr=(out_log_file, err_log_file),
         )
+
+
 
 
         try:
@@ -895,10 +900,10 @@ class TestAscendLoggingNPUCollectTokensHistogram(TestAscendLoggingNPUFullBase):
             response = requests.get(f"{self.base_url}/metrics", timeout=10)
             self.assertEqual(response.status_code, 200)
             metrics_content = response.text
-            for le in default_prompt_tokens_bucket:
+            for le in expected_prompt_tokens_bucket:
                 message = f'sglang:prompt_tokens_histogram_bucket{{le="{le}",model_name="{MODEL_PATH}"}}'
                 self.assertIn(message, metrics_content)
-            for le in default_generation_tokens_bucket:
+            for le in expected_generation_tokens_bucket:
                 message = f'sglang:generation_tokens_histogram_bucket{{le="{le}",model_name="{MODEL_PATH}"}}'
                 self.assertIn(message, metrics_content)
 
