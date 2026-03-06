@@ -876,7 +876,6 @@ class TestAscendLoggingNPUCollectTokensHistogram(TestAscendLoggingNPUFullBase):
         ]
         other_args.extend(["--enable-metrics"])
         other_args.extend(["--collect-tokens-histogram"])
-        other_args.extend(["--collect-tokens-histogram"])
         other_args.extend(["--prompt-tokens-buckets"] + ["custom", "100", "500", "1000", "5000"])
         other_args.extend(["--generation-tokens-buckets"] + ["tse", "500", "100", "4"])
 
