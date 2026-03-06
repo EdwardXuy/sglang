@@ -350,7 +350,7 @@ class TestAscendLogging(TestAscendLoggingNPUFullBase):
 
         # --enable-metrics
         # --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
-        # 实际使用两次服务
+        # 实际使用两次服务 i=0、1
         # --enable-metrics=True, i=0 使用默认桶边界, i=1 使用自定义桶边界
         my_bucket_list = ["0.1", "0.5", "1.0", "5.0", "10.0"]
         # --bucket-time-to-first-token
