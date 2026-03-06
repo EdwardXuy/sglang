@@ -876,9 +876,13 @@ class TestAscendLoggingNPUCollectTokensHistogram(TestAscendLoggingNPUFullBase):
         ]
         other_args.extend(["--enable-metrics"])
         other_args.extend(["--collect-tokens-histogram"])
+        other_args.extend(["--prompt-tokens-buckets"] + ["custom", "100", "500", "1000", "5000"])
+        other_args.extend(["--collect-tokens-histogram"] + ["tse", "500", "100", "4"])
 
-        expected_prompt_tokens_bucket = default_prompt_tokens_bucket
-        expected_generation_tokens_bucket = default_generation_tokens_bucket
+        # expected_prompt_tokens_bucket = default_prompt_tokens_bucket
+        # expected_generation_tokens_bucket = default_generation_tokens_bucket
+        expected_prompt_tokens_bucket = ["100", "500", "1000", "5000"]
+        expected_generation_tokens_bucket = ["100", "200", "300", "400", "500", "600", "700", "800", "900"]
 
         self.process = popen_launch_server(
             self.model,
