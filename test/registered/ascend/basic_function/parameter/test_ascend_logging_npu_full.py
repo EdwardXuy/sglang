@@ -13,7 +13,6 @@ from time import sleep
 
 import requests
 
-from docs.advanced_features.separate_reasoning import messages
 # from docs.advanced_features.structured_outputs_for_reasoning_models import messages
 from sglang.srt.utils import kill_process_tree
 
@@ -445,7 +444,8 @@ class TestAscendLogging(TestAscendLoggingNPUFullBase):
                         self.assertTrue(out_text_length > 2048)
 
 
-                # test metrics
+                # test --enable-metrics
+                # --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
                 if i == 0:
                     self._check_metrics_endpoint(
                         default_bucket_time_to_first_token_list,
