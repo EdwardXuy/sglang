@@ -20,7 +20,8 @@ class TestAscendQwenEagle3(TestDisaggregationBase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.model = QWEN3_32B_WEIGHTS_PATH
+        # cls.model = QWEN3_32B_WEIGHTS_PATH
+        cls.model = "/root/.cache/modelscope/hub/models/Qwen/Qwen3-8B"
         cls.base_url = DEFAULT_URL_FOR_TEST
         cls.url = urlparse(DEFAULT_URL_FOR_TEST)
         os.environ["ASCEND_MF_STORE_URL"] = "tcp://127.0.0.1:24666"
@@ -60,6 +61,7 @@ class TestAscendQwenEagle3(TestDisaggregationBase):
             "--max-prefill-tokens", 32768,
             "--speculative-algorithm", "EAGLE3",
             "--speculative-draft-model-path", "/root/.cache/modelscope/hub/models/Qwen/Qwen3-32B-Eagle3",
+            "--speculative-draft-model-path", "/root/.cache/modelscope/hub/models/Qwen/Qwen3-8B_eagle3",
             "--speculative-num-steps", 3,
             "--speculative-eagle-topk", 1,
             "--speculative-num-draft-tokens", 4,
@@ -119,6 +121,7 @@ class TestAscendQwenEagle3(TestDisaggregationBase):
             "--speculative-draft-model-quantization", "unquant",
             "--speculative-algorithm", "EAGLE3",
             "--speculative-draft-model-path", "/root/.cache/modelscope/hub/models/Qwen/Qwen3-32B-Eagle3",
+            "--speculative-draft-model-path", "/root/.cache/modelscope/hub/models/Qwen/Qwen3-8B_eagle3",
             "--speculative-num-steps", 3,
             "--speculative-eagle-topk", 1,
             "--speculative-num-draft-tokens", 4,
