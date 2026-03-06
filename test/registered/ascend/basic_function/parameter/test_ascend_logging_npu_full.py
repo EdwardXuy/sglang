@@ -877,16 +877,17 @@ class TestAscendLoggingNPUCollectTokensHistogram(TestAscendLoggingNPUFullBase):
         other_args.extend(["--enable-metrics"])
         other_args.extend(["--collect-tokens-histogram"])
 
+        self.process = popen_launch_server(
+            self.model,
+            self.base_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=other_args,
+            # return_stdout_stderr=(out_log_file, err_log_file),
+        )
+
 
         try:
-            process = popen_launch_server(
-                self.model,
-                self.base_url,
-                timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-                other_args=other_args,
-                # return_stdout_stderr=(out_log_file, err_log_file),
-            )
-            time.sleep(5)
+
 
             result = self._send_inference_request()
             print(f"✓ prompt-tokens-buckets default test passed, result: {result[:50]}...")
@@ -904,7 +905,7 @@ class TestAscendLoggingNPUCollectTokensHistogram(TestAscendLoggingNPUFullBase):
             # metrics_content = self._check_metrics_endpoint()
             # self.assertIn("sglang_prompt_tokens_bucket", metrics_content)
         finally:
-            kill_process_tree(process.pid)
+            kill_process_tree(self.process.pid)
             self.process = None
 
 
