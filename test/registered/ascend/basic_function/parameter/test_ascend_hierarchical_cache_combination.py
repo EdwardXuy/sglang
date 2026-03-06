@@ -206,7 +206,7 @@ class TestHierarchicalCacheNPU(CustomTestCase):
         """Test Hicache with combined parameters."""
         print("\n=== Test 003: Combined Parameters ===")
         self.process = self._launch_server_with_hicache(
-            hicache_size=1,
+            hicache_size=5,
             hicache_write_policy="write_through_selective",
             hicache_io_backend="kernel_ascend",
             hicache_mem_layout="page_first_direct",
@@ -227,7 +227,7 @@ class TestHierarchicalCacheNPU(CustomTestCase):
             hicache_size=2,
             hicache_write_policy="write_through",
             hicache_io_backend="direct",
-            hicache_mem_layout="page_first_kv_direct",
+            hicache_mem_layout="page_first_kv_split",
             disable_hicache_numa_detect=True,
         )
 
