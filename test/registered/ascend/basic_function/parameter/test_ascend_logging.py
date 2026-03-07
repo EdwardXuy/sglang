@@ -469,7 +469,7 @@ class TestAscendLoggingCase1(TestAscendLoggingNPUFullBase):
         cls.other_args.extend(["--log-requests-level", str(cls.log_requests_level)])
 
         cls.log_exclude_prefixes = ["/health"]
-        cls.other_args.extend(["--uvicorn-access-log-exclude-prefixes", str(cls.log_exclude_prefixes)])
+        cls.other_args.extend(["--uvicorn-access-log-exclude-prefixes"] + cls.log_exclude_prefixes)
 
         cls.other_args.extend(["--enable-metrics"])
         cls.other_args.extend(["--tp-size", 2])
