@@ -1,24 +1,18 @@
 import os
-import io
-import json
 import re
 import tempfile
 import threading
 import time
 import unittest
-import subprocess
-import signal
 from pathlib import Path
 from time import sleep
 
 import requests
 
-# from docs.advanced_features.structured_outputs_for_reasoning_models import messages
 from sglang.srt.utils import kill_process_tree
 
 # from sglang.test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH as MODEL_PATH
 MODEL_PATH = "/home/weights/Llama-3.2-1B-Instruct"
-# MODEL_PATH = "/home/weights/Qwen3-0.6B"
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -30,56 +24,12 @@ from sglang.test.test_utils import (
 register_npu_ci(est_time=7200, suite="stage-b-test-npu")
 
 
-# Done
-# TestAscendLoggingNPURequests
-# --log-requests、--log-requests-level
-
-# 求助开发，验证是否充分
-# --log-level、 --log-level-http
-# 已有用例覆盖基本功能
-
-
-# 求助开发，李果
-# --log-requests-target TODO 多级路径
-
-
-# 社区用例
-# sglang/test/registered/utils/test_request_logger.py
-# --log-requests-format（测试参数取值json，TestAscendLoggingNPULevel 覆盖默认值text）
-
-# 开发定位中
-# TestAscendLoggingNPUMetric
-# --enable-metrics、--enable-metrics-for-all-schedulers TODO 基础、详细监控指标
-# --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
-# 请求到达到首个token生成-响应时间；token输出间隔-生成速度稳定性；请求到达到完整返回时间-整体服务性能
-# --decode-log-interval TODO 观测点
-
-# TestAscendLoggingNPUCollectTokensHistogram TODO 观测点
-# --collect-tokens-histogram、--prompt-tokens-buckets、--generation-tokens-buckets
-# TestAscendLoggingNPUDecodeLogInterval
-
-# TestAscendLoggingNPUGCWarningThresholdSecs
-# --gc-warning-threshold-secs
-# TestAscendLoggingNPUEnableRequestTimeStatsLogging
-# --enable-request-time-stats-logging
-# TestAscendLoggingNPUEnableTrace
-# --enable-trace、 --otlp-traces-endpoint
-
-# TODO --uvicorn-access-log-exclude-prefixes 排除以这些前缀开头的uvicorn访问日志
-# TestAscendLoggingNPUCrashDumpFolder TODO  注入错误
-# --crash-dump-folder 崩溃转储路径
-# TODO --show-time-cost 打印阶段耗时
-# TODO --tokenizer-metrics-custom-labels-header、--tokenizer-metrics-allowed-custom-labels
-# 指定用于传递自定义标签以获取分词器指标的HTTP头， 允许用于分词器指标的自定义标签
-# TODO --kv-events-config
-
 class TestAscendLoggingNPUFullBase(CustomTestCase):
     """Comprehensive test for all Logging parameters on NPU environment.
 
     [Test Category] Functional
     [Test Target] All Logging parameters on NPU
     """
-
 
     @classmethod
     def setUpClass(cls):
@@ -96,7 +46,6 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
 
         # cls._temp_dir_obj = None
         # cls.temp_dir = None
-
 
     @classmethod
     def tearDownClass(cls):
@@ -722,7 +671,14 @@ class TestAscendLoggingNPURequestsTarget(TestAscendLoggingNPUFullBase):
         self._temp_dir_obj = tempfile.TemporaryDirectory()
         self.temp_dir = self._temp_dir_obj.name
 
-        target_config = ["stdout", self.temp_dir]
+        # self.temp_multi_level_dir = self.temp_dir / "level1" / "level2" / "level3"
+        self.temp_level1_dir = os.path.join(self.temp_dir, "level1")
+        self.temp_level2_dir = os.path.join(self.temp_dir, "level2")
+        self.temp_level3_dir = os.path.join(self.temp_dir, "level3")
+
+        os.makedirs(self.temp_level3_dir, exist_ok=True)
+
+        target_config = ["stdout", self.temp_dir, self.temp_level3_dir]
         try:
             self.process = self._launch_server_with_logging(
                 log_requests=True,
@@ -741,8 +697,16 @@ class TestAscendLoggingNPURequestsTarget(TestAscendLoggingNPUFullBase):
             file_content = log_files[0].read_text()
             self.assertIn("Receive:", file_content)
             self.assertIn("Finish:", file_content)
+
+            log_files = list(Path(self.temp_level3_dir).glob("*.log"))
+            self.assertGreater(len(log_files), 0)
+
+            file_content = log_files[0].read_text()
+            self.assertIn("Receive:", file_content)
+            self.assertIn("Finish:", file_content)
         finally:
             self._safe_kill_process()
+            self._temp_dir_obj.cleanup()
 
         # for target_config in [["stdout"], [self.temp_dir], ["stdout", self.temp_dir]]:
         #     self._temp_dir_obj = tempfile.TemporaryDirectory()
