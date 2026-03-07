@@ -1152,6 +1152,7 @@ class TestAscendLoggingNPUGCWarningThresholdSecs(TestAscendLoggingNPUFullBase):
 
         # --log-requests、--log-requests-level
         other_args.append("--log-requests")
+        other_args.extend(["--log-requests-level", "3"])
 
 
         # --enable-metrics
@@ -1189,7 +1190,7 @@ class TestAscendLoggingNPUGCWarningThresholdSecs(TestAscendLoggingNPUFullBase):
             for t in threads:
                 t.join()
 
-            sleep(600)
+            # sleep(600)
 
             GC_info = "LONG GARBAGE COLLECTION DETECTED"
             out_log_file.seek(0)
@@ -1200,8 +1201,8 @@ class TestAscendLoggingNPUGCWarningThresholdSecs(TestAscendLoggingNPUFullBase):
             kill_process_tree(self.process.pid)
             out_log_file.close()
             err_log_file.close()
-            os.remove(self.out_log_name)
-            os.remove(self.err_log_name)
+            # os.remove(self.out_log_name)
+            # os.remove(self.err_log_name)
 
 
 
