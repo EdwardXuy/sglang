@@ -278,6 +278,33 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
                 self.assertIn(message, metrics_content)
         return metrics_content
 
+    def _test_enable_metrics_for_all_scheduler(self, if_enable):
+        response = requests.get(f"{self.base_url}/metrics", timeout=10)
+        message_0 = (f'sglang:num_decode_transfer_queue_reqs{{engine_type="unified",model_name="{self.model}"'
+                     f',moe_ep_rank="0",pp_rank="0",tp_rank="0"}}')
+        message_1 = (f'sglang:num_decode_transfer_queue_reqs{{engine_type="unified",model_name="{self.model}"'
+                     f',moe_ep_rank="0",pp_rank="0",tp_rank="1"}}')
+        self.assertIn(message_0, response.text)
+        if if_enable:
+            self.assertIn(message_1, response.text)
+        else:
+            self.assertNotIn(message_1, response.text)
+
+    def _test_log_requests_target(self):
+        log_files = list(Path(self.temp_dir).glob("*.log"))
+        self.assertGreater(len(log_files), 0)
+
+        file_content = log_files[0].read_text()
+        self.assertIn("Receive:", file_content)
+        self.assertIn("Finish:", file_content)
+
+        log_files = list(Path(self.temp_level3_dir).glob("*.log"))
+        self.assertGreater(len(log_files), 0)
+
+        file_content = log_files[0].read_text()
+        self.assertIn("Receive:", file_content)
+        self.assertIn("Finish:", file_content)
+
     def _test_gc_warning_threshold(self, err_log_file):
         prompt_template = "just return me a string with of 10000 characters: " + "A" * 5000
         max_token = 1000
@@ -355,6 +382,7 @@ class TestAscendLoggingCase0(TestAscendLoggingNPUFullBase):
         cls.other_args.extend(["--log-requests-level", str(cls.log_requests_level)])
 
         cls.other_args.extend(["--enable-metrics"])
+        cls.other_args.extend(["--tp-size", 2])
 
         cls.expected_time_to_first_token_bucket = cls.default_time_to_first_token_bucket
         cls.expected_inter_token_latency_bucket = cls.default_inter_token_latency_bucket
@@ -387,27 +415,14 @@ class TestAscendLoggingCase0(TestAscendLoggingNPUFullBase):
             return_stdout_stderr=(cls.out_log_file, cls.err_log_file),
         )
 
-    def _test_log_requests_target(self):
-        log_files = list(Path(self.temp_dir).glob("*.log"))
-        self.assertGreater(len(log_files), 0)
 
-        file_content = log_files[0].read_text()
-        self.assertIn("Receive:", file_content)
-        self.assertIn("Finish:", file_content)
-
-        log_files = list(Path(self.temp_level3_dir).glob("*.log"))
-        self.assertGreater(len(log_files), 0)
-
-        file_content = log_files[0].read_text()
-        self.assertIn("Receive:", file_content)
-        self.assertIn("Finish:", file_content)
-
-        self._test_gc_warning_threshold(self.err_log_file)
 
     def test_logging_case_0(self):
         self._test_inference_function()
 
         self._test_log_requests_level(self.log_requests_level, self.out_log_file)
+
+        self._test_enable_metrics_for_all_scheduler(False)
 
         self._test_metrics(
             expected_time_to_first_token_bucket=self.expected_time_to_first_token_bucket,
@@ -438,6 +453,8 @@ class TestAscendLoggingCase1(TestAscendLoggingNPUFullBase):
         other_args.extend(["--log-requests-level", str(log_requests_level)])
 
         other_args.extend(["--enable-metrics"])
+        # cls.other_args.extend(["--enable-metrics--for-all-scheduler"])
+
 
         other_args.extend(["--bucket-time-to-first-token"] + self.my_bucket)
         other_args.extend(["--bucket-inter-token-latency"] + self.my_bucket)
