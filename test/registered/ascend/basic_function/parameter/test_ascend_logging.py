@@ -20,14 +20,14 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
-register_npu_ci(est_time=7200, suite="stage-b-test-npu")
+register_npu_ci(est_time=500, suite="nightly-16-npu-a3", nightly=True)
 
 
 class TestAscendLoggingNPUFullBase(CustomTestCase):
-    """Comprehensive test for all Logging parameters on NPU environment.
+    """Testcase：Verify the correct functionality of parameters in the logging feature.
 
-    [Test Category] Functional
-    [Test Target] All Logging parameters on NPU
+    [Test Category] Parameter
+    [Test Target] --log-requests
     """
 
     @classmethod
@@ -468,12 +468,6 @@ class TestAscendLoggingCase1(TestAscendLoggingNPUFullBase):
             expected_prompt_tokens_bucket=self.expected_prompt_tokens_bucket,
             expected_generation_tokens_bucket=self.expected_generation_tokens_bucket,
         )
-
-    @classmethod
-    def tearDownClass(cls):
-        sleep(200)
-        super().tearDownClass()
-        # cls._temp_dir_obj.cleanup()
 
 
 class TestAscendLoggingCase2(TestAscendLoggingNPUFullBase):
