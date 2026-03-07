@@ -1079,8 +1079,8 @@ class TestAscendLoggingNPUGCWarningThresholdSecs(TestAscendLoggingNPUFullBase):
         """Test gc-warning-threshold-secs."""
         print("\n=== Test 18: gc-warning-threshold-secs ===")
 
-        prompt_template = "just return me a string with of 1000 characters: " + "A" * 5000
-        max_token = 100
+        prompt_template = "just return me a string with of 10000 characters: " + "A" * 5000
+        max_token = 1000
 
 
         def send_request():
