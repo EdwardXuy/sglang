@@ -451,7 +451,7 @@ class TestAscendLoggingCase1(TestAscendLoggingNPUFullBase):
 
         cls.other_args.extend(["--enable-metrics"])
         cls.other_args.extend(["--tp-size", 2])
-        cls.other_args.extend(["--enable-metrics--for-all-scheduler"])
+        cls.other_args.extend(["--enable-metrics-for-all-scheduler"])
 
         cls.other_args.extend(["--bucket-time-to-first-token"] + cls.my_bucket)
         cls.other_args.extend(["--bucket-inter-token-latency"] + cls.my_bucket)
@@ -493,6 +493,40 @@ class TestAscendLoggingCase1(TestAscendLoggingNPUFullBase):
 
 
 class TestAscendLoggingCase2(TestAscendLoggingNPUFullBase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.other_args.append("--log-requests")
+        cls.log_requests_level = 1
+        cls.other_args.extend(["--log-requests-level", str(cls.log_requests_level)])
+
+        cls.other_args.extend(["--enable-metrics"])
+        cls.other_args.extend(["--tp-size", 2])
+        cls.other_args.extend(["--enable-metrics-for-all-scheduler"])
+
+        cls.other_args.extend(["--bucket-time-to-first-token"] + cls.my_bucket)
+        cls.other_args.extend(["--bucket-inter-token-latency"] + cls.my_bucket)
+        cls.other_args.extend(["--bucket-e2e-request-latency"] + cls.my_bucket)
+        cls.expected_time_to_first_token_bucket = cls.my_bucket
+        cls.expected_inter_token_latency_bucket = cls.my_bucket
+        cls.expected_e2e_request_latency_bucket = cls.my_bucket
+
+        cls.other_args.extend(["--collect-tokens-histogram"])
+
+        cls.other_args.extend(["--prompt-tokens-buckets"] + ["custom"] + cls.my_tokens_bucket)
+        cls.other_args.extend(["--generation-tokens-buckets"] + ["custom"] + cls.my_tokens_bucket)
+        cls.expected_prompt_tokens_bucket = cls.my_tokens_bucket
+        cls.expected_generation_tokens_bucket = cls.my_tokens_bucket
+
+        cls.process = popen_launch_server(
+            cls.model,
+            cls.base_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=cls.other_args,
+            return_stdout_stderr=(cls.out_log_file, cls.err_log_file),
+        )
+
     def test_logging_case_2(self):
         other_args = self._get_default_other_args()
         out_log_file = open(self.out_log_name, "w+", encoding="utf-8")
