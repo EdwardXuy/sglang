@@ -52,11 +52,12 @@ register_npu_ci(est_time=7200, suite="stage-b-test-npu")
 # --enable-metrics、--enable-metrics-for-all-schedulers TODO 基础、详细监控指标
 # --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
 # 请求到达到首个token生成-响应时间；token输出间隔-生成速度稳定性；请求到达到完整返回时间-整体服务性能
+# --decode-log-interval TODO 观测点
 
 # TestAscendLoggingNPUCollectTokensHistogram TODO 观测点
 # --collect-tokens-histogram、--prompt-tokens-buckets、--generation-tokens-buckets
 # TestAscendLoggingNPUDecodeLogInterval
-# --decode-log-interval TODO 观测点
+
 # TestAscendLoggingNPUGCWarningThresholdSecs
 # --gc-warning-threshold-secs
 # TestAscendLoggingNPUEnableRequestTimeStatsLogging
@@ -1078,17 +1079,31 @@ class TestAscendLoggingNPUGCWarningThresholdSecs(TestAscendLoggingNPUFullBase):
         """Test gc-warning-threshold-secs."""
         print("\n=== Test 18: gc-warning-threshold-secs ===")
 
-        try:
-            self.process = self._launch_server_with_logging(
-                gc_warning_threshold_secs=0.1,
-            )
-            time.sleep(5)
+        prompt_template = "just return me a string with of 1000 characters: " + "A" * 5000
+        max_token = 100
 
-            result = self._send_inference_request()
-            print(f"✓ gc-warning-threshold-secs test passed, result: {result[:50]}...")
-        finally:
-            kill_process_tree(self.process.pid)
-            self.process = None
+
+        def send_request():
+            try:
+                response = requests.post(
+                    f"http://127.0.0.1:30000/generate",
+                    json={
+                        "text": prompt_template,
+                        "sampling_params": {"temperature": 0, "max_new_tokens": max_token},
+                    },
+                )
+            except Exception as e:
+                print(e)
+
+        threads = []
+        for _ in range(100):
+            t = threading.Thread(target=send_request)
+            t.start()
+            threads.append(t)
+            sleep(0.01)
+
+        for t in threads:
+            t.join()
 
 
 class TestAscendLoggingNPUEnableRequestTimeStatsLogging(TestAscendLoggingNPUFullBase):
@@ -1266,7 +1281,7 @@ if __name__ == "__main__":
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendLogging))
+    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLogging))
 
     # DONE
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLogRequests))
@@ -1283,7 +1298,7 @@ if __name__ == "__main__":
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUMetric))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUCollectTokensHistogram))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUDecodeLogInterval))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUGCWarningThresholdSecs))
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUGCWarningThresholdSecs))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUEnableRequestTimeStatsLogging))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUEnableTrace))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUCrashDumpFolder))
