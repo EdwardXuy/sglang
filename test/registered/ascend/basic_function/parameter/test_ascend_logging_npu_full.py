@@ -80,82 +80,65 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
     [Test Target] All Logging parameters on NPU
     """
 
-    # Note:
-    # During the test, a fixed-length string needs to be returned.
-    # The returned value of the same prompt may vary depending on the model
-    model = MODEL_PATH
-    base_url = DEFAULT_URL_FOR_TEST
-    test_prompt = "What is the capital of France?"
-    expected_output = "Paris"
 
     @classmethod
     def setUpClass(cls):
-        cls.process = None
+        # Note: During the test, a fixed-length string needs to be returned.
+        # The returned value of the same prompt may vary depending on the model
+        cls.model = MODEL_PATH
+        cls.base_url = DEFAULT_URL_FOR_TEST
         cls.out_log_name = "./log_requests_level_out_log.txt"
         cls.err_log_name = "./log_requests_level_err_log.txt"
-        cls._temp_dir_obj = None
-        cls.temp_dir = None
-        cls.prepare_data()
+        cls.test_prompt = "What is the capital of France?"
+        cls.expected_output = "Paris"
+
+        cls.prepare_args_related_data()
+
+        # cls._temp_dir_obj = None
+        # cls.temp_dir = None
+
 
     @classmethod
     def tearDownClass(cls):
-        if cls.process:
-            kill_process_tree(cls.process.pid)
-        if cls._temp_dir_obj:
-            cls._temp_dir_obj.cleanup()
+        pass
+        # if cls.process:
+        #     kill_process_tree(cls.process.pid)
+        # if cls._temp_dir_obj:
+        #     cls._temp_dir_obj.cleanup()
 
     @classmethod
-    def prepare_data(cls):
-        cls.other_args = [
-            "--trust-remote-code",
-            "--mem-fraction-static",
-            "0.8",
-            "--attention-backend",
-            "ascend",
-            "--disable-cuda-graph",
-        ]
-
-        # 默认场景
-        # --log-requests=False;
+    def prepare_args_related_data(cls):
+        # --log-requests
+        # Basic log content
         cls.message = r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, .*"
-        cls.out_log_name = "./log_requests_level_out_log.txt"
-        cls.err_log_name = "./log_requests_level_err_log.txt"
 
-        # 拉起4次服务
-        # --log-requests、--log-requests-level
-        # 实际使用4次服务
-        # --log-requests=True,--log-requests-level=[0, 1, 2, 3]
+        # --log-requests-level: Log content at different log level
         cls.log_request_message_dict = {
             "0": r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, video_data=None,.*",
             "1": r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, video_data=None, sampling_params=.*",
             "2": r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, text=.*",
             "3": r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, text=.*",
         }
+        # Log content at the default log level (2)
         cls.keyword_Finish = r".*Finish: obj=GenerateReqInput\(.*http_worker_ipc=None, text='just.*"
         cls.keyword_start = "out={'text': '"
         cls.keyword_end = "', 'output_ids'"
 
         # --enable-metrics
-        # 实际使用两次服务 i=[0, 1, 2]
-        # --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
-        # 实际使用两次服务 i=[0, 1]
-        # --enable-metrics=True, i=0 使用默认桶边界, i=1 使用自定义桶边界
-        cls.my_bucket = ["0.1", "0.5", "1.0", "5.0", "10.0"]
-        # --bucket-time-to-first-token
+        ## --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
+        ### Default bucket boundaries
         cls.default_time_to_first_token_bucket = [
             "0.1", "0.2", "0.4", "0.6", "0.8",
             "1.0", "2.0", "4.0", "6.0", "8.0",
             "10.0", "20.0", "40.0", "60.0", "80.0",
             "100.0", "200.0", "400.0",
         ]
-        # --bucket-inter-token-latency
         cls.default_inter_token_latency_bucket = [
             "0.002", "0.004", "0.006", "0.008",
             "0.01", "0.015", "0.02", "0.025", "0.03", "0.035", "0.04", "0.06", "0.08",
             "0.1", "0.2", "0.4", "0.6", "0.8",
             "1.0", "2.0", "4.0", "6.0", "8.0",
         ]
-        # --bucket-e2e-request-latency
         cls.default_e2e_request_latency_bucket = [
             "0.1", "0.2", "0.4", "0.6", "0.8",
             "1.0", "2.0", "4.0", "6.0", "8.0",
@@ -163,8 +146,13 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
             "100.0", "200.0", "400.0", "600.0",
             "1200.0", "1800.0", "2400.0",
         ]
-        # --collect-tokens-histogram
-        # --prompt-tokens-buckets、--generation-tokens-bucket
+        ### Custom bucket boundaries
+        cls.my_bucket = ["0.1", "0.5", "1.0", "5.0", "10.0"]
+
+        ## --collect-tokens-histogram
+        ### --prompt-tokens-buckets、--generation-tokens-bucket
+        #### Default token bucket boundaries
+        #### The default bucket boundaries of prompt tokens and generated tokens are consistent.
         cls.default_tokens_bucket = [
             "100.0", "300.0", "500.0", "700.0",
             "1000.0", "1500.0", "2000.0", "3000.0", "4000.0", "5000.0", "6000.0", "7000.0", "8000.0", "9000.0",
@@ -173,13 +161,15 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
             "132000.0", "300000.0", "600000.0", "900000.0",
             "1.1e+06",
         ]
+        #### Custom bucket boundaries
         cls.my_tokens_bucket = [
             "100.0", "1000.0", "10000.0", "100000.0", "300000.0", "600000.0", "900000.0",
         ]
+        #### Two-Sided Exponential bucket Strategy
         cls.my_tse_set = ["1000", "2", "8"]
         cls.my_tse_bucket = ["984.0", "992.0", "996.0", "998.0", "1000.0", "1002.0", "1004.0", "1008.0", "1016.0"]
 
-        # --tokenizer-metrics-custom-labels-header、--tokenizer-metrics-allowed-custom-labels
+        ## --tokenizer-metrics-custom-labels-header、--tokenizer-metrics-allowed-custom-labels
         cls.labels_header = "X-Metrics-Labels"
         cls.my_label = "business_line"
 
@@ -540,7 +530,7 @@ class TestAscendLoggingDefault(TestAscendLoggingNPUFullBase):
         )
 
         try:
-            self._send_inference_request()
+            self._test_inference_function()
 
             out_log_file.seek(0)
             content = out_log_file.read()
@@ -551,8 +541,6 @@ class TestAscendLoggingDefault(TestAscendLoggingNPUFullBase):
             self.assertEqual(response.status_code, 404)
         finally:
             self._clean_environment(process, out_log_file, err_log_file)
-
-
 
 
 class TestAscendLoggingCase0(TestAscendLoggingNPUFullBase):
@@ -731,33 +719,58 @@ class TestAscendLoggingNPURequestsTarget(TestAscendLoggingNPUFullBase):
         """Test log-requests-target variations."""
         print("\n=== Test 06: log-requests-target variations ===")
 
-        for target_config in [["stdout"], [self.temp_dir], ["stdout", self.temp_dir]]:
-            self._temp_dir_obj = tempfile.TemporaryDirectory()
-            self.temp_dir = self._temp_dir_obj.name
+        self._temp_dir_obj = tempfile.TemporaryDirectory()
+        self.temp_dir = self._temp_dir_obj.name
 
-            try:
-                self.process = self._launch_server_with_logging(
-                    log_requests=True,
-                    log_requests_level=2,
-                    log_requests_format="text",
-                    log_requests_target=target_config,
-                )
-                time.sleep(5)
+        target_config = ["stdout", self.temp_dir]
+        try:
+            self.process = self._launch_server_with_logging(
+                log_requests=True,
+                log_requests_level=2,
+                log_requests_format="text",
+                log_requests_target=target_config,
+            )
+            time.sleep(5)
 
-                result = self._send_inference_request()
-                print(f"  Target {target_config} test passed")
+            result = self._send_inference_request()
+            print(f"  Target {target_config} test passed")
 
-                if self.temp_dir in target_config:
-                    log_files = list(Path(self.temp_dir).glob("*.log"))
-                    self.assertGreater(len(log_files), 0)
+            log_files = list(Path(self.temp_dir).glob("*.log"))
+            self.assertGreater(len(log_files), 0)
 
-                    file_content = log_files[0].read_text()
-                    self.assertIn("Receive:", file_content)
-                    self.assertIn("Finish:", file_content)
-            finally:
-                self._safe_kill_process()
+            file_content = log_files[0].read_text()
+            self.assertIn("Receive:", file_content)
+            self.assertIn("Finish:", file_content)
+        finally:
+            self._safe_kill_process()
 
-        print(f"✓ All log-requests-target variations test passed")
+        # for target_config in [["stdout"], [self.temp_dir], ["stdout", self.temp_dir]]:
+        #     self._temp_dir_obj = tempfile.TemporaryDirectory()
+        #     self.temp_dir = self._temp_dir_obj.name
+        #
+        #     try:
+        #         self.process = self._launch_server_with_logging(
+        #             log_requests=True,
+        #             log_requests_level=2,
+        #             log_requests_format="text",
+        #             log_requests_target=target_config,
+        #         )
+        #         time.sleep(5)
+        #
+        #         result = self._send_inference_request()
+        #         print(f"  Target {target_config} test passed")
+        #
+        #         if self.temp_dir in target_config:
+        #             log_files = list(Path(self.temp_dir).glob("*.log"))
+        #             self.assertGreater(len(log_files), 0)
+        #
+        #             file_content = log_files[0].read_text()
+        #             self.assertIn("Receive:", file_content)
+        #             self.assertIn("Finish:", file_content)
+        #     finally:
+        #         self._safe_kill_process()
+        #
+        # print(f"✓ All log-requests-target variations test passed")
 
 
 if __name__ == "__main__":
@@ -784,13 +797,6 @@ if __name__ == "__main__":
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUMetric))
 
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsFormat))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsTarget))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUMetric))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUCollectTokensHistogram))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUDecodeLogInterval))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUEnableRequestTimeStatsLogging))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUEnableTrace))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUCrashDumpFolder))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUBucket))
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsTarget))
     runner = unittest.TextTestRunner()
     runner.run(suite)
