@@ -5,7 +5,6 @@ import threading
 import unittest
 from pathlib import Path
 from time import sleep
-from unittest import skip
 
 import requests
 
@@ -54,9 +53,12 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
 
         cls.prepare_args_related_data()
 
+        cls.process = None
+
     @classmethod
     def tearDownClass(cls):
-        kill_process_tree(cls.process.pid)
+        if cls.process:
+            kill_process_tree(cls.process.pid)
         cls.out_log_file.close()
         os.remove(cls.out_log_name)
         cls.err_log_file.close()
@@ -128,17 +130,6 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
         ## --tokenizer-metrics-custom-labels-header、--tokenizer-metrics-allowed-custom-labels
         cls.labels_header = "X-Metrics-Labels"
         cls.my_label = "business_line"
-
-    def _clean_environment(self, process, out_log_file, err_log_file):
-        """Clean up environment variables used by tests."""
-        if process:
-            kill_process_tree(process.pid)
-        if out_log_file:
-            out_log_file.close()
-            os.remove(self.out_log_name)
-        if err_log_file:
-            err_log_file.close()
-            os.remove(self.err_log_name)
 
     def _test_inference_function(self, max_new_tokens=32):
         """Send a basic inference request to test inference function."""
@@ -212,19 +203,18 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
     def _test_log_exclude_prefixes(self, if_enable, out_log_file):
         response = requests.get(f"{self.base_url}/health", timeout=10)
         self.assertEqual(response.status_code, 200)
+        response = requests.get(f"{self.base_url}/get_server_info", timeout=10)
+        self.assertEqual(response.status_code, 200)
         out_log_file.seek(0)
         content = out_log_file.read()
-        print('"POST /generate HTTP/1.1" 200 OK' in content)
-        print('"GET /health HTTP/1.1" 200 OK' in content)
-        # message_0 = (f'sglang:num_decode_transfer_queue_reqs{{engine_type="unified",model_name="{self.model}"'
-        #              f',moe_ep_rank="0",pp_rank="0",tp_rank="0"}}')
-        # message_1 = (f'sglang:num_decode_transfer_queue_reqs{{engine_type="unified",model_name="{self.model}"'
-        #              f',moe_ep_rank="0",pp_rank="0",tp_rank="1"}}')
-        # self.assertIn(message_0, response.text)
-        # if if_enable:
-        #     self.assertIn(message_1, response.text)
-        # else:
-        #     self.assertNotIn(message_1, response.text)
+        health_message = '"GET /health HTTP/1.1" 200 OK'
+        get_server_info_message = '"GET /get_server_info HTTP/1.1" 200 OK'
+        if if_enable:
+            self.assertNotIn(health_message, content)
+            self.assertNotIn(get_server_info_message, content)
+        else:
+            self.assertIn(health_message, content)
+            self.assertIn(get_server_info_message, content)
 
     def _test_log_metrics_tokenizer_label(self):
         response = requests.post(
@@ -252,16 +242,6 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
         self.assertIn(message, metrics_content)
         message = f'sglang:e2e_request_latency_seconds_bucket{{{self.my_label}='
         self.assertIn(message, metrics_content)
-
-    def _get_default_other_args(self):
-        return [
-            "--trust-remote-code",
-            "--mem-fraction-static",
-            "0.8",
-            "--attention-backend",
-            "ascend",
-            "--disable-cuda-graph",
-        ]
 
     def _test_metrics(
         self,
@@ -307,6 +287,20 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
             self.assertIn(message_1, response.text)
         else:
             self.assertNotIn(message_1, response.text)
+
+    @classmethod
+    def _prepare_log_requests_target_obj(cls):
+        cls._temp_dir_obj = tempfile.TemporaryDirectory()
+        cls.temp_dir = cls._temp_dir_obj.name
+
+        cls.temp_level1_dir = os.path.join(cls.temp_dir, "level1")
+        cls.temp_level2_dir = os.path.join(cls.temp_dir, "level2")
+        cls.temp_level3_dir = os.path.join(cls.temp_dir, "level3")
+
+        os.makedirs(cls.temp_level3_dir, exist_ok=True)
+
+        target_config = ["stdout", cls.temp_dir, cls.temp_level3_dir]
+        cls.other_args.extend(["--log-requests-target"] + target_config)
 
     def _test_log_requests_target(self):
         log_files = list(Path(self.temp_dir).glob("*.log"))
@@ -355,41 +349,6 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
         self.assertTrue(len(content) > 0)
         self.assertIn(GC_info, content)
 
-    def _safe_kill_process(self):
-        if self.process is not None:
-            kill_process_tree(self.process.pid)
-            self.process = None
-
-
-@unittest.skip("非正向用例")
-class TestAscendLoggingDefault(TestAscendLoggingNPUFullBase):
-
-    def test_logging_default(self):
-        other_args = self._get_default_other_args()
-        out_log_file = open(self.out_log_name, "w+", encoding="utf-8")
-        err_log_file = open(self.err_log_name, "w+", encoding="utf-8")
-
-        process = popen_launch_server(
-            self.model,
-            self.base_url,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=other_args,
-            return_stdout_stderr=(out_log_file, err_log_file),
-        )
-
-        try:
-            self._test_inference_function()
-
-            out_log_file.seek(0)
-            content = out_log_file.read()
-            self.assertTrue(len(content) > 0)
-            self.assertIsNone(re.search(self.message, content))
-
-            response = requests.get(f"{self.base_url}/metrics", timeout=10)
-            self.assertEqual(response.status_code, 404)
-        finally:
-            self._clean_environment(process, out_log_file, err_log_file)
-
 
 class TestAscendLoggingCase0(TestAscendLoggingNPUFullBase):
     @classmethod
@@ -414,17 +373,7 @@ class TestAscendLoggingCase0(TestAscendLoggingNPUFullBase):
 
         cls.other_args.extend(["--gc-warning-threshold-secs", "0.01"])
 
-        cls._temp_dir_obj = tempfile.TemporaryDirectory()
-        cls.temp_dir = cls._temp_dir_obj.name
-
-        cls.temp_level1_dir = os.path.join(cls.temp_dir, "level1")
-        cls.temp_level2_dir = os.path.join(cls.temp_dir, "level2")
-        cls.temp_level3_dir = os.path.join(cls.temp_dir, "level3")
-
-        os.makedirs(cls.temp_level3_dir, exist_ok=True)
-
-        target_config = ["stdout", cls.temp_dir, cls.temp_level3_dir]
-        cls.other_args.extend(["--log-requests-target"] + target_config)
+        cls._prepare_log_requests_target_obj()
 
         cls.process = popen_launch_server(
             cls.model,
@@ -438,6 +387,11 @@ class TestAscendLoggingCase0(TestAscendLoggingNPUFullBase):
         self._test_inference_function()
 
         self._test_log_requests_level(self.log_requests_level, self.out_log_file)
+
+        self._test_log_requests_target()
+
+        # test --uvicorn-access-log-exclude-prefixes
+        self._test_log_exclude_prefixes(False, self.out_log_file)
 
         self._test_enable_metrics_for_all_scheduler(False)
 
@@ -500,9 +454,10 @@ class TestAscendLoggingCase1(TestAscendLoggingNPUFullBase):
     def test_logging_case_1(self):
         self._test_inference_function()
 
-        self._test_log_exclude_prefixes(True, self.out_log_file)
-
         self._test_log_requests_level(self.log_requests_level, self.out_log_file)
+
+        # test --uvicorn-access-log-exclude-prefixes
+        self._test_log_exclude_prefixes(True, self.out_log_file)
 
         self._test_enable_metrics_for_all_scheduler(True)
 
@@ -590,18 +545,4 @@ class TestAscendLoggingCase3(TestAscendLoggingNPUFullBase):
 
 
 if __name__ == "__main__":
-    # unittest.main()
-    loader = unittest.TestLoader()
-    suite = unittest.TestSuite()
-
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLogging))
-
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingDefault))
-
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase0))
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase1))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase2))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase3))
-
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+    unittest.main()
