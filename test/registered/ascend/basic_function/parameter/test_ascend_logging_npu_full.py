@@ -864,21 +864,20 @@ class TestAscendLoggingCase1(TestAscendLoggingNPUFullBase):
         err_log_file = open(self.err_log_name, "w+", encoding="utf-8")
 
         # --log-requests=True
-        ## --log-requests-level=1
         other_args.append("--log-requests")
+        ## --log-requests-level=1
         log_requests_level = 1
         other_args.extend(["--log-requests-level", str(log_requests_level)])
 
         # --enable-metrics=True
-        ## --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
         other_args.extend(["--enable-metrics"])
+        ## --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
         other_args.extend(["--bucket-time-to-first-token"] + self.my_bucket)
         other_args.extend(["--bucket-inter-token-latency"] + self.my_bucket)
         other_args.extend(["--bucket-e2e-request-latency"] + self.my_bucket)
         expected_time_to_first_token_bucket = self.my_bucket
         expected_inter_token_latency_bucket = self.my_bucket
         expected_e2e_request_latency_bucket = self.my_bucket
-
         ## --collect-tokens-histogram=True
         other_args.extend(["--collect-tokens-histogram"])
         ### --prompt-tokens-buckets=custom
@@ -911,6 +910,56 @@ class TestAscendLoggingCase1(TestAscendLoggingNPUFullBase):
                 expected_time_to_first_token_bucket=expected_time_to_first_token_bucket,
                 expected_inter_token_latency_bucket=expected_inter_token_latency_bucket,
                 expected_e2e_request_latency_bucket=expected_e2e_request_latency_bucket,
+                expected_prompt_tokens_bucket=expected_prompt_tokens_bucket,
+                expected_generation_tokens_bucket=expected_generation_tokens_bucket,
+            )
+        finally:
+            self._clean_environment(process, out_log_file, err_log_file)
+
+class TestAscendLoggingCase2(TestAscendLoggingNPUFullBase):
+    def test_logging_case_2(self):
+        other_args = self.get_default_other_args()
+        out_log_file = open(self.out_log_name, "w+", encoding="utf-8")
+        err_log_file = open(self.err_log_name, "w+", encoding="utf-8")
+
+        # --log-requests=True
+        ## --log-requests-level=2
+        other_args.append("--log-requests")
+        log_requests_level = 2
+        other_args.extend(["--log-requests-level", str(log_requests_level)])
+
+        # --enable-metrics=True
+        other_args.extend(["--enable-metrics"])
+        ## SKIP --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
+        ## --collect-tokens-histogram=True
+        other_args.extend(["--collect-tokens-histogram"])
+        ### --prompt-tokens-buckets=tse
+        ### --generation-tokens-buckets=tse
+        other_args.extend(["--prompt-tokens-buckets"] + ["tse"] + self.my_tse_set)
+        other_args.extend(["--generation-tokens-buckets"] + ["tse"] + self.my_tse_set)
+        expected_prompt_tokens_bucket = self.my_tse_bucket
+        expected_generation_tokens_bucket = self.my_tse_bucket
+
+        process = popen_launch_server(
+            self.model,
+            self.base_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=other_args,
+            return_stdout_stderr=(out_log_file, err_log_file),
+        )
+
+        try:
+            # test inference function
+            self._test_inference_function()
+
+            # test --log-requests、--log-requests-level
+            self._test_log_requests_level(log_requests_level, out_log_file)
+
+            # test --enable-metrics
+            ## SKIP --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
+            ## --collect-tokens-histogram
+            ### --prompt-tokens-buckets=default、--generation-tokens-buckets=default
+            self._check_metrics_endpoint(
                 expected_prompt_tokens_bucket=expected_prompt_tokens_bucket,
                 expected_generation_tokens_bucket=expected_generation_tokens_bucket,
             )
@@ -1617,7 +1666,8 @@ if __name__ == "__main__":
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLogging))
 
 
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase1))
+    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase1))
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase2))
 
     # DONE
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLogRequests))
