@@ -209,6 +209,23 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
                 self.assertNotIn("' ... '", out_text)
                 self.assertTrue(out_text_length > 2048)
 
+    def _test_log_exclude_prefixes(self, if_enable, out_log_file):
+        response = requests.get(f"{self.base_url}/health", timeout=10)
+        self.assertEqual(response.status_code, 200)
+        out_log_file.seek(0)
+        content = out_log_file.read()
+        print("generate" in content)
+        print("health" in content)
+        # message_0 = (f'sglang:num_decode_transfer_queue_reqs{{engine_type="unified",model_name="{self.model}"'
+        #              f',moe_ep_rank="0",pp_rank="0",tp_rank="0"}}')
+        # message_1 = (f'sglang:num_decode_transfer_queue_reqs{{engine_type="unified",model_name="{self.model}"'
+        #              f',moe_ep_rank="0",pp_rank="0",tp_rank="1"}}')
+        # self.assertIn(message_0, response.text)
+        # if if_enable:
+        #     self.assertIn(message_1, response.text)
+        # else:
+        #     self.assertNotIn(message_1, response.text)
+
     def _test_log_metrics_tokenizer_label(self):
         response = requests.post(
             f"{self.base_url}/generate",
@@ -343,6 +360,7 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
             kill_process_tree(self.process.pid)
             self.process = None
 
+
 @unittest.skip("非正向用例")
 class TestAscendLoggingDefault(TestAscendLoggingNPUFullBase):
 
@@ -450,6 +468,9 @@ class TestAscendLoggingCase1(TestAscendLoggingNPUFullBase):
         cls.log_requests_level = 1
         cls.other_args.extend(["--log-requests-level", str(cls.log_requests_level)])
 
+        cls.log_exclude_prefixes = ["/health"]
+        cls.other_args.extend(["--uvicorn-access-log-exclude-prefixes", str(cls.log_exclude_prefixes)])
+
         cls.other_args.extend(["--enable-metrics"])
         cls.other_args.extend(["--tp-size", 2])
         cls.other_args.extend(["--enable-metrics-for-all-scheduler"])
@@ -478,6 +499,8 @@ class TestAscendLoggingCase1(TestAscendLoggingNPUFullBase):
 
     def test_logging_case_1(self):
         self._test_inference_function()
+
+        self._test_log_exclude_prefixes(True)
 
         self._test_log_requests_level(self.log_requests_level, self.out_log_file)
 
@@ -528,6 +551,7 @@ class TestAscendLoggingCase2(TestAscendLoggingNPUFullBase):
             expected_generation_tokens_bucket=self.expected_generation_tokens_bucket,
         )
 
+
 class TestAscendLoggingCase3(TestAscendLoggingNPUFullBase):
     @classmethod
     def setUpClass(cls):
@@ -569,9 +593,9 @@ if __name__ == "__main__":
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingDefault))
 
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase0))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase1))
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase2))
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase3))
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase1))
+    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase2))
+    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase3))
 
     runner = unittest.TextTestRunner()
     runner.run(suite)
