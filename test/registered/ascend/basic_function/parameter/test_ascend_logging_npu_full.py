@@ -383,7 +383,7 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
         message = f'sglang:e2e_request_latency_seconds_bucket{{{self.my_label}='
         self.assertIn(message, metrics_content)
 
-    def get_default_other_args(self):
+    def _get_default_other_args(self):
         return [
             "--trust-remote-code",
             "--mem-fraction-static",
@@ -466,7 +466,7 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
 
 class TestAscendLoggingDefault(TestAscendLoggingNPUFullBase):
     def test_logging_default(self):
-        other_args = self.get_default_other_args()
+        other_args = self._get_default_other_args()
         out_log_file = open(self.out_log_name, "w+", encoding="utf-8")
         err_log_file = open(self.err_log_name, "w+", encoding="utf-8")
 
@@ -494,7 +494,7 @@ class TestAscendLoggingDefault(TestAscendLoggingNPUFullBase):
 
 class TestAscendLoggingCase0(TestAscendLoggingNPUFullBase):
     def test_logging_case_0(self):
-        other_args = self.get_default_other_args()
+        other_args = self._get_default_other_args()
         out_log_file = open(self.out_log_name, "w+", encoding="utf-8")
         err_log_file = open(self.err_log_name, "w+", encoding="utf-8")
 
@@ -514,6 +514,20 @@ class TestAscendLoggingCase0(TestAscendLoggingNPUFullBase):
         expected_generation_tokens_bucket = self.default_tokens_bucket
 
         other_args.extend(["--gc-warning-threshold-secs", "0.01"])
+
+        self._temp_dir_obj = tempfile.TemporaryDirectory()
+        self.temp_dir = self._temp_dir_obj.name
+
+        # self.temp_multi_level_dir = self.temp_dir / "level1" / "level2" / "level3"
+        self.temp_level1_dir = os.path.join(self.temp_dir, "level1")
+        self.temp_level2_dir = os.path.join(self.temp_dir, "level2")
+        self.temp_level3_dir = os.path.join(self.temp_dir, "level3")
+
+        os.makedirs(self.temp_level3_dir, exist_ok=True)
+
+
+        target_config = ["stdout", self.temp_dir, self.temp_level3_dir]
+        other_args.extend(["--log-requests-target"] + target_config)
 
         process = popen_launch_server(
             self.model,
@@ -536,6 +550,20 @@ class TestAscendLoggingCase0(TestAscendLoggingNPUFullBase):
                 expected_generation_tokens_bucket=expected_generation_tokens_bucket,
             )
 
+            log_files = list(Path(self.temp_dir).glob("*.log"))
+            self.assertGreater(len(log_files), 0)
+
+            file_content = log_files[0].read_text()
+            self.assertIn("Receive:", file_content)
+            self.assertIn("Finish:", file_content)
+
+            log_files = list(Path(self.temp_level3_dir).glob("*.log"))
+            self.assertGreater(len(log_files), 0)
+
+            file_content = log_files[0].read_text()
+            self.assertIn("Receive:", file_content)
+            self.assertIn("Finish:", file_content)
+
             self._test_gc_warning_threshold(err_log_file)
         finally:
             self._clean_environment(process, out_log_file, err_log_file)
@@ -543,7 +571,7 @@ class TestAscendLoggingCase0(TestAscendLoggingNPUFullBase):
 
 class TestAscendLoggingCase1(TestAscendLoggingNPUFullBase):
     def test_logging_case_1(self):
-        other_args = self.get_default_other_args()
+        other_args = self._get_default_other_args()
         out_log_file = open(self.out_log_name, "w+", encoding="utf-8")
         err_log_file = open(self.err_log_name, "w+", encoding="utf-8")
 
@@ -593,7 +621,7 @@ class TestAscendLoggingCase1(TestAscendLoggingNPUFullBase):
 
 class TestAscendLoggingCase2(TestAscendLoggingNPUFullBase):
     def test_logging_case_2(self):
-        other_args = self.get_default_other_args()
+        other_args = self._get_default_other_args()
         out_log_file = open(self.out_log_name, "w+", encoding="utf-8")
         err_log_file = open(self.err_log_name, "w+", encoding="utf-8")
 
@@ -631,7 +659,7 @@ class TestAscendLoggingCase2(TestAscendLoggingNPUFullBase):
 
 class TestAscendLoggingCase3(TestAscendLoggingNPUFullBase):
     def test_logging_case_3(self):
-        other_args = self.get_default_other_args()
+        other_args = self._get_default_other_args()
         out_log_file = open(self.out_log_name, "w+", encoding="utf-8")
         err_log_file = open(self.err_log_name, "w+", encoding="utf-8")
 
@@ -744,23 +772,16 @@ if __name__ == "__main__":
 
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLogging))
 
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingDefault))
+    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingDefault))
 
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase0))
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase0))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase1))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase2))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase3))
 
-    # DONE
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLogRequests))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUCollectTokensHistogram))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPULabel))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUGCWarningThresholdSecs))
 
     # TODO
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUMetric))
 
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsFormat))
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsTarget))
+    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsTarget))
     runner = unittest.TextTestRunner()
     runner.run(suite)
