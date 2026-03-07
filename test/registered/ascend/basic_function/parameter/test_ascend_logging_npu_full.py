@@ -122,143 +122,6 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
         cls.labels_header = "X-Metrics-Labels"
         cls.my_label = "business_line"
 
-    def _launch_server_with_logging(
-        self,
-        log_level="info",
-        log_level_http=None,
-        log_requests=False,
-        log_requests_level=None,
-        log_requests_format="text",
-        log_requests_target=None,
-        enable_metrics=False,
-        enable_metrics_for_all_schedulers=False,
-        collect_tokens_histogram=False,
-        bucket_time_to_first_token=None,
-        bucket_inter_token_latency=None,
-        bucket_e2e_request_latency=None,
-        prompt_tokens_buckets=None,
-        generation_tokens_buckets=None,
-        gc_warning_threshold_secs=0.0,
-        decode_log_interval=None,
-        enable_request_time_stats_logging=False,
-        enable_trace=False,
-        otlp_traces_endpoint="localhost:4317",
-        crash_dump_folder=None,
-        tp_size=None,
-        enable_dp_attention=None,
-        dp_size=None,
-        uvicorn_access_log_exclude_prefixes=None,
-        show_time_cost=None,
-        tokenizer_metrics_custom_labels_header=None,
-        tokenizer_metrics_allowed_custom_labels=None,
-        kv_events_config=None,
-        out_log_file=None,
-        err_log_file=None,
-    ):
-        """Launch server with logging parameters."""
-
-        other_args = [
-            "--trust-remote-code",
-            "--mem-fraction-static",
-            "0.8",
-            "--attention-backend",
-            "ascend",
-            "--disable-cuda-graph",
-        ]
-
-        if tp_size:
-            other_args.extend(["--tp-size", str(tp_size)])
-
-        if enable_dp_attention:
-            other_args.extend(["--enable-dp-attention"])
-            other_args.extend(["--dp-size", str(dp_size)])
-
-        if log_level is not None:
-            other_args.extend(["--log-level", log_level])
-
-        if log_level_http is not None:
-            other_args.extend(["--log-level-http", log_level_http])
-
-        if log_requests:
-            other_args.append("--log-requests")
-            if log_requests_level is not None:
-                other_args.extend(["--log-requests-level", str(log_requests_level)])
-            if log_requests_format is not None:
-                other_args.extend(["--log-requests-format", log_requests_format])
-
-            if log_requests_target is not None:
-                other_args.extend(["--log-requests-target"] + log_requests_target)
-
-        if enable_metrics:
-            other_args.append("--enable-metrics")
-
-        if enable_metrics_for_all_schedulers:
-            other_args.append("--enable-metrics-for-all-schedulers")
-
-        if collect_tokens_histogram:
-            other_args.append("--collect-tokens-histogram")
-
-        if bucket_time_to_first_token is not None:
-            other_args.extend(["--bucket-time-to-first-token"] + [str(x) for x in bucket_time_to_first_token])
-
-        if bucket_inter_token_latency is not None:
-            other_args.extend(["--bucket-inter-token-latency"] + [str(x) for x in bucket_inter_token_latency])
-
-        if bucket_e2e_request_latency is not None:
-            other_args.extend(["--bucket-e2e-request-latency"] + [str(x) for x in bucket_e2e_request_latency])
-
-        if prompt_tokens_buckets is not None:
-            other_args.extend(["--prompt-tokens-buckets"] + prompt_tokens_buckets)
-
-        if generation_tokens_buckets is not None:
-            other_args.extend(["--generation-tokens-buckets"] + generation_tokens_buckets)
-
-        if gc_warning_threshold_secs > 0:
-            other_args.extend(["--gc-warning-threshold-secs", str(gc_warning_threshold_secs)])
-
-        if decode_log_interval:
-            other_args.extend(["--decode-log-interval", str(decode_log_interval)])
-
-        if enable_request_time_stats_logging:
-            other_args.append("--enable-request-time-stats-logging")
-
-        if enable_trace:
-            other_args.append("--enable-trace")
-            other_args.extend(["--otlp-traces-endpoint", otlp_traces_endpoint])
-
-        if crash_dump_folder is not None:
-            other_args.extend(["--crash-dump-folder", crash_dump_folder])
-
-        if uvicorn_access_log_exclude_prefixes is not None:
-            other_args.extend(["--uvicorn-access-log-exclude-prefixes", uvicorn_access_log_exclude_prefixes])
-
-        if show_time_cost is not None:
-            other_args.extend(["--show-time-cost", show_time_cost])
-
-        if tokenizer_metrics_custom_labels_header is not None:
-            other_args.extend(["--tokenizer-metrics-custom-labels-header", tokenizer_metrics_custom_labels_header])
-
-        if tokenizer_metrics_allowed_custom_labels is not None:
-            other_args.extend(["--tokenizer-metrics-allowed-custom-labels", tokenizer_metrics_allowed_custom_labels])
-
-        if kv_events_config is not None:
-            other_args.extend(["--kv-events-config", kv_events_config])
-
-        process = popen_launch_server(
-            self.model,
-            self.base_url,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=other_args,
-        ) if out_log_file is None and err_log_file is None else popen_launch_server(
-            self.model,
-            self.base_url,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=other_args,
-            return_stdout_stderr=(out_log_file, err_log_file),
-        )
-
-        return process
-
     def _clean_environment(self, process, out_log_file, err_log_file):
         """Clean up environment variables used by tests."""
         if process:
@@ -518,13 +381,11 @@ class TestAscendLoggingCase0(TestAscendLoggingNPUFullBase):
         self._temp_dir_obj = tempfile.TemporaryDirectory()
         self.temp_dir = self._temp_dir_obj.name
 
-        # self.temp_multi_level_dir = self.temp_dir / "level1" / "level2" / "level3"
         self.temp_level1_dir = os.path.join(self.temp_dir, "level1")
         self.temp_level2_dir = os.path.join(self.temp_dir, "level2")
         self.temp_level3_dir = os.path.join(self.temp_dir, "level3")
 
         os.makedirs(self.temp_level3_dir, exist_ok=True)
-
 
         target_config = ["stdout", self.temp_dir, self.temp_level3_dir]
         other_args.extend(["--log-requests-target"] + target_config)
@@ -690,98 +551,19 @@ class TestAscendLoggingCase3(TestAscendLoggingNPUFullBase):
             self._clean_environment(process, out_log_file, err_log_file)
 
 
-# TODO 多级目录
-class TestAscendLoggingNPURequestsTarget(TestAscendLoggingNPUFullBase):
-    def test_06_log_requests_target_variations(self):
-        """Test log-requests-target variations."""
-        print("\n=== Test 06: log-requests-target variations ===")
-
-        self._temp_dir_obj = tempfile.TemporaryDirectory()
-        self.temp_dir = self._temp_dir_obj.name
-
-        # self.temp_multi_level_dir = self.temp_dir / "level1" / "level2" / "level3"
-        self.temp_level1_dir = os.path.join(self.temp_dir, "level1")
-        self.temp_level2_dir = os.path.join(self.temp_dir, "level2")
-        self.temp_level3_dir = os.path.join(self.temp_dir, "level3")
-
-        os.makedirs(self.temp_level3_dir, exist_ok=True)
-
-        target_config = ["stdout", self.temp_dir, self.temp_level3_dir]
-        try:
-            self.process = self._launch_server_with_logging(
-                log_requests=True,
-                log_requests_level=2,
-                log_requests_format="text",
-                log_requests_target=target_config,
-            )
-            time.sleep(5)
-
-            result = self._send_inference_request()
-            print(f"  Target {target_config} test passed")
-
-            log_files = list(Path(self.temp_dir).glob("*.log"))
-            self.assertGreater(len(log_files), 0)
-
-            file_content = log_files[0].read_text()
-            self.assertIn("Receive:", file_content)
-            self.assertIn("Finish:", file_content)
-
-            log_files = list(Path(self.temp_level3_dir).glob("*.log"))
-            self.assertGreater(len(log_files), 0)
-
-            file_content = log_files[0].read_text()
-            self.assertIn("Receive:", file_content)
-            self.assertIn("Finish:", file_content)
-        finally:
-            self._safe_kill_process()
-            self._temp_dir_obj.cleanup()
-
-        # for target_config in [["stdout"], [self.temp_dir], ["stdout", self.temp_dir]]:
-        #     self._temp_dir_obj = tempfile.TemporaryDirectory()
-        #     self.temp_dir = self._temp_dir_obj.name
-        #
-        #     try:
-        #         self.process = self._launch_server_with_logging(
-        #             log_requests=True,
-        #             log_requests_level=2,
-        #             log_requests_format="text",
-        #             log_requests_target=target_config,
-        #         )
-        #         time.sleep(5)
-        #
-        #         result = self._send_inference_request()
-        #         print(f"  Target {target_config} test passed")
-        #
-        #         if self.temp_dir in target_config:
-        #             log_files = list(Path(self.temp_dir).glob("*.log"))
-        #             self.assertGreater(len(log_files), 0)
-        #
-        #             file_content = log_files[0].read_text()
-        #             self.assertIn("Receive:", file_content)
-        #             self.assertIn("Finish:", file_content)
-        #     finally:
-        #         self._safe_kill_process()
-        #
-        # print(f"✓ All log-requests-target variations test passed")
-
-
 if __name__ == "__main__":
-    # unittest.main()
-    loader = unittest.TestLoader()
-    suite = unittest.TestSuite()
-
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLogging))
-
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingDefault))
-
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase0))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase1))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase2))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase3))
-
-
-    # TODO
-
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsTarget))
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+    unittest.main()
+    # loader = unittest.TestLoader()
+    # suite = unittest.TestSuite()
+    #
+    # # suite.addTests(loader.loadTestsFromTestCase(TestAscendLogging))
+    #
+    # # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingDefault))
+    #
+    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase0))
+    # # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase1))
+    # # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase2))
+    # # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase3))
+    #
+    # runner = unittest.TextTestRunner()
+    # runner.run(suite)
