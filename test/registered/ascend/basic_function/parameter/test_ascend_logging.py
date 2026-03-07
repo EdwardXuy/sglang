@@ -498,26 +498,17 @@ class TestAscendLoggingCase2(TestAscendLoggingNPUFullBase):
         super().setUpClass()
 
         cls.other_args.append("--log-requests")
-        cls.log_requests_level = 1
+        cls.log_requests_level = 2
         cls.other_args.extend(["--log-requests-level", str(cls.log_requests_level)])
 
         cls.other_args.extend(["--enable-metrics"])
-        cls.other_args.extend(["--tp-size", 2])
-        cls.other_args.extend(["--enable-metrics-for-all-scheduler"])
-
-        cls.other_args.extend(["--bucket-time-to-first-token"] + cls.my_bucket)
-        cls.other_args.extend(["--bucket-inter-token-latency"] + cls.my_bucket)
-        cls.other_args.extend(["--bucket-e2e-request-latency"] + cls.my_bucket)
-        cls.expected_time_to_first_token_bucket = cls.my_bucket
-        cls.expected_inter_token_latency_bucket = cls.my_bucket
-        cls.expected_e2e_request_latency_bucket = cls.my_bucket
 
         cls.other_args.extend(["--collect-tokens-histogram"])
 
-        cls.other_args.extend(["--prompt-tokens-buckets"] + ["custom"] + cls.my_tokens_bucket)
-        cls.other_args.extend(["--generation-tokens-buckets"] + ["custom"] + cls.my_tokens_bucket)
-        cls.expected_prompt_tokens_bucket = cls.my_tokens_bucket
-        cls.expected_generation_tokens_bucket = cls.my_tokens_bucket
+        cls.other_args.extend(["--prompt-tokens-buckets"] + ["tse"] + cls.my_tse_set)
+        cls.other_args.extend(["--generation-tokens-buckets"] + ["tse"] + cls.my_tse_set)
+        cls.expected_prompt_tokens_bucket = cls.my_tse_set
+        cls.expected_generation_tokens_bucket = cls.my_tse_bucket
 
         cls.process = popen_launch_server(
             cls.model,
@@ -528,40 +519,14 @@ class TestAscendLoggingCase2(TestAscendLoggingNPUFullBase):
         )
 
     def test_logging_case_2(self):
-        other_args = self._get_default_other_args()
-        out_log_file = open(self.out_log_name, "w+", encoding="utf-8")
-        err_log_file = open(self.err_log_name, "w+", encoding="utf-8")
+        self._test_inference_function()
 
-        other_args.append("--log-requests")
-        log_requests_level = 2
-        other_args.extend(["--log-requests-level", str(log_requests_level)])
+        self._test_log_requests_level(self.log_requests_level, self.out_log_file)
 
-        other_args.extend(["--enable-metrics"])
-        other_args.extend(["--collect-tokens-histogram"])
-        other_args.extend(["--prompt-tokens-buckets"] + ["tse"] + self.my_tse_set)
-        other_args.extend(["--generation-tokens-buckets"] + ["tse"] + self.my_tse_set)
-        expected_prompt_tokens_bucket = self.my_tse_bucket
-        expected_generation_tokens_bucket = self.my_tse_bucket
-
-        process = popen_launch_server(
-            self.model,
-            self.base_url,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=other_args,
-            return_stdout_stderr=(out_log_file, err_log_file),
+        self._test_metrics(
+            expected_prompt_tokens_bucket=self.expected_prompt_tokens_bucket,
+            expected_generation_tokens_bucket=self.expected_generation_tokens_bucket,
         )
-
-        try:
-            self._test_inference_function()
-
-            self._test_log_requests_level(log_requests_level, out_log_file)
-
-            self._test_metrics(
-                expected_prompt_tokens_bucket=expected_prompt_tokens_bucket,
-                expected_generation_tokens_bucket=expected_generation_tokens_bucket,
-            )
-        finally:
-            self._clean_environment(process, out_log_file, err_log_file)
 
 
 class TestAscendLoggingCase3(TestAscendLoggingNPUFullBase):
@@ -607,8 +572,8 @@ if __name__ == "__main__":
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingDefault))
 
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase0))
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase1))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase2))
+    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase1))
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase2))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase3))
 
     runner = unittest.TextTestRunner()
