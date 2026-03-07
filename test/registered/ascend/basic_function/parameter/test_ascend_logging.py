@@ -571,7 +571,7 @@ if __name__ == "__main__":
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase0))
     # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase1))
     suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase2))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase3))
+    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase3))
 
     runner = unittest.TextTestRunner()
     runner.run(suite)
