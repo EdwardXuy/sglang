@@ -444,7 +444,7 @@ class TestAscendLogging(TestAscendLoggingNPUFullBase):
                     print(e)
 
             threads = []
-            for _ in range(100):
+            for _ in range(200):
                 t = threading.Thread(target=send_request)
                 t.start()
                 threads.append(t)
