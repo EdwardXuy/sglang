@@ -30,8 +30,8 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
     [Test Target] --log-requests; --log-requests-level; --log-requests-target; --uvicorn-access-log-exclude-prefixes;
     --enable-metrics; --enable-metrics-for-all-scheduler;
     --bucket-time-to-first-token; --bucket-inter-token-latency; --bucket-e2e-request-latency;
-    --collect-tokens-histogram; --prompt-tokens-buckets;
-    --generation-tokens-buckets; --tokenizer-metrics-custom-labels-header; --tokenizer-metrics-allowed-custom-labels;
+    --collect-tokens-histogram; --prompt-tokens-buckets; --generation-tokens-buckets;
+    --tokenizer-metrics-custom-labels-header; --tokenizer-metrics-allowed-custom-labels;
     --gc-warning-threshold-secs
     """
 
@@ -430,7 +430,6 @@ class TestAscendLoggingCase1(TestAscendLoggingNPUFullBase):
         cls.log_requests_level = 1
         cls.other_args.extend(["--log-requests-level", str(cls.log_requests_level)])
 
-
         cls.other_args.extend(["--uvicorn-access-log-exclude-prefixes"] + cls.log_exclude_prefixes)
 
         cls.other_args.extend(["--enable-metrics"])
@@ -547,18 +546,4 @@ class TestAscendLoggingCase3(TestAscendLoggingNPUFullBase):
 
 
 if __name__ == "__main__":
-    # unittest.main()
-    loader = unittest.TestLoader()
-    suite = unittest.TestSuite()
-
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLogging))
-
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingDefault))
-
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase0))
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase1))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase2))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase3))
-
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+    unittest.main()
