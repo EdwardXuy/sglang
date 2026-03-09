@@ -1,18 +1,14 @@
 import os
-import io
-import json
 import re
 import tempfile
 import threading
 import time
 import unittest
-import subprocess
-import signal
 from pathlib import Path
+from time import sleep
 
 import requests
 
-# from docs.advanced_features.structured_outputs_for_reasoning_models import messages
 from sglang.srt.utils import kill_process_tree
 
 # from sglang.test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH as MODEL_PATH
@@ -27,22 +23,6 @@ from sglang.test.test_utils import (
 
 register_npu_ci(est_time=7200, suite="stage-b-test-npu")
 
-# Done
-# TestAscendLoggingNPURequests
-# --log-requests、--log-requests-level
-
-# 求助开发，验证是否充分
-# --log-level、 --log-level-http
-# 已有用例覆盖基本功能
-
-# 求助开发，李果
-# --log-requests-target TODO 多级路径
-
-
-# 社区用例
-# sglang/test/registered/utils/test_request_logger.py
-# --log-requests-format（测试参数取值json，TestAscendLoggingNPULevel 覆盖默认值text）
-
 
 class TestAscendLoggingNPUFullBase(CustomTestCase):
     """Comprehensive test for all Logging parameters on NPU environment.
@@ -51,158 +31,107 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
     [Test Target] All Logging parameters on NPU
     """
 
-    model = MODEL_PATH
-    base_url = DEFAULT_URL_FOR_TEST
-    test_prompt = "What is the capital of France?"
-    expected_output = "Paris"
-
     @classmethod
     def setUpClass(cls):
-        cls.process = None
-        cls._temp_dir_obj = None
-        cls.temp_dir = None
+        # Note: During the test, a fixed-length string needs to be returned.
+        # The returned value of the same prompt may vary depending on the model
+        cls.model = MODEL_PATH
+        cls.base_url = DEFAULT_URL_FOR_TEST
+        cls.out_log_name = "./log_requests_level_out_log.txt"
+        cls.err_log_name = "./log_requests_level_err_log.txt"
+        cls.test_prompt = "What is the capital of France?"
+        cls.expected_output = "Paris"
+
+        cls.prepare_args_related_data()
+
+        # cls._temp_dir_obj = None
+        # cls.temp_dir = None
 
     @classmethod
     def tearDownClass(cls):
-        if cls.process:
-            kill_process_tree(cls.process.pid)
-        if cls._temp_dir_obj:
-            cls._temp_dir_obj.cleanup()
+        pass
+        # if cls.process:
+        #     kill_process_tree(cls.process.pid)
+        # if cls._temp_dir_obj:
+        #     cls._temp_dir_obj.cleanup()
 
-    def _launch_server_with_logging(
-        self,
-        log_level="info",
-        log_level_http=None,
-        log_requests=False,
-        log_requests_level=None,
-        log_requests_format="text",
-        log_requests_target=None,
-        enable_metrics=False,
-        enable_metrics_for_all_schedulers=False,
-        collect_tokens_histogram=False,
-        bucket_time_to_first_token=None,
-        bucket_inter_token_latency=None,
-        bucket_e2e_request_latency=None,
-        prompt_tokens_buckets=None,
-        generation_tokens_buckets=None,
-        gc_warning_threshold_secs=0.0,
-        decode_log_interval=40,
-        enable_request_time_stats_logging=False,
-        enable_trace=False,
-        otlp_traces_endpoint="localhost:4317",
-        crash_dump_folder=None,
-        tp_size=None,
-        dp_size=None,
-        uvicorn_access_log_exclude_prefixes=None,
-        show_time_cost=None,
-        tokenizer_metrics_custom_labels_header=None,
-        tokenizer_metrics_allowed_custom_labels=None,
-        kv_events_config=None,
-        out_log_file=None,
-        err_log_file=None,
-    ):
-        """Launch server with logging parameters."""
+    @classmethod
+    def prepare_args_related_data(cls):
+        # --log-requests
+        # Basic log content
+        cls.message = r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, .*"
 
-        other_args = [
-            "--trust-remote-code",
-            "--mem-fraction-static",
-            "0.8",
-            "--attention-backend",
-            "ascend",
-            "--disable-cuda-graph",
+        # --log-requests-level: Log content at different log level
+        cls.log_request_message_dict = {
+            "0": r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, video_data=None,.*",
+            "1": r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, video_data=None, sampling_params=.*",
+            "2": r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, text=.*",
+            "3": r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, text=.*",
+        }
+        # Log content at the default log level (2)
+        cls.keyword_Finish = r".*Finish: obj=GenerateReqInput\(.*http_worker_ipc=None, text='just.*"
+        cls.keyword_start = "out={'text': '"
+        cls.keyword_end = "', 'output_ids'"
+
+        # --enable-metrics
+        ## --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
+        ### Default bucket boundaries
+        cls.default_time_to_first_token_bucket = [
+            "0.1", "0.2", "0.4", "0.6", "0.8",
+            "1.0", "2.0", "4.0", "6.0", "8.0",
+            "10.0", "20.0", "40.0", "60.0", "80.0",
+            "100.0", "200.0", "400.0",
         ]
+        cls.default_inter_token_latency_bucket = [
+            "0.002", "0.004", "0.006", "0.008",
+            "0.01", "0.015", "0.02", "0.025", "0.03", "0.035", "0.04", "0.06", "0.08",
+            "0.1", "0.2", "0.4", "0.6", "0.8",
+            "1.0", "2.0", "4.0", "6.0", "8.0",
+        ]
+        cls.default_e2e_request_latency_bucket = [
+            "0.1", "0.2", "0.4", "0.6", "0.8",
+            "1.0", "2.0", "4.0", "6.0", "8.0",
+            "10.0", "20.0", "40.0", "60.0", "80.0",
+            "100.0", "200.0", "400.0", "600.0",
+            "1200.0", "1800.0", "2400.0",
+        ]
+        ### Custom bucket boundaries
+        cls.my_bucket = ["0.1", "0.5", "1.0", "5.0", "10.0"]
 
-        if tp_size:
-            other_args.extend(["--tp-size", str(tp_size)])
+        ## --collect-tokens-histogram
+        ### --prompt-tokens-buckets、--generation-tokens-bucket
+        #### Default token bucket boundaries
+        #### The default bucket boundaries of prompt tokens and generated tokens are consistent.
+        cls.default_tokens_bucket = [
+            "100.0", "300.0", "500.0", "700.0",
+            "1000.0", "1500.0", "2000.0", "3000.0", "4000.0", "5000.0", "6000.0", "7000.0", "8000.0", "9000.0",
+            "10000.0", "12000.0", "15000.0", "20000.0", "22000.0", "25000.0",
+            "30000.0", "35000.0", "40000.0", "66000.0", "99000.0",
+            "132000.0", "300000.0", "600000.0", "900000.0",
+            "1.1e+06",
+        ]
+        #### Custom bucket boundaries
+        cls.my_tokens_bucket = [
+            "100.0", "1000.0", "10000.0", "100000.0", "300000.0", "600000.0", "900000.0",
+        ]
+        #### Two-Sided Exponential bucket Strategy
+        cls.my_tse_set = ["1000", "2", "8"]
+        cls.my_tse_bucket = ["984.0", "992.0", "996.0", "998.0", "1000.0", "1002.0", "1004.0", "1008.0", "1016.0"]
 
-        if dp_size:
-            other_args.extend(["--dp-size", str(dp_size)])
+        ## --tokenizer-metrics-custom-labels-header、--tokenizer-metrics-allowed-custom-labels
+        cls.labels_header = "X-Metrics-Labels"
+        cls.my_label = "business_line"
 
-        if log_level is not None:
-            other_args.extend(["--log-level", log_level])
-
-
-        if log_level_http is not None:
-            other_args.extend(["--log-level-http", log_level_http])
-
-        if log_requests:
-            other_args.append("--log-requests")
-            if log_requests_level is not None:
-                other_args.extend(["--log-requests-level", str(log_requests_level)])
-            if log_requests_format is not None:
-                other_args.extend(["--log-requests-format", log_requests_format])
-
-            if log_requests_target is not None:
-                other_args.extend(["--log-requests-target"] + log_requests_target)
-
-        if enable_metrics:
-            other_args.append("--enable-metrics")
-
-        if enable_metrics_for_all_schedulers:
-            other_args.append("--enable-metrics-for-all-schedulers")
-
-        if collect_tokens_histogram:
-            other_args.append("--collect-tokens-histogram")
-
-        if bucket_time_to_first_token is not None:
-            other_args.extend(["--bucket-time-to-first-token"] + [str(x) for x in bucket_time_to_first_token])
-
-        if bucket_inter_token_latency is not None:
-            other_args.extend(["--bucket-inter-token-latency"] + [str(x) for x in bucket_inter_token_latency])
-
-        if bucket_e2e_request_latency is not None:
-            other_args.extend(["--bucket-e2e-request-latency"] + [str(x) for x in bucket_e2e_request_latency])
-
-        if prompt_tokens_buckets is not None:
-            other_args.extend(["--prompt-tokens-buckets"] + prompt_tokens_buckets)
-
-        if generation_tokens_buckets is not None:
-            other_args.extend(["--generation-tokens-buckets"] + generation_tokens_buckets)
-
-        if gc_warning_threshold_secs > 0:
-            other_args.extend(["--gc-warning-threshold-secs", str(gc_warning_threshold_secs)])
-
-        other_args.extend(["--decode-log-interval", str(decode_log_interval)])
-
-        if enable_request_time_stats_logging:
-            other_args.append("--enable-request-time-stats-logging")
-
-        if enable_trace:
-            other_args.append("--enable-trace")
-            other_args.extend(["--otlp-traces-endpoint", otlp_traces_endpoint])
-
-        if crash_dump_folder is not None:
-            other_args.extend(["--crash-dump-folder", crash_dump_folder])
-
-        if uvicorn_access_log_exclude_prefixes is not None:
-            other_args.extend(["--uvicorn-access-log-exclude-prefixes", uvicorn_access_log_exclude_prefixes])
-
-        if show_time_cost is not None:
-            other_args.extend(["--show-time-cost", show_time_cost])
-
-        if tokenizer_metrics_custom_labels_header is not None:
-            other_args.extend(["--tokenizer-metrics-custom-labels-header", tokenizer_metrics_custom_labels_header])
-
-        if tokenizer_metrics_allowed_custom_labels is not None:
-            other_args.extend(["--tokenizer-metrics-allowed-custom-labels", tokenizer_metrics_allowed_custom_labels])
-
-        if kv_events_config is not None:
-            other_args.extend(["--kv-events-config", kv_events_config])
-
-        process = popen_launch_server(
-            self.model,
-            self.base_url,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=other_args,
-        ) if out_log_file is None and err_log_file is None else popen_launch_server(
-            self.model,
-            self.base_url,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=other_args,
-            return_stdout_stderr=(out_log_file, err_log_file),
-        )
-
-        return process
+    def _clean_environment(self, process, out_log_file, err_log_file):
+        """Clean up environment variables used by tests."""
+        if process:
+            kill_process_tree(process.pid)
+        if out_log_file:
+            out_log_file.close()
+            os.remove(self.out_log_name)
+        if err_log_file:
+            err_log_file.close()
+            os.remove(self.err_log_name)
 
     def _send_inference_request(self, max_new_tokens=32):
         """Send a basic inference request."""
@@ -221,20 +150,176 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
         self.assertIn(self.expected_output, response.text)
         return response.text
 
-    # TODO 验证方法
-    def _check_metrics_endpoint(self):
-        """Check if metrics endpoint is accessible and returns valid Prometheus metrics."""
+    def _test_inference_function(self, max_new_tokens=32):
+        """Send a basic inference request to test inference function."""
+        response = requests.post(
+            f"{self.base_url}/generate",
+            json={
+                "text": self.test_prompt,
+                "sampling_params": {
+                    "temperature": 0,
+                    "max_new_tokens": max_new_tokens,
+                },
+            },
+            timeout=60,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.expected_output, response.text)
+        return response.text
+
+    @staticmethod
+    def get_lines_with_keyword(filename, keyword):
+        results = []
         try:
-            response = requests.get(f"{self.base_url}/metrics", timeout=10)
-            self.assertEqual(response.status_code, 200)
-            metrics_content = response.text
-            # self.assertIn("sglang_", metrics_content)
-            print("=================check_metrics_endpoint==================")
-            print(metrics_content)
-            print("=================check_metrics_endpoint END==================")
-            return metrics_content
-        except requests.exceptions.RequestException as e:
-            self.fail(f"Metrics endpoint not accessible: {e}")
+            with open(filename, "r", encoding="utf-8") as file:
+                for line_num, line in enumerate(file, 1):
+                    if re.match(keyword, line):
+                        results.append(
+                            {
+                                "line_number": line_num,
+                                "content": line.strip(),
+                            }
+                        )
+            return results
+        except Exception as e:
+            print(f"error:{e}")
+            return []
+
+    def _test_log_requests_level(self, log_requests_level, out_log_file):
+        """Send a basic inference request to test inference function."""
+        # When the log level is 2, input and output will be truncated, retaining a length of 2048.
+        # When the log level is 3, complete input and output will be retained.
+        # In other cases, only basic functions are tested, and reducing token output increases testing speed.
+        max_new_token = 2500 if log_requests_level >= 2 else 100
+        response = requests.post(
+            f"{self.base_url}/generate",
+            json={
+                "text": f"just return me a string with of {max_new_token} characters.",
+                "sampling_params": {"temperature": 0, "max_new_tokens": max_new_token},
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        out_log_file.seek(0)
+        content = out_log_file.read()
+
+        self.assertTrue(len(content) > 0)
+        self.assertIsNotNone(re.search(self.log_request_message_dict[str(log_requests_level)], content))
+        if log_requests_level >= 2:
+            lines = self.get_lines_with_keyword(self.out_log_name, self.keyword_Finish)
+            Finish_message = lines[0]["content"]
+            start_index = Finish_message.find(self.keyword_start) + len(self.keyword_start)
+            end_index = Finish_message.find(self.keyword_end)
+            out_text = Finish_message[start_index:end_index]
+            out_text_length = len(out_text)
+            out_text_length_n = len(out_text.replace("\\n", " "))
+            if log_requests_level == 2:
+                self.assertIn("' ... '", out_text)
+                self.assertTrue(out_text_length_n - len("' ... '") == 2048)
+            else:
+                self.assertNotIn("' ... '", out_text)
+                self.assertTrue(out_text_length > 2048)
+
+    def _test_log_metrics_tokenizer_label(self):
+        response = requests.post(
+            f"{self.base_url}/generate",
+            json={
+                "Content-Type": "application/json",
+                "X-Metrics-Labels": f"{self.my_label}=cunstomer_service",
+                "text": self.test_prompt,
+                "sampling_params": {
+                    "temperature": 0,
+                    "max_new_tokens": 32,
+                },
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.expected_output, response.text)
+
+        response = requests.get(f"{self.base_url}/metrics", timeout=10)
+        self.assertEqual(response.status_code, 200)
+        metrics_content = response.text
+        message = f'sglang:time_to_first_token_seconds_bucket{{{self.my_label}="'
+        self.assertIn(message, metrics_content)
+        message = f'sglang:inter_token_latency_seconds_bucket{{{self.my_label}='
+        self.assertIn(message, metrics_content)
+        message = f'sglang:e2e_request_latency_seconds_bucket{{{self.my_label}='
+        self.assertIn(message, metrics_content)
+
+    def _get_default_other_args(self):
+        return [
+            "--trust-remote-code",
+            "--mem-fraction-static",
+            "0.8",
+            "--attention-backend",
+            "ascend",
+            "--disable-cuda-graph",
+        ]
+
+    def _test_metrics(
+        self,
+        expected_time_to_first_token_bucket=None,
+        expected_inter_token_latency_bucket=None,
+        expected_e2e_request_latency_bucket=None,
+        expected_prompt_tokens_bucket=None,
+        expected_generation_tokens_bucket=None,
+    ):
+        response = requests.get(f"{self.base_url}/metrics", timeout=10)
+        self.assertEqual(response.status_code, 200)
+        metrics_content = response.text
+        if expected_time_to_first_token_bucket is not None:
+            for le in expected_time_to_first_token_bucket:
+                message = f'sglang:time_to_first_token_seconds_bucket{{le="{le}",model_name="{self.model}"}}'
+                self.assertIn(message, metrics_content)
+        if expected_inter_token_latency_bucket is not None:
+            for le in expected_inter_token_latency_bucket:
+                message = f'sglang:inter_token_latency_seconds_bucket{{le="{le}",model_name="{self.model}"}}'
+                self.assertIn(message, metrics_content)
+        if expected_e2e_request_latency_bucket is not None:
+            for le in expected_e2e_request_latency_bucket:
+                message = f'sglang:e2e_request_latency_seconds_bucket{{le="{le}",model_name="{self.model}"}}'
+                self.assertIn(message, metrics_content)
+        if expected_prompt_tokens_bucket is not None:
+            for le in expected_prompt_tokens_bucket:
+                message = f'sglang:prompt_tokens_histogram_bucket{{le="{le}",model_name="{self.model}"}}'
+                self.assertIn(message, metrics_content)
+        if expected_generation_tokens_bucket is not None:
+            for le in expected_generation_tokens_bucket:
+                message = f'sglang:generation_tokens_histogram_bucket{{le="{le}",model_name="{self.model}"}}'
+                self.assertIn(message, metrics_content)
+        return metrics_content
+
+    def _test_gc_warning_threshold(self, err_log_file):
+        prompt_template = "just return me a string with of 10000 characters: " + "A" * 5000
+        max_token = 1000
+
+        def send_request():
+            try:
+                response = requests.post(
+                    f"{self.base_url}/generate",
+                    json={
+                        "text": prompt_template,
+                        "sampling_params": {"temperature": 0, "max_new_tokens": max_token},
+                    },
+                )
+            except Exception as e:
+                print(e)
+
+        threads = []
+        for _ in range(200):
+            t = threading.Thread(target=send_request)
+            t.start()
+            threads.append(t)
+            sleep(0.01)
+
+        for t in threads:
+            t.join()
+
+        GC_info = "LONG GARBAGE COLLECTION DETECTED"
+        err_log_file.seek(0)
+        content = err_log_file.read()
+        self.assertTrue(len(content) > 0)
+        self.assertIn(GC_info, content)
 
     def _safe_kill_process(self):
         if self.process is not None:
@@ -242,595 +327,243 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
             self.process = None
 
 
-# TestAscendLoggingNPUMetric
-# --enable-metrics、--enable-metrics-for-all-schedulers TODO 基础、详细监控指标
-# --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
+class TestAscendLoggingDefault(TestAscendLoggingNPUFullBase):
+    def test_logging_default(self):
+        other_args = self._get_default_other_args()
+        out_log_file = open(self.out_log_name, "w+", encoding="utf-8")
+        err_log_file = open(self.err_log_name, "w+", encoding="utf-8")
+
+        process = popen_launch_server(
+            self.model,
+            self.base_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=other_args,
+            return_stdout_stderr=(out_log_file, err_log_file),
+        )
+
+        try:
+            self._test_inference_function()
+
+            out_log_file.seek(0)
+            content = out_log_file.read()
+            self.assertTrue(len(content) > 0)
+            self.assertIsNone(re.search(self.message, content))
+
+            response = requests.get(f"{self.base_url}/metrics", timeout=10)
+            self.assertEqual(response.status_code, 404)
+        finally:
+            self._clean_environment(process, out_log_file, err_log_file)
 
 
-# TestAscendLoggingNPUBucket TODO 观测点
-# --bucket-time-to-first-token、--bucket-inter-token-latency、--bucket-e2e-request-latency
-# 请求到达到首个token生成-响应时间；token输出间隔-生成速度稳定性；请求到达到完整返回时间-整体服务性能
-# TestAscendLoggingNPUCollectTokensHistogram TODO 观测点
-# --collect-tokens-histogram、--prompt-tokens-buckets、--generation-tokens-buckets
-# TestAscendLoggingNPUDecodeLogInterval
-# --decode-log-interval TODO 观测点
-# TestAscendLoggingNPUGCWarningThresholdSecs
-# --gc-warning-threshold-secs
-# TestAscendLoggingNPUEnableRequestTimeStatsLogging
-# --enable-request-time-stats-logging
-# TestAscendLoggingNPUEnableTrace
-# --enable-trace、 --otlp-traces-endpoint
+class TestAscendLoggingCase0(TestAscendLoggingNPUFullBase):
+    def test_logging_case_0(self):
+        other_args = self._get_default_other_args()
+        out_log_file = open(self.out_log_name, "w+", encoding="utf-8")
+        err_log_file = open(self.err_log_name, "w+", encoding="utf-8")
 
-# TODO --uvicorn-access-log-exclude-prefixes 排除以这些前缀开头的uvicorn访问日志
-# TestAscendLoggingNPUCrashDumpFolder TODO  注入错误
-# --crash-dump-folder 崩溃转储路径
-# TODO --show-time-cost 打印阶段耗时
-# TODO --tokenizer-metrics-custom-labels-header、--tokenizer-metrics-allowed-custom-labels
-# 指定用于传递自定义标签以获取分词器指标的HTTP头， 允许用于分词器指标的自定义标签
-# TODO --kv-events-config
+        other_args.append("--log-requests")
+        log_requests_level = 0
+        other_args.extend(["--log-requests-level", str(log_requests_level)])
 
-# TODO 验证方式、删减
-class TestAscendLoggingNPULevel(TestAscendLoggingNPUFullBase):
-    def test_log_level(self):
-        level_list = ["info", "debug", "warning", "error", "critical"]
-        http_level_list = ["info", "critical", "error", "warning", "debug", ]
+        other_args.extend(["--enable-metrics"])
 
-        for level, http_level in zip(level_list, http_level_list):
-            self._temp_dir_obj = tempfile.TemporaryDirectory()
-            self.temp_dir = self._temp_dir_obj.name
+        expected_time_to_first_token_bucket = self.default_time_to_first_token_bucket
+        expected_inter_token_latency_bucket = self.default_inter_token_latency_bucket
+        expected_e2e_request_latency_bucket = self.default_e2e_request_latency_bucket
 
-            try:
-                self.process = self._launch_server_with_logging(
-                    log_level=level,
-                    log_level_http=http_level,
-                    log_requests=True,
-                    log_requests_level=2,
-                    log_requests_format="text",
-                    log_requests_target=["stdout", self.temp_dir],
-                )
-                time.sleep(5)
+        other_args.extend(["--collect-tokens-histogram"])
 
-                result = self._send_inference_request()
-                print(f"✓ log-level=debug test passed, result: {result[:50]}...")
+        expected_prompt_tokens_bucket = self.default_tokens_bucket
+        expected_generation_tokens_bucket = self.default_tokens_bucket
 
-                log_files = list(Path(self.temp_dir).glob("*.log"))
-                self.assertGreater(len(log_files), 0)
+        other_args.extend(["--gc-warning-threshold-secs", "0.01"])
 
-                file_content = log_files[0].read_text()
-                self.assertIn("Receive:", file_content)
-                self.assertIn("Finish:", file_content)
-            finally:
-                self._safe_kill_process()
-
-
-def get_lines_with_keyword(filename, keyword):
-    results = []
-
-    try:
-        with open(filename, "r", encoding="utf-8") as file:
-            for line_num, line in enumerate(file, 1):
-                if re.match(keyword, line):
-                    results.append(
-                        {
-                            "line_number": line_num,
-                            "content": line.strip(),
-                        }
-                    )
-        return results
-    except Exception as e:
-        print(f"error:{e}")
-        return []
-
-
-class TestAscendLogRequests(TestAscendLoggingNPUFullBase):
-    def test_log_requests_level(self):
-        message = {
-            "0": r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, video_data=None,.*",
-            "1": r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, video_data=None, sampling_params=.*",
-            "2": r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, text=.*",
-            "3": r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, text=.*",
-        }
-        out_log_name = "./log_requests_level_out_log.txt"
-        err_log_name = "./log_requests_level_err_log.txt"
-        keyword_Finish = r".*Finish: obj=GenerateReqInput\(.*http_worker_ipc=None, text='just.*"
-        keyword_start = "out={'text': '"
-        keyword_end = "', 'output_ids'"
-        for i in [0, 1, 2, 3]:
-            out_log_file = open(out_log_name, "w+", encoding="utf-8")
-            err_log_file = open(err_log_name, "w+", encoding="utf-8")
-            process = self._launch_server_with_logging(
-                log_requests=True,
-                log_requests_level=i,
-                out_log_file=out_log_file,
-                err_log_file=err_log_file,
-            ) if i != 2 else self._launch_server_with_logging(
-                log_requests=True,
-                out_log_file=out_log_file,
-                err_log_file=err_log_file,
-            )
-
-            try:
-                self._send_inference_request()
-
-                max_new_token = 2500 if i >= 2 else 100
-
-                response = requests.post(
-                    f"{self.base_url}/generate",
-                    json={
-                        "text": f"just return me a string with of 5000 characters",
-                        "sampling_params": {"temperature": 0, "max_new_tokens": max_new_token},
-                    },
-                )
-                self.assertEqual(response.status_code, 200)
-                out_log_file.seek(0)
-                content = out_log_file.read()
-
-                self.assertTrue(len(content) > 0)
-                self.assertIsNotNone(re.search(message[str(i)], content))
-                if i >= 2:
-                    lines = get_lines_with_keyword(out_log_name, keyword_Finish)
-                    Finish_message = lines[0]["content"]
-                    start_index = Finish_message.find(keyword_start) + len(keyword_start)
-                    end_index = Finish_message.find(keyword_end)
-                    out_text = Finish_message[start_index:end_index]
-                    out_text_length = len(out_text)
-                    out_text_length_n = len(out_text.replace("\\n", " "))
-                    if i == 2:
-                        self.assertIn("' ... '", out_text)
-                        self.assertTrue(out_text_length_n - len("' ... '") == 2048)
-                    else:
-                        self.assertNotIn("' ... '", out_text)
-                        self.assertTrue(out_text_length > 2048)
-            finally:
-                kill_process_tree(process.pid)
-                out_log_file.close()
-                err_log_file.close()
-                os.remove(out_log_name)
-                os.remove(err_log_name)
-
-
-class TestAscendLoggingNPURequestsFormat(TestAscendLoggingNPUFullBase):
-    def test_05_log_requests_format_json(self):
-        """Test log-requests-format=json."""
-        print("\n=== Test 05: log-requests-format=json ===")
         self._temp_dir_obj = tempfile.TemporaryDirectory()
         self.temp_dir = self._temp_dir_obj.name
 
-        try:
-            self.process = self._launch_server_with_logging(
-                log_requests=True,
-                log_requests_level=2,
-                log_requests_format="json",
-                log_requests_target=["stdout", self.temp_dir],
-            )
-            time.sleep(5)
+        self.temp_level1_dir = os.path.join(self.temp_dir, "level1")
+        self.temp_level2_dir = os.path.join(self.temp_dir, "level2")
+        self.temp_level3_dir = os.path.join(self.temp_dir, "level3")
 
-            result = self._send_inference_request()
-            print(f"✓ log-requests-format=json test passed, result: {result[:50]}...")
+        os.makedirs(self.temp_level3_dir, exist_ok=True)
+
+        target_config = ["stdout", self.temp_dir, self.temp_level3_dir]
+        other_args.extend(["--log-requests-target"] + target_config)
+
+        process = popen_launch_server(
+            self.model,
+            self.base_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=other_args,
+            return_stdout_stderr=(out_log_file, err_log_file),
+        )
+
+        try:
+            self._test_inference_function()
+
+            self._test_log_requests_level(log_requests_level, out_log_file)
+
+            self._test_metrics(
+                expected_time_to_first_token_bucket=expected_time_to_first_token_bucket,
+                expected_inter_token_latency_bucket=expected_inter_token_latency_bucket,
+                expected_e2e_request_latency_bucket=expected_e2e_request_latency_bucket,
+                expected_prompt_tokens_bucket=expected_prompt_tokens_bucket,
+                expected_generation_tokens_bucket=expected_generation_tokens_bucket,
+            )
 
             log_files = list(Path(self.temp_dir).glob("*.log"))
             self.assertGreater(len(log_files), 0)
 
             file_content = log_files[0].read_text()
-            print("============json.loads(file_content)=========================")
-            print(json.loads(file_content))
-            json_lines = [line for line in file_content.splitlines() if line.strip().startswith("{")]
-            self.assertGreater(len(json_lines), 0)
+            self.assertIn("Receive:", file_content)
+            self.assertIn("Finish:", file_content)
 
-            for line in json_lines:
-                data = json.loads(line)
-                self.assertIn("event", data)
-                self.assertIn("rid", data)
+            log_files = list(Path(self.temp_level3_dir).glob("*.log"))
+            self.assertGreater(len(log_files), 0)
+
+            file_content = log_files[0].read_text()
+            self.assertIn("Receive:", file_content)
+            self.assertIn("Finish:", file_content)
+
+            self._test_gc_warning_threshold(err_log_file)
         finally:
-            self._safe_kill_process()
+            self._clean_environment(process, out_log_file, err_log_file)
 
 
-# TODO 多级目录
-class TestAscendLoggingNPURequestsTarget(TestAscendLoggingNPUFullBase):
-    def test_06_log_requests_target_variations(self):
-        """Test log-requests-target variations."""
-        print("\n=== Test 06: log-requests-target variations ===")
+class TestAscendLoggingCase1(TestAscendLoggingNPUFullBase):
+    def test_logging_case_1(self):
+        other_args = self._get_default_other_args()
+        out_log_file = open(self.out_log_name, "w+", encoding="utf-8")
+        err_log_file = open(self.err_log_name, "w+", encoding="utf-8")
 
-        for target_config in [["stdout"], [self.temp_dir], ["stdout", self.temp_dir]]:
-            self._temp_dir_obj = tempfile.TemporaryDirectory()
-            self.temp_dir = self._temp_dir_obj.name
+        other_args.append("--log-requests")
+        log_requests_level = 1
+        other_args.extend(["--log-requests-level", str(log_requests_level)])
 
-            try:
-                self.process = self._launch_server_with_logging(
-                    log_requests=True,
-                    log_requests_level=2,
-                    log_requests_format="text",
-                    log_requests_target=target_config,
-                )
-                time.sleep(5)
+        other_args.extend(["--enable-metrics"])
 
-                result = self._send_inference_request()
-                print(f"  Target {target_config} test passed")
+        other_args.extend(["--bucket-time-to-first-token"] + self.my_bucket)
+        other_args.extend(["--bucket-inter-token-latency"] + self.my_bucket)
+        other_args.extend(["--bucket-e2e-request-latency"] + self.my_bucket)
+        expected_time_to_first_token_bucket = self.my_bucket
+        expected_inter_token_latency_bucket = self.my_bucket
+        expected_e2e_request_latency_bucket = self.my_bucket
 
-                if self.temp_dir in target_config:
-                    log_files = list(Path(self.temp_dir).glob("*.log"))
-                    self.assertGreater(len(log_files), 0)
+        other_args.extend(["--collect-tokens-histogram"])
 
-                    file_content = log_files[0].read_text()
-                    self.assertIn("Receive:", file_content)
-                    self.assertIn("Finish:", file_content)
-            finally:
-                self._safe_kill_process()
+        other_args.extend(["--prompt-tokens-buckets"] + ["custom"] + self.my_tokens_bucket)
+        other_args.extend(["--generation-tokens-buckets"] + ["custom"] + self.my_tokens_bucket)
+        expected_prompt_tokens_bucket = self.my_tokens_bucket
+        expected_generation_tokens_bucket = self.my_tokens_bucket
 
-        print(f"✓ All log-requests-target variations test passed")
-
-
-class TestAscendLoggingNPUMetric(TestAscendLoggingNPUFullBase):
-    # def test_08_enable_metrics_for_all_schedulers(self):
-    #     """Test enable-metrics-for-all-schedulers with TP2."""
-    #     print("\n=== Test 08: enable-metrics-for-all-schedulers (TP2) ===")
-    #
-    #     try:
-    #         self.process = self._launch_server_with_logging(
-    #             enable_metrics=True,
-    #             enable_metrics_for_all_schedulers=True,
-    #             tp_size=2,
-    #         )
-    #         # time.sleep(8)
-    #
-    #         result = self._send_inference_request()
-    #         # print(f"✓ enable-metrics-for-all-schedulers test passed, result: {result[:50]}...")
-    #
-    #         metrics_content = self._check_metrics_endpoint()
-    #         self.assertIn('tp_rank="0"', metrics_content)
-    #         self.assertIn('tp_rank="1"', metrics_content)
-    #     finally:
-    #         self._safe_kill_process()
-    #
-    def test_metrics_2(self):
-        """Test enable-metrics-for-all-schedulers with TP2."""
-        print("\n=== Test 02: test_metrics_2 ===")
-        print("")
+        process = popen_launch_server(
+            self.model,
+            self.base_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=other_args,
+            return_stdout_stderr=(out_log_file, err_log_file),
+        )
 
         try:
-            self.process = self._launch_server_with_logging(
-                enable_metrics=True,
-                # enable_metrics_for_all_schedulers=True,
-                tp_size=2,
-                dp_size=2
+            self._test_inference_function()
+
+            self._test_log_requests_level(log_requests_level, out_log_file)
+
+            self._test_metrics(
+                expected_time_to_first_token_bucket=expected_time_to_first_token_bucket,
+                expected_inter_token_latency_bucket=expected_inter_token_latency_bucket,
+                expected_e2e_request_latency_bucket=expected_e2e_request_latency_bucket,
+                expected_prompt_tokens_bucket=expected_prompt_tokens_bucket,
+                expected_generation_tokens_bucket=expected_generation_tokens_bucket,
             )
-            # time.sleep(8)
-
-            result = self._send_inference_request()
-            # print(f"✓ enable-metrics-for-all-schedulers test passed, result: {result[:50]}...")
-
-            metrics_content = self._check_metrics_endpoint()
-
-            self.assertIn('tp_rank="0"', metrics_content)
-            # self.assertNotIn('tp_rank="1"', metrics_content)
-            for le in ["0.1", "0.2", "0.4", "0.8", "1.0", "400.0", "+Inf"]:
-                message = f'sglang:time_to_first_token_seconds_bucket{{le="{le}",model_name="{MODEL_PATH}"}}'
-                self.assertIn(message, metrics_content)
-                message = f'sglang:e2e_request_latency_seconds_bucket{{le="{le}",model_name="{MODEL_PATH}"}}'
-                self.assertIn(message, metrics_content)
         finally:
-            self._safe_kill_process()
+            self._clean_environment(process, out_log_file, err_log_file)
 
-    def test_metrics_for_3(self):
-        """Test enable-metrics-for-all-schedulers with TP2."""
-        print("\n=== Test 03: test_metrics_for_3 ===")
-        print("")
+
+class TestAscendLoggingCase2(TestAscendLoggingNPUFullBase):
+    def test_logging_case_2(self):
+        other_args = self._get_default_other_args()
+        out_log_file = open(self.out_log_name, "w+", encoding="utf-8")
+        err_log_file = open(self.err_log_name, "w+", encoding="utf-8")
+
+        other_args.append("--log-requests")
+        log_requests_level = 2
+        other_args.extend(["--log-requests-level", str(log_requests_level)])
+
+        other_args.extend(["--enable-metrics"])
+        other_args.extend(["--collect-tokens-histogram"])
+        other_args.extend(["--prompt-tokens-buckets"] + ["tse"] + self.my_tse_set)
+        other_args.extend(["--generation-tokens-buckets"] + ["tse"] + self.my_tse_set)
+        expected_prompt_tokens_bucket = self.my_tse_bucket
+        expected_generation_tokens_bucket = self.my_tse_bucket
+
+        process = popen_launch_server(
+            self.model,
+            self.base_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=other_args,
+            return_stdout_stderr=(out_log_file, err_log_file),
+        )
 
         try:
-            self.process = self._launch_server_with_logging(
-                enable_metrics=True,
-                enable_metrics_for_all_schedulers=True,
-                tp_size=2,
-                dp_size=2,
-                bucket_time_to_first_token=[0.1, 0.5, 1.0, 2.0, 5.0],
-                bucket_inter_token_latency=[0.01, 0.05, 0.1, 0.5],
-                bucket_e2e_request_latency=[0.1, 0.5, 1.0, 2.0, 5.0],
+            self._test_inference_function()
+
+            self._test_log_requests_level(log_requests_level, out_log_file)
+
+            self._test_metrics(
+                expected_prompt_tokens_bucket=expected_prompt_tokens_bucket,
+                expected_generation_tokens_bucket=expected_generation_tokens_bucket,
             )
-            # time.sleep(8)
-
-            result = self._send_inference_request()
-            # print(f"✓ enable-metrics-for-all-schedulers test passed, result: {result[:50]}...")
-
-            metrics_content = self._check_metrics_endpoint()
-
-            self.assertIn('tp_rank="0"', metrics_content)
-            # self.assertNotIn('tp_rank="1"', metrics_content)
-            # for le in ["0.1", "0.2", "0.4", "0.8", "1.0", "400.0", "+Inf"]:
-            #     message = f'sglang:time_to_first_token_seconds_bucket{{le="{le}",model_name="{MODEL_PATH}"}}'
-            #     self.assertIn(message, metrics_content)
-            #     message = f'sglang:e2e_request_latency_seconds_bucket{{le="{le}",model_name="{MODEL_PATH}"}}'
-            #     self.assertIn(message, metrics_content)
         finally:
-            self._safe_kill_process()
+            self._clean_environment(process, out_log_file, err_log_file)
 
 
-# class TestAscendLoggingNPUBucket(TestAscendLoggingNPUFullBase):
-#     def test_09_custom_buckets(self):
-#         """Test custom metric buckets."""
-#         print("\n=== Test 09: custom metric buckets ===")
-#
-#         try:
-#             self.process = self._launch_server_with_logging(
-#                 enable_metrics=True,
-#                 bucket_time_to_first_token=[0.1, 0.5, 1.0, 2.0, 5.0],
-#                 bucket_inter_token_latency=[0.01, 0.05, 0.1, 0.5],
-#                 bucket_e2e_request_latency=[1.0, 5.0, 10.0, 30.0],
-#             )
-#             time.sleep(5)
-#
-#             result = self._send_inference_request()
-#             print(f"✓ custom buckets test passed, result: {result[:50]}...")
-#
-#             metrics_content = self._check_metrics_endpoint()
-#             # self.assertIn("sglang_time_to_first_token_bucket", metrics_content)
-#             # self.assertIn("sglang_e2e_request_latency_bucket", metrics_content)
-#         finally:
-#             kill_process_tree(self.process.pid)
-#             self.process = None
+class TestAscendLoggingCase3(TestAscendLoggingNPUFullBase):
+    def test_logging_case_3(self):
+        other_args = self._get_default_other_args()
+        out_log_file = open(self.out_log_name, "w+", encoding="utf-8")
+        err_log_file = open(self.err_log_name, "w+", encoding="utf-8")
 
+        other_args.append("--log-requests")
+        log_requests_level = 3
+        other_args.extend(["--log-requests-level", str(log_requests_level)])
 
-class TestAscendLoggingNPUCollectTokensHistogram(TestAscendLoggingNPUFullBase):
-    def test_11_prompt_tokens_buckets_default(self):
-        """Test prompt-tokens-buckets with default."""
-        print("\n=== Test 11: prompt-tokens-buckets default ===")
+        other_args.extend(["--enable-metrics"])
+        other_args.extend(["--tokenizer-metrics-custom-labels-header", self.labels_header])
+        other_args.extend(["--tokenizer-metrics-allowed-custom-labels", self.my_label])
 
-        prompt_tokens_bucket_list = [["default"], ["tse", "512", "2", "8"], ["custom", "100", "500", "1000", "5000"]]
-        generation_tokens_buckets_list = [["custom", "100", "500", "1000", "5000"], ["tse", "512", "2", "8"],
-                                          ["default"]]
-
-        for prompt_tokens_bucket, generation_tokens_buckets in zip(prompt_tokens_bucket_list,
-                                                                   generation_tokens_buckets_list):
-
-            try:
-                self.process = self._launch_server_with_logging(
-                    enable_metrics=True,
-                    collect_tokens_histogram=True,
-                    prompt_tokens_buckets=prompt_tokens_bucket,
-                    generation_tokens_buckets=generation_tokens_buckets,
-                )
-                time.sleep(5)
-
-                result = self._send_inference_request()
-                print(f"✓ prompt-tokens-buckets default test passed, result: {result[:50]}...")
-
-                # metrics_content = self._check_metrics_endpoint()
-                # self.assertIn("sglang_prompt_tokens_bucket", metrics_content)
-            finally:
-                kill_process_tree(self.process.pid)
-                self.process = None
-
-
-class TestAscendLoggingNPUDecodeLogInterval(TestAscendLoggingNPUFullBase):
-    def test_15_decode_log_interval(self):
-        """Test decode-log-interval."""
-        print("\n=== Test 15: decode-log-interval ===")
-        self._temp_dir_obj = tempfile.TemporaryDirectory()
-        self.temp_dir = self._temp_dir_obj.name
+        process = popen_launch_server(
+            self.model,
+            self.base_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=other_args,
+            return_stdout_stderr=(out_log_file, err_log_file),
+        )
 
         try:
-            self.process = self._launch_server_with_logging(
-                log_level="debug",
-                decode_log_interval=10,
-            )
-            time.sleep(5)
+            self._test_inference_function()
 
-            result = self._send_inference_request(max_new_tokens=100)
-            print(f"✓ decode-log-interval test passed, result: {result[:50]}...")
+            self._test_log_requests_level(log_requests_level, out_log_file)
+
+            # test --tokenizer-metrics-custom-labels-header、--tokenizer-metrics-allowed-custom-labels
+            self._test_log_metrics_tokenizer_label()
         finally:
-            kill_process_tree(self.process.pid)
-            self.process = None
-
-
-class TestAscendLoggingNPUGCWarningThresholdSecs(TestAscendLoggingNPUFullBase):
-    def test_18_gc_warning_threshold_secs(self):
-        """Test gc-warning-threshold-secs."""
-        print("\n=== Test 18: gc-warning-threshold-secs ===")
-
-        try:
-            self.process = self._launch_server_with_logging(
-                gc_warning_threshold_secs=0.1,
-            )
-            time.sleep(5)
-
-            result = self._send_inference_request()
-            print(f"✓ gc-warning-threshold-secs test passed, result: {result[:50]}...")
-        finally:
-            kill_process_tree(self.process.pid)
-            self.process = None
-
-
-class TestAscendLoggingNPUEnableRequestTimeStatsLogging(TestAscendLoggingNPUFullBase):
-    def test_16_enable_request_time_stats_logging(self):
-        """Test enable-request-time-stats-logging."""
-        print("\n=== Test 16: enable-request-time-stats-logging ===")
-
-        try:
-            self.process = self._launch_server_with_logging(
-                enable_request_time_stats_logging=True,
-            )
-            time.sleep(5)
-
-            result = self._send_inference_request()
-            print(f"✓ enable-request-time-stats-logging test passed, result: {result[:50]}...")
-        finally:
-            kill_process_tree(self.process.pid)
-            self.process = None
-
-
-# TODO install OTLP collector
-class TestAscendLoggingNPUEnableTrace(TestAscendLoggingNPUFullBase):
-    def test_17_enable_trace(self):
-        """Test enable-trace (requires OTLP collector)."""
-        print("\n=== Test 17: enable-trace ===")
-
-        try:
-            self.process = self._launch_server_with_logging(
-                enable_trace=True,
-                otlp_traces_endpoint="localhost:4317",
-            )
-            time.sleep(5)
-
-            result = self._send_inference_request()
-            print(f"✓ enable-trace test passed (server started successfully), result: {result[:50]}...")
-        except Exception as e:
-            print(f"⚠ enable-trace test skipped (OTLP collector may not be available): {e}")
-        finally:
-            if self.process:
-                kill_process_tree(self.process.pid)
-                self.process = None
-
-
-# TODO: 注入崩溃
-class TestAscendLoggingNPUCrashDumpFolder(TestAscendLoggingNPUFullBase):
-    def test_19_crash_dump_folder(self):
-        """Test crash-dump-folder."""
-        print("\n=== Test 19: crash-dump-folder ===")
-        self._temp_dir_obj = tempfile.TemporaryDirectory()
-        self.temp_dir = self._temp_dir_obj.name
-        crash_dir = os.path.join(self.temp_dir, "crash_dumps")
-        os.makedirs(crash_dir, exist_ok=True)
-
-        try:
-            self.process = self._launch_server_with_logging(
-                crash_dump_folder=crash_dir,
-            )
-            time.sleep(5)
-
-            result = self._send_inference_request()
-            print(f"✓ crash-dump-folder test passed (server started successfully), result: {result[:50]}...")
-        finally:
-            kill_process_tree(self.process.pid)
-            self.process = None
-
-    # def test_20_combined_logging_params(self):
-    #     """Test combined logging parameters."""
-    #     print("\n=== Test 20: Combined logging parameters ===")
-    #     self._temp_dir_obj = tempfile.TemporaryDirectory()
-    #     self.temp_dir = self._temp_dir_obj.name
-    #
-    #     try:
-    #         self.process = self._launch_server_with_logging(
-    #             log_level="debug",
-    #             log_requests=True,
-    #             log_requests_level=2,
-    #             log_requests_format="json",
-    #             log_requests_target=["stdout", self.temp_dir],
-    #             enable_metrics=True,
-    #             collect_tokens_histogram=True,
-    #             enable_request_time_stats_logging=True,
-    #         )
-    #         time.sleep(5)
-    #
-    #         result = self._send_inference_request()
-    #         print(f"✓ Combined logging parameters test passed, result: {result[:50]}...")
-    #
-    #         metrics_content = self._check_metrics_endpoint()
-    #         self.assertIn("sglang_cache_hit_rate", metrics_content)
-    #
-    #         log_files = list(Path(self.temp_dir).glob("*.log"))
-    #         self.assertGreater(len(log_files), 0)
-    #
-    #         file_content = log_files[0].read_text()
-    #         json_lines = [line for line in file_content.splitlines() if line.strip().startswith("{")]
-    #         self.assertGreater(len(json_lines), 0)
-    #     finally:
-    #         kill_process_tree(self.process.pid)
-    #         self.process = None
-    #
-    # def test_21_concurrent_requests_logging(self):
-    #     """Test logging with concurrent requests."""
-    #     print("\n=== Test 21: Concurrent requests logging ===")
-    #     self._temp_dir_obj = tempfile.TemporaryDirectory()
-    #     self.temp_dir = self._temp_dir_obj.name
-    #
-    #     try:
-    #         self.process = self._launch_server_with_logging(
-    #             log_requests=True,
-    #             log_requests_level=2,
-    #             log_requests_format="text",
-    #             log_requests_target=["stdout", self.temp_dir],
-    #             enable_metrics=True,
-    #         )
-    #         time.sleep(5)
-    #
-    #         threads = []
-    #         results = []
-    #
-    #         def send_request(rid):
-    #             response = requests.post(
-    #                 f"{self.base_url}/generate",
-    #                 json={
-    #                     "text": f"Test request {rid}",
-    #                     "sampling_params": {
-    #                         "temperature": 0,
-    #                         "max_new_tokens": 16,
-    #                     },
-    #                 },
-    #                 timeout=60,
-    #             )
-    #             results.append(response.status_code)
-    #
-    #         for i in range(20):
-    #             thread = threading.Thread(target=send_request, args=(i,))
-    #             threads.append(thread)
-    #             thread.start()
-    #
-    #         for thread in threads:
-    #             thread.join()
-    #
-    #         success_count = sum(1 for r in results if r == 200)
-    #         self.assertGreaterEqual(success_count, 18)
-    #         print(f"✓ Concurrent requests logging test passed, {success_count}/20 succeeded")
-    #
-    #         metrics_content = self._check_metrics_endpoint()
-    #         self.assertIn("sglang_num_running_reqs", metrics_content)
-    #     finally:
-    #         kill_process_tree(self.process.pid)
-    #         self.process = None
-    #
-    # def test_22_tp4_metrics(self):
-    #     """Test metrics with TP4."""
-    #     print("\n=== Test 22: TP4 metrics ===")
-    #
-    #     try:
-    #         self.process = self._launch_server_with_logging(
-    #             enable_metrics=True,
-    #             tp_size=4,
-    #         )
-    #         time.sleep(10)
-    #
-    #         result = self._send_inference_request()
-    #         print(f"✓ TP4 metrics test passed, result: {result[:50]}...")
-    #
-    #         metrics_content = self._check_metrics_endpoint()
-    #         self.assertIn("sglang_cache_hit_rate", metrics_content)
-    #     finally:
-    #         kill_process_tree(self.process.pid)
-    #         self.process = None
+            self._clean_environment(process, out_log_file, err_log_file)
 
 
 if __name__ == "__main__":
-    # unittest.main()
-    loader = unittest.TestLoader()
-    suite = unittest.TestSuite()
-
-    # DONE
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLogRequests))
-
-    # TODO
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsLevel))
-
-
-
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsFormat))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPURequestsTarget))
-    suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUMetric))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUCollectTokensHistogram))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUDecodeLogInterval))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUGCWarningThresholdSecs))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUEnableRequestTimeStatsLogging))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUEnableTrace))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUCrashDumpFolder))
-    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingNPUBucket))
-    runner = unittest.TextTestRunner()
-    runner.run(suite)
+    unittest.main()
+    # loader = unittest.TestLoader()
+    # suite = unittest.TestSuite()
+    #
+    # # suite.addTests(loader.loadTestsFromTestCase(TestAscendLogging))
+    #
+    # # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingDefault))
+    #
+    # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase0))
+    # # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase1))
+    # # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase2))
+    # # suite.addTests(loader.loadTestsFromTestCase(TestAscendLoggingCase3))
+    #
+    # runner = unittest.TextTestRunner()
+    # runner.run(suite)
