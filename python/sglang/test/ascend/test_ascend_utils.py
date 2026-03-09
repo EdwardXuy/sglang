@@ -150,6 +150,12 @@ OLMO_2_1124_7B_INSTRUCT_WEIGHTS_PATH = os.path.join(
 SOLAR_10_7B_INSTRUCT_V1_0_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "upstage/SOLAR-10.7B-Instruct-v1.0"
 )
+STARCODER2_7B_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "bigcode/starcoder2-7b"
+)
+GPT_OSS_120B_BF16_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "eigen-ai-labs/gpt-oss-120b-bf16"
+)
 
 # VLM model weights path
 DEEPSEEK_VL2_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "deepseek-ai/deepseek-vl2")
