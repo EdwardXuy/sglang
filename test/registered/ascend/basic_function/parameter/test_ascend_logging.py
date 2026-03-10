@@ -23,7 +23,7 @@ from sglang.test.test_utils import (
 register_npu_ci(est_time=300, suite="nightly-2-npu-a3", nightly=True)
 
 
-class TestAscendLoggingNPUFullBase(CustomTestCase):
+class TestAscendLoggingBase(CustomTestCase):
     """Testcase：Verify the correct functionality of parameters in the logging feature.
 
     [Test Category] Parameter
@@ -463,7 +463,7 @@ class TestAscendLoggingNPUFullBase(CustomTestCase):
         self.assertIn(GC_info, content)
 
 
-class TestAscendLoggingCase0(TestAscendLoggingNPUFullBase):
+class TestAscendLoggingCase0(TestAscendLoggingBase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -528,7 +528,7 @@ class TestAscendLoggingCase0(TestAscendLoggingNPUFullBase):
         cls._temp_dir_obj.cleanup()
 
 
-class TestAscendLoggingCase1(TestAscendLoggingNPUFullBase):
+class TestAscendLoggingCase1(TestAscendLoggingBase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -584,7 +584,7 @@ class TestAscendLoggingCase1(TestAscendLoggingNPUFullBase):
         )
 
 
-class TestAscendLoggingCase2(TestAscendLoggingNPUFullBase):
+class TestAscendLoggingCase2(TestAscendLoggingBase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -621,7 +621,7 @@ class TestAscendLoggingCase2(TestAscendLoggingNPUFullBase):
         )
 
 
-class TestAscendLoggingCase3(TestAscendLoggingNPUFullBase):
+class TestAscendLoggingCase3(TestAscendLoggingBase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
