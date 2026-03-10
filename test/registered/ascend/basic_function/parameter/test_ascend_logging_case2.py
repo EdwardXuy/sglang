@@ -1,3 +1,5 @@
+import os
+import tempfile
 import unittest
 import requests
 
@@ -78,8 +80,43 @@ class TestAscendLoggingCase1(TestAscendLoggingBase):
             expected_time_to_first_token_bucket=self.my_bucket,
             expected_inter_token_latency_bucket=self.my_bucket,
             expected_e2e_request_latency_bucket=self.my_bucket,
-            expected_prompt_tokens_bucket=self.my_tokens_bucket,
-            expected_generation_tokens_bucket=self.my_tokens_bucket,
+            expected_prompt_tokens_bucket=self.my_bucket,
+            expected_generation_tokens_bucket=self.my_bucket,
+        )
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+
+        cls.other_args.append("--log-requests")
+        cls.log_requests_level = 2
+        cls.other_args.extend(["--log-requests-level", str(cls.log_requests_level)])
+
+        cls.other_args.extend(["--enable-metrics"])
+
+        cls.other_args.extend(["--collect-tokens-histogram"])
+
+        cls.other_args.extend(["--prompt-tokens-buckets"] + ["tse"] + cls.my_tse_set)
+        cls.other_args.extend(["--generation-tokens-buckets"] + ["tse"] + cls.my_tse_set)
+        cls.expected_prompt_tokens_bucket = cls.my_tse_bucket
+        cls.expected_generation_tokens_bucket = cls.my_tse_bucket
+
+        cls.process = popen_launch_server(
+            cls.model,
+            cls.base_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=cls.other_args,
+            return_stdout_stderr=(cls.out_log_file, cls.err_log_file),
+        )
+
+    def test_logging_case_2(self):
+        self._test_inference_function()
+
+        self._test_log_requests_level(self.log_requests_level, self.out_log_file)
+
+        self._test_metrics(
+            expected_prompt_tokens_bucket=self.expected_prompt_tokens_bucket,
+            expected_generation_tokens_bucket=self.expected_generation_tokens_bucket,
         )
 
 if __name__ == "__main__":
