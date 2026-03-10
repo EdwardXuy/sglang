@@ -107,6 +107,7 @@ class TestAscendLoggingBase(CustomTestCase):
         cls.keyword_Finish = r".*Finish: obj=GenerateReqInput\(.*http_worker_ipc=None, text='just.*"  # Match target log line
         cls.keyword_output_id_start = "'output_ids': ["  # Start delimiter for token ID array
         cls.keyword_output_id_end = "], 'meta_info'"  # End delimiter for token ID array
+        cls.keyword_output_id_ellipsis = "] ... ["
 
         # --------------------------------------------------------------------------
         # 2. --uvicorn-access-log-exclude-prefixes Configuration
@@ -163,7 +164,7 @@ class TestAscendLoggingBase(CustomTestCase):
             "1.1e+06",
         ]
 
-        # Custom token count bucket boundaries (for testing non-default configurations)
+        # Custom token count bucket boundaries (for testing custom configurations)
         cls.my_tokens_bucket = [
             "100.0", "1000.0", "10000.0", "100000.0", "300000.0", "600000.0", "900000.0",
         ]
@@ -280,8 +281,8 @@ class TestAscendLoggingBase(CustomTestCase):
             output_ids_end_index = finish_message.find(self.keyword_output_id_end)
             output_ids_list_str = finish_message[output_ids_start_index:output_ids_end_index].strip()
             if log_requests_level == 2:
-                self.assertIn("] ... [", output_ids_list_str)
-                output_ids_list_str = output_ids_list_str.replace("] ... [", ", ")
+                self.assertIn(self.keyword_output_id_ellipsis, output_ids_list_str)
+                output_ids_list_str = output_ids_list_str.replace(self.keyword_output_id_ellipsis, ", ")
                 token_id_count = len([x.strip() for x in re.split(r",\s*", output_ids_list_str) if x.strip()])
                 self.assertTrue(token_id_count == 2048)
             else:

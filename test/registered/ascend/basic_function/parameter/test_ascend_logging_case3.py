@@ -1,5 +1,3 @@
-import os
-import tempfile
 import unittest
 import requests
 
@@ -22,8 +20,8 @@ class TestAscendLoggingCase3(TestAscendLoggingBase):
     Core Functionality:
         This class tests the behavior of SGLang logging/metrics features under a specific parameter configuration set,
         working with Case0/1/2 to fully cover the parameter value range of the logging feature. The tested configuration includes:
-          --log-requests; --log-requests-level=3; --enable-metrics; --collect-tokens-histogram;
-          --prompt-tokens-buckets custom_bucket_boundary; --generation-tokens-buckets custom_bucket_boundary;
+          --log-requests; --log-requests-level=3; --enable-metrics;
+          --tokenizer-metrics-custom-labels-header custom_labels_header; --tokenizer-metrics-allowed-custom-labels allowed_custom_labels_list;
 
         Note:
             --log-requests, --enable-metrics, and --collect-tokens-histogram are feature-enabling parameters;
@@ -31,39 +29,8 @@ class TestAscendLoggingCase3(TestAscendLoggingBase):
 
     [Test Category] Parameter
     [Test Target] --log-requests; --log-requests-level; --enable-metrics;
-    --prompt-tokens-buckets; --generation-tokens-buckets;
+    --tokenizer-metrics-custom-labels-header; --tokenizer-metrics-allowed-custom-labels;
     """
-
-    @classmethod
-    def setUpClass(cls):
-        super().setUpClass()
-
-        cls.log_requests_level = 3
-
-        cls.other_args.extend(["--log-requests"])
-        cls.other_args.extend(["--log-requests-level", str(cls.log_requests_level)])
-        cls.other_args.extend(["--enable-metrics"])
-        cls.other_args.extend(["--collect-tokens-histogram"])
-        cls.other_args.extend(["--prompt-tokens-buckets"] + ["tse"] + cls.my_tse_set)
-        cls.other_args.extend(["--generation-tokens-buckets"] + ["tse"] + cls.my_tse_set)
-
-        cls.process = popen_launch_server(
-            cls.model,
-            cls.base_url,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=cls.other_args,
-            return_stdout_stderr=(cls.out_log_file, cls.err_log_file),
-        )
-
-    def test_logging_case_2(self):
-        self._test_inference_function()
-
-        self._test_log_requests_level(self.log_requests_level, self.out_log_file)
-
-        self._test_metrics(
-            expected_prompt_tokens_bucket=self.my_tse_bucket,
-            expected_generation_tokens_bucket=self.my_tse_bucket,
-        )
 
     @classmethod
     def setUpClass(cls):
@@ -92,6 +59,7 @@ class TestAscendLoggingCase3(TestAscendLoggingBase):
 
         # test --tokenizer-metrics-custom-labels-header、--tokenizer-metrics-allowed-custom-labels
         self._test_log_metrics_tokenizer_label()
+
 
 if __name__ == "__main__":
     unittest.main()

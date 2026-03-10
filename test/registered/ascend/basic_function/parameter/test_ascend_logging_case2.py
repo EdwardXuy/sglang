@@ -1,5 +1,3 @@
-import os
-import tempfile
 import unittest
 import requests
 
@@ -13,7 +11,7 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
-register_npu_ci(est_time=300, suite="nightly-1-npu-a3", nightly=True)
+register_npu_ci(est_time=100, suite="nightly-1-npu-a3", nightly=True)
 
 
 class TestAscendLoggingCase2(TestAscendLoggingBase):
@@ -64,6 +62,7 @@ class TestAscendLoggingCase2(TestAscendLoggingBase):
             expected_prompt_tokens_bucket=self.my_tse_bucket,
             expected_generation_tokens_bucket=self.my_tse_bucket,
         )
+
 
 if __name__ == "__main__":
     unittest.main()
