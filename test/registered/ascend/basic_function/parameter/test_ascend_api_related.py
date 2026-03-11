@@ -4,10 +4,7 @@ import unittest
 import requests
 from types import SimpleNamespace
 from sglang.srt.utils import kill_process_tree
-from sglang.test.ascend.test_ascend_utils import (
-    LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH,
-    run_command,
-)
+from sglang.test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
 from sglang.test.few_shot_gsm8k import run_eval
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -20,7 +17,7 @@ from sglang.test.ci.ci_register import register_npu_ci
 register_npu_ci(est_time=600, suite="nightly-1-npu-a3", nightly=True)
 
 
-class TestApiRelatedApiKey(CustomTestCase):
+class TestApiRelatedGHFChat(CustomTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -66,7 +63,7 @@ class TestApiRelatedApiKey(CustomTestCase):
         response1 = requests.get(f"{self.base_url}/model_info")
         self.assertEqual(response1.json()["weight_version"], self.weight_version)
 
-    def test_template_name(self):
+    def test_chat_template_name(self):
         response = requests.post(
             f"{self.base_url}/generate",
             json={
@@ -87,7 +84,6 @@ class TestApiRelatedToolCallParser(CustomTestCase):
     def setUpClass(cls):
         cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
         cls.base_url = DEFAULT_URL_FOR_TEST
-        cls.storage_path = "/tmp/storage_path"
         other_args = [
             "--trust-remote-code",
             "--mem-fraction-static",
@@ -170,7 +166,7 @@ class TestApiRelatedSamplingDefaults(CustomTestCase):
         self.assertGreater(len(result["choices"]), 0)
         logging.warning(f"Builtin chat template works: {result['choices'][0]['message']['content'][:50]}...")
 
-class TestApiRelatedCache_report(CustomTestCase):
+class TestApiRelatedCacheReport(CustomTestCase):
     @classmethod
     def setUpClass(cls):
         cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
@@ -185,7 +181,6 @@ class TestApiRelatedCache_report(CustomTestCase):
             "--chat-template",
             "llama-2",
             "--enable-cache-report"
-
         ]
 
         cls.process = popen_launch_server(
