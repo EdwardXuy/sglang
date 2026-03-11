@@ -40,8 +40,8 @@ class TestNPULoggingCase2(TestNPULoggingBase):
         cls.other_args.extend(["--log-requests-level", str(cls.log_requests_level)])
         cls.other_args.extend(["--enable-metrics"])
         cls.other_args.extend(["--collect-tokens-histogram"])
-        cls.other_args.extend(["--prompt-tokens-buckets"] + ["tse"] + cls.my_tse_set)
-        cls.other_args.extend(["--generation-tokens-buckets"] + ["tse"] + cls.my_tse_set)
+        cls.other_args.extend(["--prompt-tokens-buckets", "tse", *cls.my_tse_set])
+        cls.other_args.extend(["--generation-tokens-buckets", "tse", *cls.my_tse_set])
 
         cls.process = popen_launch_server(
             cls.model,

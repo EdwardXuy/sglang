@@ -62,7 +62,7 @@ class TestNPULoggingCase0(TestNPULoggingBase):
         cls.other_args.extend(["--tp-size", 2])
         cls.other_args.extend(["--collect-tokens-histogram"])
         cls.other_args.extend(["--gc-warning-threshold-secs", "0.01"])
-        cls.other_args.extend(["--log-requests-target"] + target_config)
+        cls.other_args.extend(["--log-requests-target", *target_config])
 
         cls.process = popen_launch_server(
             cls.model,
