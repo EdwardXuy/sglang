@@ -336,23 +336,23 @@ class TestNPULoggingBase(CustomTestCase):
         response = requests.get(f"{self.base_url}/metrics", timeout=10)
         self.assertEqual(response.status_code, 200)
         metrics_content = response.text
-        if expected_time_to_first_token_bucket is not None:
+        if expected_time_to_first_token_bucket:
             for le in expected_time_to_first_token_bucket:
                 message = f'sglang:time_to_first_token_seconds_bucket{{le="{le}",model_name="{self.model}"}}'
                 self.assertIn(message, metrics_content)
-        if expected_inter_token_latency_bucket is not None:
+        if expected_inter_token_latency_bucket:
             for le in expected_inter_token_latency_bucket:
                 message = f'sglang:inter_token_latency_seconds_bucket{{le="{le}",model_name="{self.model}"}}'
                 self.assertIn(message, metrics_content)
-        if expected_e2e_request_latency_bucket is not None:
+        if expected_e2e_request_latency_bucket:
             for le in expected_e2e_request_latency_bucket:
                 message = f'sglang:e2e_request_latency_seconds_bucket{{le="{le}",model_name="{self.model}"}}'
                 self.assertIn(message, metrics_content)
-        if expected_prompt_tokens_bucket is not None:
+        if expected_prompt_tokens_bucket:
             for le in expected_prompt_tokens_bucket:
                 message = f'sglang:prompt_tokens_histogram_bucket{{le="{le}",model_name="{self.model}"}}'
                 self.assertIn(message, metrics_content)
-        if expected_generation_tokens_bucket is not None:
+        if expected_generation_tokens_bucket:
             for le in expected_generation_tokens_bucket:
                 message = f'sglang:generation_tokens_histogram_bucket{{le="{le}",model_name="{self.model}"}}'
                 self.assertIn(message, metrics_content)
