@@ -9,7 +9,7 @@ import requests
 
 from sglang.srt.utils import kill_process_tree
 
-from sglang.test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH as MODEL_PATH
+from sglang.test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
 from sglang.test.test_utils import (
     DEFAULT_URL_FOR_TEST,
     CustomTestCase,
@@ -65,7 +65,7 @@ class TestNPULoggingBase(CustomTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.model = MODEL_PATH
+        cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
         cls.base_url = DEFAULT_URL_FOR_TEST
         cls.other_args = [
             "--trust-remote-code",
