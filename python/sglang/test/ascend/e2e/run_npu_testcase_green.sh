@@ -10,14 +10,8 @@ fi
 echo "NPU info:"
 npu-smi info
 
-export http_proxy=http://61.251.148.40:30066
-export https_proxy=${http_proxy}
-export no_proxy=127.0.0.1,localhost,local,.local,192.168.*.*
-
-pip config set global.index-url "https://pypi.tuna.tsinghua.edu.cn/simple"
-pip config set global.trusted-host "pypi.tuna.tsinghua.edu.cn"
-
-pip3 install kubernetes
+cp -r /root/.cache/auto_test/kubernetes /tmp/
+pip3 install --no-index --find-links=/tmp/kubernetes/ kubernetes
 
 unset https_proxy
 unset http_proxy

@@ -6,96 +6,92 @@ pkill -9 python
 #export PYTHONPATH=/data/d00662834/lts-test/randgun/sglang/python:$PYTHONPATH
 #export PYTHONPATH=/data/d00662834/lts-test/release1230/sglang/python:$PYTHONPATH
 
-cann_version=$(cat /usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/ascend_toolkit_install.info | grep "^version=")
-echo "CANN: ${cann_version}"
-if [[ ${cann_version} == version=8.3.* ]];then
-    echo "Set env for CANN 8.3"
-    source /usr/local/Ascend/ascend-toolkit/set_env.sh
-    source /usr/local/Ascend/nnal/atb/set_env.sh
-    source /usr/local/Ascend/ascend-toolkit/latest/opp/vendors/customize/bin/set_env.bash
-    source /usr/local/Ascend/8.5.0/bisheng_toolkit/set_env.sh
-else
-    echo "Set env for CANN 8.5"
-    source /usr/local/Ascend/cann/set_env.sh
-    source /usr/local/Ascend/nnal/atb/set_env.sh
-fi
-
-# NIC Name
-NIC_NAME="enp194s0f0"
-#NIC_NAME="enp23s0f3"
-
-# node ip
-export node_ip="141.61.29.201"
-
-# pd传输, IP设置为p节点首节点
-export ASCEND_MF_STORE_URL="tcp://141.61.39.231:24667"
-# export ASCEND_MF_STORE_URL="tcp://192.168.0.184:24667"
-
-MODEL_PATH="/root/.cache/modelscope/hub/models/DeepSeek-V3.2-Exp-W8A8"
-
-mkdir -p log
-DECODE_LOG_FILE="./log/launch_decode_$(date +'%Y-%m-%d-%H:%M').log"
-
-# cpu高性能
 echo performance | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
 sysctl -w vm.swappiness=0
 sysctl -w kernel.numa_balancing=0
-# sysctl -w kernel.sched_migration_cost_ns=50000
+sysctl -w kernel.sched_migration_cost_ns=50000
 
-# 绑核
 export SGLANG_SET_CPU_AFFINITY=1
-
 unset https_proxy
 unset http_proxy
 unset HTTPS_PROXY
 unset HTTP_PROXY
 unset ASCEND_LAUNCH_BLOCKING
 
-# 内存碎片
+source /usr/local/Ascend/cann/set_env.sh
+source /usr/local/Ascend/nnal/atb/set_env.sh
+
 export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
 export STREAMS_PER_DEVICE=32
 
-# enable mlapo
+MODEL_PATH="/root/.cache/modelscope/hub/models/DeepSeek-V3.2-Exp-W8A8"
+
+export SGLANG_NPU_USE_MULTI_STREAM=1
 export SGLANG_NPU_USE_MLAPO=1
-export SGLANG_USE_FIA_NZ=1
-export ENABLE_MOE_NZ=1
-# decode环境变量
+export HCCL_OP_EXPANSION_MODE=AIV
+export SGLANG_SCHEDULER_SKIP_ALL_GATHER=1
+export TASK_QUEUE_ENABLE=0
 export SGLANG_ENABLE_OVERLAP_PLAN_STREAM=1
 export SGLANG_ENABLE_SPEC_V2=1
-export HCCL_BUFFSIZE=720
-export SGLANG_DEEPEP_NUM_MAX_DISPATCH_TOKENS_PER_RANK=96
-export TASK_QUEUE_ENABLE=0
-export HCCL_SOCKET_IFNAME=$NIC_NAME
-export GLOO_SOCKET_IFNAME=$NIC_NAME
 
-# D节点
-# --context-length 8192 \ 长序列场景，注释该参数
-nohup \
-python -m sglang.launch_server --model-path ${MODEL_PATH} --disaggregation-mode decode \
---host ${node_ip} --port 8001 --trust-remote-code \
---nnodes 1 \
---node-rank 0 \
---tp-size 16 \
---dp-size 16 \
---mem-fraction-static 0.8 \
---max-running-requests 384 \
+PIPs=('your prefill ip1' 'your prefill ip2')
+
+DIPs=('your decode ip1' 'your decode ip2')
+IFNAMES=('xxx' 'xxx')
+
+# get IP in current node
+LOCAL_HOST=`hostname -I|awk -F " " '{print$1}'`
+echo "LOCAL_HOST = " ${LOCAL_HOST}
+# get node index
+for i in "${!DIPs[@]}";
+do
+  echo "LOCAL_HOST=${LOCAL_HOST}, DIPs[${i}]=${DIPs[$i]}"
+  if [ "$LOCAL_HOST" == "${DIPs[$i]}" ]; then
+      echo "Node Rank : ${i}"
+      VC_TASK_INDEX=$i
+      break
+  fi
+done
+
+export HCCL_SOCKET_IFNAME=${IFNAMES[$VC_TASK_INDEX]}
+export GLOO_SOCKET_IFNAME=${HCCL_SOCKET_IFNAME}
+nnodes=${#DIPs[@]}
+tp_size=`expr 16 \* ${nnodes}`
+export ASCEND_MF_STORE_URL=tcp://${PIPs[0]}:24667
+
+CHUNKED_SIZE=65536
+DP=8
+export HCCL_BUFFSIZE=400
+export SGLANG_DEEPEP_NUM_MAX_DISPATCH_TOKENS_PER_RANK=8
+
+mkdir -p log
+DECODE_LOG_FILE="./log/launch_decode_$(date +'%Y-%m-%d-%H:%M').log"
+
+nohup python3 -m sglang.launch_server --model-path ${MODEL_PATH} \
+--tp $tp_size \
+--dp ${DP} \
+--ep $tp_size \
+--moe-dense-tp-size 1 \
+--enable-dp-attention \
+--enable-dp-lm-head \
+--trust-remote-code \
 --attention-backend ascend \
 --device npu \
---quantization modelslim \
---moe-a2a-backend deepep \
---enable-dp-attention \
---deepep-mode low_latency \
---enable-dp-lm-head \
---cuda-graph-bs 8 10 12 14 16 18 20 22 24 \
---disaggregation-transfer-backend ascend \
 --watchdog-timeout 9000 \
---speculative-algorithm NEXTN \
---speculative-num-steps 3 \
---speculative-eagle-topk 1 \
---speculative-num-draft-tokens 4 \
+--host ${DIPs[$VC_TASK_INDEX]} --port 8001 \
+--mem-fraction-static 0.79 \
+--disable-radix-cache \
+--chunked-prefill-size -1 --max-prefill-tokens 68000 \
+--max-running-requests 32 \
+--cuda-graph-max-bs 4 \
+--moe-a2a-backend deepep \
+--deepep-mode low_latency \
+--quantization modelslim \
+--speculative-algorithm NEXTN --speculative-num-steps 3 --speculative-eagle-topk 1 --speculative-num-draft-tokens 4 \
+--disaggregation-transfer-backend ascend \
+--disaggregation-mode decode \
 --prefill-round-robin-balance \
---disable-shared-experts-fusion \
---dtype bfloat16 \
---tokenizer-worker-num 4 \
---dist-init-addr ${node_ip}:5000 \
+--load-balance-method round_robin \
+--nnodes $nnodes --node-rank $VC_TASK_INDEX \
+--dist-init-addr ${DIPs[0]}:10000 --load-balance-method decode_round_robin \
 > $DECODE_LOG_FILE 2>&1 &

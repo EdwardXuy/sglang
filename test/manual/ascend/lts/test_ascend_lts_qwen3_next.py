@@ -3,9 +3,10 @@ import os
 import unittest
 from types import SimpleNamespace
 
-from lts_utils import NIC_NAME, run_bench_serving, run_command
+from lts_utils import run_bench_serving, run_command
 
 from sglang.srt.utils import kill_process_tree
+from sglang.test.ascend.e2e.test_npu_multi_node_utils import NIC_NAME
 from sglang.test.few_shot_gsm8k import run_eval
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,

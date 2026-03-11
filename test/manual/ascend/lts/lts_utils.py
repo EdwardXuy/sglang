@@ -1,25 +1,7 @@
-import socket
 import subprocess
 from types import SimpleNamespace
 
-import psutil
-
 from sglang.test.few_shot_gsm8k import run_eval
-
-
-def get_nic_name():
-    for nic, addrs in psutil.net_if_addrs().items():
-        for addr in addrs:
-            if addr.family == socket.AF_INET and (
-                addr.address.startswith("172.") or addr.address.startswith("192.")
-            ):
-                print("The nic name matched is {}".format(nic))
-                return nic
-    return None
-
-
-NIC_NAME = get_nic_name()
-NIC_NAME = "lo" if NIC_NAME is None else NIC_NAME
 
 
 def run_command(cmd, shell=True):

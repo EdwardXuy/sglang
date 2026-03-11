@@ -3,7 +3,6 @@ import os
 import unittest
 
 from lts_utils import (
-    NIC_NAME,
     run_bench_serving,
     run_command,
     run_gsm8k,
@@ -11,6 +10,7 @@ from lts_utils import (
 )
 
 from sglang.srt.utils import kill_process_tree
+from sglang.test.ascend.e2e.test_npu_multi_node_utils import NIC_NAME
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,

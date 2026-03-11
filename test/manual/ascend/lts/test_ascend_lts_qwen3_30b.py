@@ -15,7 +15,7 @@ from sglang.test.test_utils import (
 )
 
 # MODEL_PATH = "/root/.cache/modelscope/hub/models/aleoyang/Qwen3-32B-w8a8-MindIE"
-MODEL_PATH = "/home/weights/Qwen3-32B-Int8"
+MODEL_PATH = "/home/weights/Qwen3-30B-A3B-W8A8"
 
 OTHER_ARGS = [
     "--trust-remote-code",
@@ -52,7 +52,7 @@ OTHER_ARGS = [
     "bfloat16",
     "--enable-metrics",
     "--base-gpu-id",
-    12,
+    0,
 ]
 
 ENVS = {
@@ -88,9 +88,9 @@ class TestLTSQwen332B(CustomTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.base_url = "http://0.0.0.0:30020"
+        cls.base_url = "http://0.0.0.0:30000"
         cls.host = "0.0.0.0"
-        cls.port = 30020
+        cls.port = 30000
         env = os.environ.copy()
         env.update(cls.envs)
 
