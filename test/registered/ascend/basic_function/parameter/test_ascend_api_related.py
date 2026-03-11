@@ -4,10 +4,7 @@ import unittest
 import requests
 from types import SimpleNamespace
 from sglang.srt.utils import kill_process_tree
-from sglang.test.ascend.test_ascend_utils import (
-    LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH,
-    run_command,
-)
+from sglang.test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
 from sglang.test.few_shot_gsm8k import run_eval
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -20,7 +17,7 @@ from sglang.test.ci.ci_register import register_npu_ci
 register_npu_ci(est_time=600, suite="nightly-1-npu-a3", nightly=True)
 
 
-class TestApiRelatedApiKey(CustomTestCase):
+class TestApiRelatedGHFChat(CustomTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -66,7 +63,7 @@ class TestApiRelatedApiKey(CustomTestCase):
         response1 = requests.get(f"{self.base_url}/model_info")
         self.assertEqual(response1.json()["weight_version"], self.weight_version)
 
-    def test_template_name(self):
+    def test_chat_template_name(self):
         response = requests.post(
             f"{self.base_url}/generate",
             json={
@@ -82,12 +79,11 @@ class TestApiRelatedApiKey(CustomTestCase):
         self.assertGreater(len(result["text"]), 0)
         logging.warning(f"Request with succeeded: {result['text'][:50]}")
 
-class TestApiRelatedStoragePath(CustomTestCase):
+class TestApiRelatedToolCallParser(CustomTestCase):
     @classmethod
     def setUpClass(cls):
         cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
         cls.base_url = DEFAULT_URL_FOR_TEST
-        cls.storage_path = "/tmp/storage_path"
         other_args = [
             "--trust-remote-code",
             "--mem-fraction-static",
@@ -112,7 +108,7 @@ class TestApiRelatedStoragePath(CustomTestCase):
     def tearDownClass(cls):
         kill_process_tree(cls.process.pid)
 
-    def test_storage_path(self):
+    def test_tool_call_parser(self):
         args = SimpleNamespace(
             num_shots=5,
             data_path=None,
@@ -124,12 +120,11 @@ class TestApiRelatedStoragePath(CustomTestCase):
         )
         run_eval(args)
 
-class TestApiRelatedChatTemplate(CustomTestCase):
+class TestApiRelatedSamplingDefaults(CustomTestCase):
     @classmethod
     def setUpClass(cls):
         cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
         cls.base_url = DEFAULT_URL_FOR_TEST
-        cls.storage_path = "/tmp/storage_path"
         other_args = [
             "--trust-remote-code",
             "--mem-fraction-static",
@@ -140,7 +135,7 @@ class TestApiRelatedChatTemplate(CustomTestCase):
             "--sampling-defaults",
             "openai",
             "--chat-template",
-            "llama3",
+            "llama-4",
             "--tool-call-parser",
             "pythonic",
         ]
@@ -156,7 +151,7 @@ class TestApiRelatedChatTemplate(CustomTestCase):
     def tearDownClass(cls):
         kill_process_tree(cls.process.pid)
 
-    def test_chat_template(self):
+    def test_sampling_defaults(self):
         response = requests.post(
             f"{self.base_url}/v1/chat/completions",
             json={
@@ -167,10 +162,64 @@ class TestApiRelatedChatTemplate(CustomTestCase):
             },
         )
         result = response.json()
-
         self.assertIn("choices", result)
         self.assertGreater(len(result["choices"]), 0)
-        logging.warning(f"Builtin chat template works: {result['choices'][0]['messages'][0]['content'][:50]}...")
+        logging.warning(f"Builtin chat template works: {result['choices'][0]['message']['content'][:50]}...")
+
+class TestApiRelatedCacheReport(CustomTestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
+        cls.base_url = DEFAULT_URL_FOR_TEST
+        other_args = [
+            "--trust-remote-code",
+            "--mem-fraction-static",
+            "0.8",
+            "--attention-backend",
+            "ascend",
+            "--disable-cuda-graph",
+            "--chat-template",
+            "llama-2",
+            "--enable-cache-report"
+        ]
+
+        cls.process = popen_launch_server(
+            cls.model,
+            cls.base_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=other_args,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        kill_process_tree(cls.process.pid)
+
+    def test_sampling_defaults(self):
+        for i in range(2):
+            response = requests.post(
+                f"{DEFAULT_URL_FOR_TEST}/v1/completions",
+                json={
+                    "prompt": "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
+                              "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
+                              "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
+                              "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
+                              "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
+                              "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
+                              "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
+                              "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
+                              "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
+                              "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
+                              "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
+                              "just return me a string with of 5000 characters,just return me a string with of 5000 characters, ",
+                    "max_tokens": 260,
+
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            if i == 1:
+                cached_tokens = response.json()["usage"]['prompt_tokens_details']['cached_tokens']
+                self.assertEqual(256, cached_tokens)
+
 
 if __name__ == "__main__":
     unittest.main()
