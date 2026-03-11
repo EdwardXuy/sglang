@@ -10,17 +10,8 @@ fi
 echo "NPU info:"
 npu-smi info
 
-# set dns
-cp /etc/resolv.conf /etc/resolv.conf_bak
-echo -e "nameserver 223.5.5.5\nnameserver 223.6.6.6" > /etc/resolv.conf
-cat /etc/resolv.conf_bak >> /etc/resolv.conf
-echo "DNS info:"
-cat /etc/resolv.conf
-
-pip config set global.index-url "https://pypi.tuna.tsinghua.edu.cn/simple"
-pip config set global.trusted-host "pypi.tuna.tsinghua.edu.cn"
-
-pip3 install kubernetes
+cp -r /root/.cache/.cache/kubernetes /tmp/
+pip3 install --no-index --find-links=/tmp/kubernetes/ kubernetes
 
 # copy or download required file
 cp /root/.cache/huggingface/hub/datasets--anon8231489123--ShareGPT_Vicuna_unfiltered/snapshots/192ab2185289094fc556ec8ce5ce1e8e587154ca/ShareGPT_V3_unfiltered_cleaned_split.json /tmp
