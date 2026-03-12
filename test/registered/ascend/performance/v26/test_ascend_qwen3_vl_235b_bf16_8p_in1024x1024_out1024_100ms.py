@@ -1,81 +1,88 @@
 import unittest
 
 from sglang.test.ascend.e2e.test_npu_performance_utils import (
-    QWEN3_VL_8B_W8A8_MODEL_PATH,
+    QWEN3_VL_235B_MODEL_PATH,
     TestAscendPerformanceTestCaseBase,
 )
 from sglang.test.ci.ci_register import register_npu_ci
 
 register_npu_ci(
     est_time=1800,
-    suite="nightly-4-npu-a3",
+    suite="nightly-16-npu-a3",
     nightly=True,
     disabled="Currently it is executed by the npu performance workflow.",
 )
 
-QWEN3_VL_8B_ENVS = {
+QWEN3_VL_235B_ENVS = {
     "SGLANG_DISAGGREGATION_BOOTSTRAP_TIMEOUT": "600",
     "PYTORCH_NPU_ALLOC_CONF": "expandable_segments:True",
+    "STREAMS_PER_DEVICE": "32",
     "HCCL_SOCKET_IFNAME": "lo",
     "GLOO_SOCKET_IFNAME": "lo",
     "HCCL_OP_EXPANSION_MODE": "AIV",
-    "SGLANG_MM_SKIP_COMPUTE_HASH": "1",
+    "TASK_QUEUE_ENABLE": "1",
+    "HCCL_BUFFSIZE": "1600",
+    "SGLANG_NPU_PROFILING": "0",
+    "SGLANG_NPU_PROFILING_BS": "2",
+    "SGLANG_NPU_PROFILING_STAGE": "prefill",
+    "SGLANG_NPU_PROFILING_STEP": "50",
+    "SGLANG_DEEPEP_NUM_MAX_DISPATCH_TOKENS_PER_RANK": "128",
+    "SGLANG_DEEPEP_BF16_DISPATCH": "1",
+    "DEEPEP_NORMAL_LONG_SEQ_ROUND": "32",
+    "DEEPEP_NORMAL_LONG_SEQ_PER_ROUND_TOKENS": "2048",
 }
 
-QWEN3_VL_8B_OTHER_ARGS = [
+QWEN3_VL_235B_OTHER_ARGS = [
     "--trust-remote-code",
     "--attention-backend",
     "ascend",
     "--device",
     "npu",
     "--tp-size",
-    1,
+    16,
     "--max-prefill-tokens",
     40960,
     "--chunked-prefill-size",
     40960,
     "--mem-fraction-static",
-    0.86,
+    0.89,
+    "--mm-attention-backend",
+    "ascend_attn",
     "--max-running-requests",
     512,
     "--disable-radix-cache",
     "--cuda-graph-bs",
-    10,
-    20,
-    40,
-    80,
-    85,
-    88,
-    90,
-    96,
-    100,
+    32,
     "--enable-multimodal",
-    "--mm-attention-backend",
-    "ascend_attn",
+    "--mm-enable-dp-encoder",
+    "--enable-dp-attention" "--dp-size",
+    16,
+    "--moe-a2a-backend",
+    "deepep",
+    "--deepep-mode",
+    "auto",
     "--sampling-backend",
     "ascend",
-    "--context-length",
-    32768,
 ]
 
 
-class TestQwenVl8B(TestAscendPerformanceTestCaseBase):
-    model = QWEN3_VL_8B_W8A8_MODEL_PATH
-    other_args = QWEN3_VL_8B_OTHER_ARGS
-    envs = QWEN3_VL_8B_ENVS
+class TestQwenVl235B(TestAscendPerformanceTestCaseBase):
+    model = QWEN3_VL_235B_MODEL_PATH
+    other_args = QWEN3_VL_235B_OTHER_ARGS
+    envs = QWEN3_VL_235B_ENVS
     backend = "sglang-oai-chat"
     dataset_name = "image"
     image_resolution = "1024x1024"
     image_count = 1
-    max_concurrency = 96
-    num_prompts = 384
+    max_concurrency = 512
+    num_prompts = 2048
     input_len = 0
     output_len = 1024
     random_range_ratio = 1
-    tpot = 50
-    output_token_throughput = 1575
+    tpot = 100
+    output_token_throughput = 4220
 
-    def test_qwen3_vl_8b(self):
+    def test_qwen3_vl_235b(self):
         self.run_throughput()
 
 
