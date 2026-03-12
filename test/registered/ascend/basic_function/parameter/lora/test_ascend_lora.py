@@ -326,9 +326,13 @@ class TestLoraKVCache(CustomTestCase):
             "--lora-path",
             f"lora_a={cls.lora_a}",
             f"lora_b={cls.lora_b}",
+            # "enable-radix-cache",
+            # "enable-hierarchical-cache",
             "--attention-backend",
             "ascend",
             "--disable-cuda-graph",
+            "--base-gpu-id",
+            "6",
         ]
         cls.process = popen_launch_server(
             LLAMA_3_2_1B_WEIGHTS_PATH,
@@ -342,10 +346,13 @@ class TestLoraKVCache(CustomTestCase):
         kill_process_tree(cls.process.pid)
 
     def test_lora(self):
+        input_ids_first = [1] * 200
+        input_ids_second = input_ids_first + [2] * 70
+
         response = requests.post(
             f"{DEFAULT_URL_FOR_TEST}/generate",
             json={
-                "text": "The capital of France is",
+                "input_ids": input_ids_first,
                 "sampling_params": {
                     "temperature": 0,
                     "max_new_tokens": 32,
@@ -355,12 +362,12 @@ class TestLoraKVCache(CustomTestCase):
             },
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["cached_tokens"], 0)
+        self.assertEqual(response.json()["meta_info"]["cached_tokens"], 0)
 
         response = requests.post(
             f"{DEFAULT_URL_FOR_TEST}/generate",
             json={
-                "text": "The capital of France is",
+                "input_ids": input_ids_first,
                 "sampling_params": {
                     "temperature": 0,
                     "max_new_tokens": 32,
@@ -369,12 +376,12 @@ class TestLoraKVCache(CustomTestCase):
             },
         )
         self.assertEqual(response.status_code, 200)
-        self.assertGreater(response.json()["cached_tokens"], 0)
+        self.assertEqual(response.json()["meta_info"]["cached_tokens"], 0)
 
         response = requests.post(
             f"{DEFAULT_URL_FOR_TEST}/generate",
             json={
-                "text": "The capital of France is Paris",
+                "input_ids": input_ids_second,
                 "sampling_params": {
                     "temperature": 0,
                     "max_new_tokens": 32,
@@ -383,12 +390,12 @@ class TestLoraKVCache(CustomTestCase):
             },
         )
         self.assertEqual(response.status_code, 200)
-        self.assertGreater(response.json()["cached_tokens"], 0)
+        self.assertEqual(response.json()["meta_info"]["cached_tokens"], 128)
 
         response = requests.post(
             f"{DEFAULT_URL_FOR_TEST}/generate",
             json={
-                "text": "The capital of France is Paris",
+                "input_ids": input_ids_second,
                 "sampling_params": {
                     "temperature": 0,
                     "max_new_tokens": 32,
@@ -397,7 +404,7 @@ class TestLoraKVCache(CustomTestCase):
             },
         )
         self.assertEqual(response.status_code, 200)
-        self.assertGreater(response.json()["cached_tokens"], 0)
+        self.assertEqual(response.json()["meta_info"]["cached_tokens"], 128)
 
 
 class TestLoraMaxLoraRank(CustomTestCase):
