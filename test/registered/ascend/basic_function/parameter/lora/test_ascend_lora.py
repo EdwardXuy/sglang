@@ -329,8 +329,6 @@ class TestLoraKVCache(CustomTestCase):
             "--attention-backend",
             "ascend",
             "--disable-cuda-graph",
-            "--base-gpu-id",
-            "6",
         ]
         cls.process = popen_launch_server(
             LLAMA_3_2_1B_WEIGHTS_PATH,
