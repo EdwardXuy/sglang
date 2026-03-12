@@ -50,12 +50,7 @@ spec:
           command: ["/bin/bash", "-c"]
           args:
             - |
-               {% if env in ["ci", "debug"] %}
                bash /root/sglang/python/sglang/test/ascend/e2e/run_npu_testcase.sh {{ test_case }}
-               {% endif %}
-               {% if env == "green" %}
-               bash /root/sglang/python/sglang/test/ascend/e2e/run_npu_testcase_green.sh {{ test_case }}
-               {% endif %}
           resources:
             requests:
               {% if env in ["ci", "debug"] %}
