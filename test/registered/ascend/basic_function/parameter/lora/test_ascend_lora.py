@@ -296,7 +296,7 @@ class TestLoraMemoryEvictionFifo(CustomTestCase):
                     "temperature": 0,
                     "max_new_tokens": 32,
                 },
-                "lora_path": self.lora_c,
+                "lora_path": "lora_c",
             },
         )
         self.assertEqual(response.status_code, 200)
@@ -354,7 +354,7 @@ class TestLoraKVCache(CustomTestCase):
                     "temperature": 0,
                     "max_new_tokens": 32,
                 },
-                "lora_path": self.lora_a,
+                "lora_path": "lora_a",
             },
         )
         self.assertEqual(response.status_code, 200)
@@ -426,7 +426,7 @@ class TestLoraMaxLoraRank(CustomTestCase):
                     "temperature": 0,
                     "max_new_tokens": 32,
                 },
-                "lora_path":"lora_a",
+                "lora_path": "lora_a",
             },
         )
         self.assertEqual(response.status_code, 200)
