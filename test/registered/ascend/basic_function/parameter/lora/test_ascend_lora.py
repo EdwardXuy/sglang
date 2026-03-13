@@ -218,6 +218,67 @@ class TestLoraBasicFunction(CustomTestCase):
         self.assertIn("age", parsed_json)
         self.assertIn("city", parsed_json)
 
+    def test_lora_kv_cache(self):
+        input_ids_first = [1] * 200
+        input_ids_second = input_ids_first + [2] * 70
+
+        response = requests.post(
+            f"{DEFAULT_URL_FOR_TEST}/generate",
+            json={
+                "input_ids": input_ids_first,
+                "sampling_params": {
+                    "temperature": 0,
+                    "max_new_tokens": 32,
+                },
+                "lora_path": "lora_a",
+
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["meta_info"]["cached_tokens"], 0)
+
+        response = requests.post(
+            f"{DEFAULT_URL_FOR_TEST}/generate",
+            json={
+                "input_ids": input_ids_first,
+                "sampling_params": {
+                    "temperature": 0,
+                    "max_new_tokens": 32,
+                },
+                "lora_path": "lora_b",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["meta_info"]["cached_tokens"], 0)
+
+        response = requests.post(
+            f"{DEFAULT_URL_FOR_TEST}/generate",
+            json={
+                "input_ids": input_ids_second,
+                "sampling_params": {
+                    "temperature": 0,
+                    "max_new_tokens": 32,
+                },
+                "lora_path": "lora_a",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["meta_info"]["cached_tokens"], 128)
+
+        response = requests.post(
+            f"{DEFAULT_URL_FOR_TEST}/generate",
+            json={
+                "input_ids": input_ids_second,
+                "sampling_params": {
+                    "temperature": 0,
+                    "max_new_tokens": 32,
+                },
+                "lora_path": "lora_b",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["meta_info"]["cached_tokens"], 128)
+
 
 class TestLoraMemoryEvictionFifo(CustomTestCase):
     """Testcase：Verify the eviction policy works properly, when the number of load lora exceed max-load-loras.
@@ -305,104 +366,6 @@ class TestLoraMemoryEvictionFifo(CustomTestCase):
 
 class TestLoraMemoryEvictionLru(CustomTestCase):
     lora_eviction_policy = "lru"
-
-
-class TestLoraKVCache(CustomTestCase):
-    """Testcase：Verify the LoRA adapter can work properly with Radix Cache
-
-    [Test Category] Parameter
-    [Test Target] --enable-lora, --enable-radix-cache
-    """
-
-    lora_a = LLAMA_3_2_1B_INSTRUCT_TOOL_CALLING_LORA_WEIGHTS_PATH
-    lora_b = LLAMA_3_2_1B_INSTRUCT_TOOL_FAST_LORA_WEIGHTS_PATH
-
-    @classmethod
-    def setUpClass(cls):
-        other_args = [
-            "--tp-size",
-            "2",
-            "--enable-lora",
-            "--lora-path",
-            f"lora_a={cls.lora_a}",
-            f"lora_b={cls.lora_b}",
-            "--attention-backend",
-            "ascend",
-            "--disable-cuda-graph",
-            "--base-gpu-id",
-            "6",
-        ]
-        cls.process = popen_launch_server(
-            LLAMA_3_2_1B_WEIGHTS_PATH,
-            DEFAULT_URL_FOR_TEST,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=other_args,
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        kill_process_tree(cls.process.pid)
-
-    def test_lora(self):
-        input_ids_first = [1] * 200
-        input_ids_second = input_ids_first + [2] * 70
-
-        response = requests.post(
-            f"{DEFAULT_URL_FOR_TEST}/generate",
-            json={
-                "input_ids": input_ids_first,
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": 32,
-                },
-                "lora_path": "lora_a",
-
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["meta_info"]["cached_tokens"], 0)
-
-        response = requests.post(
-            f"{DEFAULT_URL_FOR_TEST}/generate",
-            json={
-                "input_ids": input_ids_first,
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": 32,
-                },
-                "lora_path": "lora_b",
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["meta_info"]["cached_tokens"], 0)
-
-        response = requests.post(
-            f"{DEFAULT_URL_FOR_TEST}/generate",
-            json={
-                "input_ids": input_ids_second,
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": 32,
-                },
-                "lora_path": "lora_a",
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["meta_info"]["cached_tokens"], 128)
-
-        response = requests.post(
-            f"{DEFAULT_URL_FOR_TEST}/generate",
-            json={
-                "input_ids": input_ids_second,
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": 32,
-                },
-                "lora_path": "lora_b",
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["meta_info"]["cached_tokens"], 128)
 
 
 class TestLoraMaxLoraRank(CustomTestCase):
