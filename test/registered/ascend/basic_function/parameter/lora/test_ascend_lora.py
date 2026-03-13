@@ -447,7 +447,7 @@ class TestLoraMemoryEvictionLru(CustomTestCase):
 
 
 class TestLoraMaxLoraRank(CustomTestCase):
-    """Testcase：Verify set the --max-load-rank parameter, inference request succeeded.
+    """Testcase：Verify set the --max-load-rank parameter, can load lora corresponding to the number of ranks, inference request succeeded.
 
     [Test Category] Parameter
     [Test Target] --max-load-rank
