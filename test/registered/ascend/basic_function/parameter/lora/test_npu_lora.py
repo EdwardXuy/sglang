@@ -219,53 +219,34 @@ class TestLoraBasicFunction(CustomTestCase):
         self.assertIn("age", parsed_json)
         self.assertIn("city", parsed_json)
 
-    # 抽取
     def test_lora_kv_cache(self):
+        #test kv cache reuse
         input_ids_first = [1] * 200
         input_ids_second = input_ids_first + [2] * 70
 
-        response = requests.post(
-            f"{DEFAULT_URL_FOR_TEST}/generate",
-            json={
-                "input_ids": input_ids_first,
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": 32,
+        def make_request(lora_path, input_ids, expected_cached_tokens):
+            response = requests.post(
+                f"{DEFAULT_URL_FOR_TEST}/generate",
+                json={
+                    "input_ids": input_ids,
+                    "sampling_params": {
+                        "temperature": 0,
+                        "max_new_tokens": 32,
+                    },
+                    "lora_path": lora_path,
                 },
-                "lora_path": "lora_a",
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json()["meta_info"]["cached_tokens"], expected_cached_tokens)
 
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["meta_info"]["cached_tokens"], 0)
+        # For the first request, using lora_a, the expected cache size is 0.
+        make_request("lora_a", input_ids_first, 0)
 
-        response = requests.post(
-            f"{DEFAULT_URL_FOR_TEST}/generate",
-            json={
-                "input_ids": input_ids_first,
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": 32,
-                },
-                "lora_path": "lora_b",
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["meta_info"]["cached_tokens"], 0)
+        # The second request uses lora_b, expecting a cache of 0 (different lora types do not share cache).
+        make_request("lora_b", input_ids_first, 0)
 
-        response = requests.post(
-            f"{DEFAULT_URL_FOR_TEST}/generate",
-            json={
-                "input_ids": input_ids_second,
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": 32,
-                },
-                "lora_path": "lora_a",
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["meta_info"]["cached_tokens"], 128)
+        # The third request uses lora_a again, but the input is longer, same lora share cache.
+        make_request("lora_a", input_ids_second, 128)
 
     def test_lora_session(self):
         # test the correct collaboration of lora with session management functionality
