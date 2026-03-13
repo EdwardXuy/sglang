@@ -365,7 +365,7 @@ class TestLoraBasicFunction(CustomTestCase):
 
 
 class TestLoraMemoryEvictionFifo(CustomTestCase):
-    """Testcase：Verify the eviction policy works properly,  inference request succeeded.
+    """Testcase：Verify the eviction policy works properly, inference request succeeded.
     [Test Category] Parameter
     [Test Target] --lora-eviction-policy
     """
@@ -443,7 +443,7 @@ class TestLoraMemoryEvictionLru(CustomTestCase):
 
 
 class TestLoraMaxLoraRank(CustomTestCase):
-    """Testcase：Verify set the --max-load-rank parameter can limit lora memory poll size
+    """Testcase：Verify set the --max-load-rank parameter, inference request succeeded.
 
     [Test Category] Parameter
     [Test Target] --max-load-rank
