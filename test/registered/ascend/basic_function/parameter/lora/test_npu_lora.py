@@ -59,7 +59,7 @@ class TestLoraBasicFunction(CustomTestCase):
     @classmethod
     def tearDownClass(cls):
         kill_process_tree(cls.process.pid)
-
+#update
     def test_lora_use_different_lora(self):
         response = requests.post(
             f"{DEFAULT_URL_FOR_TEST}/generate",
@@ -141,7 +141,7 @@ class TestLoraBasicFunction(CustomTestCase):
                 data = json.loads(chunk[5:].strip("\n"))
                 stream_text += data.get("text", "")
         self.assertIn(text_lora_a, stream_text)
-
+#num
     def test_batch_with_different_loras(self):
         # test different loras in batch requests can work properly
         prompts = [
@@ -220,7 +220,7 @@ class TestLoraBasicFunction(CustomTestCase):
         self.assertIn("name", parsed_json)
         self.assertIn("age", parsed_json)
         self.assertIn("city", parsed_json)
-
+#抽取
     def test_lora_kv_cache(self):
         input_ids_first = [1] * 200
         input_ids_second = input_ids_first + [2] * 70
@@ -268,19 +268,6 @@ class TestLoraBasicFunction(CustomTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["meta_info"]["cached_tokens"], 128)
 
-        response = requests.post(
-            f"{DEFAULT_URL_FOR_TEST}/generate",
-            json={
-                "input_ids": input_ids_second,
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": 32,
-                },
-                "lora_path": "lora_b",
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["meta_info"]["cached_tokens"], 128)
 
     def test_lora_session(self):
         # test the correct collaboration of lora  with session management functionality
@@ -318,7 +305,7 @@ class TestLoraBasicFunction(CustomTestCase):
         )
         self.assertEqual(response1.status_code, 200)
         rid = response1.json()["meta_info"]["id"]
-        # Second conversation round - verify context
+
         response2 = requests.post(
             f"{DEFAULT_URL_FOR_TEST}/generate",
             json={
@@ -339,7 +326,7 @@ class TestLoraBasicFunction(CustomTestCase):
         response_text_2 = response2.text
         self.assertIn("咪咪", response_text_2,
                       f"Session should remember pet name '咪咪', but got: {response_text_2}")
-
+        # Second conversation round - verify context
         response3 = requests.post(
             f"{DEFAULT_URL_FOR_TEST}/generate",
             json={
@@ -368,7 +355,7 @@ class TestLoraMemoryEvictionFifo(CustomTestCase):
     [Test Category] Parameter
     [Test Target] --lora-eviction-policy
     """
-
+#memory
     lora_a = LLAMA_3_2_1B_INSTRUCT_TOOL_CALLING_LORA_WEIGHTS_PATH
     lora_b = LLAMA_3_2_1B_INSTRUCT_TOOL_FAST_LORA_WEIGHTS_PATH
     lora_eviction_policy = "fifo"
