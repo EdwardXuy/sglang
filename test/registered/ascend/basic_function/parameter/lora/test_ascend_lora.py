@@ -283,6 +283,88 @@ class TestLoraBasicFunction(CustomTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["meta_info"]["cached_tokens"], 128)
 
+    def test_lora_session(self):
+        # test the correct collaboration of lora  with session management functionality
+        session_id_first = requests.post(
+            f"{DEFAULT_URL_FOR_TEST}/open_session",
+            json={"capacity_of_str_len": 1000},
+        ).json()
+
+        session_id_second = requests.post(
+            f"{DEFAULT_URL_FOR_TEST}/open_session",
+            json={"capacity_of_str_len": 1000},
+        ).json()
+        self.assertNotEqual(
+            session_id_first,
+            session_id_second,
+            f"session_id"
+        )
+
+        # First conversation round - establish context
+        response1 = requests.post(
+            f"{DEFAULT_URL_FOR_TEST}/generate",
+            json={
+                "text": "我的宠物是一只猫，叫咪咪",
+                "sampling_params": {
+                    "temperature": 0,
+                    "max_new_tokens": 32,
+
+                },
+                "session_params": {
+                    "id": session_id_first,
+                    # "rid": rid_first,
+                },
+                "lora_path": "lora_a",
+
+            },
+        )
+        self.assertEqual(response1.status_code, 200)
+        rid = response1.json()["meta_info"]["id"]
+        # Second conversation round - verify context
+        response2 = requests.post(
+            f"{DEFAULT_URL_FOR_TEST}/generate",
+            json={
+                "text": "我的宠物叫什么名字？",
+                "sampling_params": {
+                    "temperature": 0,
+                    "max_new_tokens": 32,
+                },
+                "session_params": {
+                    "id": session_id_first,
+                    "rid": rid,
+                },
+                "lora_path": "lora_a",
+
+            },
+        )
+        self.assertEqual(response2.status_code, 200)
+        response_text_2 = response2.text
+        self.assertIn("咪咪", response_text_2,
+                      f"Session should remember pet name '咪咪', but got: {response_text_2}")
+
+        response3 = requests.post(
+            f"{DEFAULT_URL_FOR_TEST}/generate",
+            json={
+                "text": "我的宠物叫什么名字？",
+                "sampling_params": {
+                    "temperature": 0,
+                    "max_new_tokens": 32,
+                },
+                "session_params": {
+                    "id": session_id_second,
+                    # "rid": rid_third,
+                },
+                "lora_path": "lora_a",
+
+            },
+        )
+        self.assertEqual(response3.status_code, 200)
+        response_text_3 = response3.text
+
+        # Verify new session doesn't remember previous context
+        self.assertNotIn("咪咪", response_text_3,
+                         f"New session should not remember old context, but got: {response_text_3}")
+
 
 class TestLoraMemoryEvictionFifo(CustomTestCase):
     """Testcase：Verify the eviction policy works properly, when the number of load lora exceed max-load-loras.
