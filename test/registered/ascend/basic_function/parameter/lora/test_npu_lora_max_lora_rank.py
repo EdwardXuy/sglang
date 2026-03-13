@@ -24,6 +24,7 @@ class TestLoraMaxLoraRank(CustomTestCase):
     """
 
     lora_a = LLAMA_3_2_1B_INSTRUCT_TOOL_CALLING_LORA_WEIGHTS_PATH
+    max_lora_rank = "64"
 
     @classmethod
     def setUpClass(cls):
@@ -34,7 +35,7 @@ class TestLoraMaxLoraRank(CustomTestCase):
             "--lora-path",
             f"lora_a={cls.lora_a}",
             "--max-lora-rank",
-            "64",
+            cls.max_lora_rank,
             "--attention-backend",
             "ascend",
             "--disable-cuda-graph",
@@ -69,3 +70,32 @@ class TestLoraMaxLoraRank(CustomTestCase):
         self.assertEqual(response.json()["max_lora_rank"], 64)
 
 
+class TestLoraMaxLoraRankFault(TestLoraMaxLoraRank):
+    """Testcase：Verify set the --max-load-rank parameter, can't load lora no corresponding to the number of ranks, service startup failed .
+
+    [Test Category] Parameter
+    [Test Target] --max-load-rank
+    """
+
+    max_lora_rank = "32"
+
+    @classmethod
+    def setUpClass(cls):
+        other_args = [
+            "--tp-size",
+            "2",
+            "--enable-lora",
+            "--lora-path",
+            f"lora_a={cls.lora_a}",
+            "--max-lora-rank",
+            cls.max_lora_rank,
+            "--attention-backend",
+            "ascend",
+            "--disable-cuda-graph",
+        ]
+        cls.process = popen_launch_server(
+            LLAMA_3_2_1B_WEIGHTS_PATH,
+            DEFAULT_URL_FOR_TEST,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=other_args,
+        )
