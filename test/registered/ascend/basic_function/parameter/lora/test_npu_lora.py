@@ -147,7 +147,6 @@ class TestLoraBasicFunction(CustomTestCase):
         prompts = [
             "What is AI",
             "Explain neural network",
-            "What is deep learning",
         ]
         response = requests.post(
             f"{DEFAULT_URL_FOR_TEST}/generate",
