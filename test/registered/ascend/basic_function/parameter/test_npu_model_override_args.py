@@ -99,7 +99,8 @@ class TestModelOverrideArgs(CustomTestCase):
             result1 = self._test_basic_inference()
             self.assertIn("text", result1)
             self.assertGreater(len(result1["text"]), 0)
-
+            self.assertIn("length", result1["meta_info"]["finish_reason"])
+            self.assertEqual(result1["meta_info"]["completion_tokens"], 32)
             logging.warning(f"Inference with multiple overrides: {result1['text'][:50]}...")
 
             args = SimpleNamespace(
