@@ -365,11 +365,11 @@ class TestLoraBasicFunction(CustomTestCase):
 
 
 class TestLoraMemoryEvictionFifo(CustomTestCase):
-    """Testcase：Verify the eviction policy works properly, when the number of load lora exceed max-load-loras.
-
+    """Testcase：Verify the eviction policy works properly,  inference request succeeded.
     [Test Category] Parameter
     [Test Target] --lora-eviction-policy
     """
+
     lora_a = LLAMA_3_2_1B_INSTRUCT_TOOL_CALLING_LORA_WEIGHTS_PATH
     lora_b = LLAMA_3_2_1B_INSTRUCT_TOOL_FAST_LORA_WEIGHTS_PATH
     lora_eviction_policy = "fifo"
