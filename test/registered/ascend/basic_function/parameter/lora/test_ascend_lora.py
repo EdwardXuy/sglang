@@ -139,7 +139,7 @@ class TestLoraBasicFunction(CustomTestCase):
         self.assertIn(text_lora_a, stream_text)
 
     def test_batch_with_different_loras(self):
-        # test different loras in batch requests can work normally
+        # test different loras in batch requests can work properly
         prompts = [
             "What is AI",
             "Explain neural network",
@@ -187,7 +187,7 @@ class TestLoraBasicFunction(CustomTestCase):
             self.assertNotEqual(text, first_text, f"same response_text")
 
     def test_lora_with_json_schema(self):
-        # test lora and json schema can work normally
+        # test lora and json schema can work properly
         json_schema = json.dumps({
             "type": "object",
             "properties": {
