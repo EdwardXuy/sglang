@@ -123,7 +123,7 @@ class TestModelOverrideArgs(CustomTestCase):
         logging.warning("\n=== Test 002: multiple sampling parameters ===")
         self.process = self._launch_server_with_hicache(
             model_override_args='{"num_hidden_layers": 3, "max_position_embeddings": 50, "num_key_value_heads": 4}',
-            preferred_sampling_params='{"temperature": 0.7, "top_p": 0.9, "top_k": 40, "max_new_tokens": 256, "min_new_tokens": 1}'
+            preferred_sampling_params='{"temperature": 0.7, "top_p": 0.9, "top_k": 40, "max_new_tokens": 256, "min_new_tokens": 1, "logit_bias": {"123": 100}}'
         )
 
         try:
@@ -134,11 +134,31 @@ class TestModelOverrideArgs(CustomTestCase):
             self.assertEqual(result["preferred_sampling_params"]["top_p"], 0.9)
             self.assertEqual(result["preferred_sampling_params"]["top_k"], 40)
             self.assertEqual(result["preferred_sampling_params"]["max_new_tokens"], 256)
+            self.assertEqual(result["preferred_sampling_params"]["logit_bias"], {"123": 100})
 
             result1 = self._test_basic_inference()
             self.assertIn("text", result1)
             self.assertGreater(len(result1["text"]), 0)
             logging.warning(f"Inference with multiple sampling: {result1['text'][:50]}...")
+
+            response2 = requests.post(
+                f"{DEFAULT_URL_FOR_TEST}/generate",
+                json={
+                    "text": "The ancient Romans made significant contributions to various fields, "
+                            "including law, philosophy, science, and literature. They were known "
+                            "for their engineering achievements, such as the construction of the Colosseum and the Pantheon. "
+                            "Their art and architecture were also highly esteemed, with the Colosseum being a symbol of "
+                            "their power and influence. In science, they made important contributions to astronomy "
+                            "and mathematics. Literature was also a major part of their culture, ",
+                    "sampling_params": {
+                        "temperature": 0,
+                        "max_new_tokens": 32,
+                    },
+                },
+            )
+
+            self.assertEqual(response2.status_code, 400)
+            self.assertIn("longer than the model's context length (50 tokens)", response2.text)
 
         finally:
             kill_process_tree(self.process.pid)
