@@ -303,10 +303,6 @@ class TestLoraMemoryEvictionFifo(CustomTestCase):
             "--lora-path",
             f"lora_a={cls.lora_a}",
             f"lora_a={cls.lora_b}",
-            "--max-loaded-loras",
-            "2",
-            "--max-loras-per-batch",
-            "2",
             "--lora-eviction-policy",
             cls.lora_eviction_policy,
             "--lora-target-modules",
@@ -354,7 +350,6 @@ class TestLoraMemoryEvictionFifo(CustomTestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn("Paris", response.text)
-
 
 
 class TestLoraMemoryEvictionLru(CustomTestCase):
