@@ -141,6 +141,31 @@ class TestLoraBasicFunction(CustomTestCase):
                 data = json.loads(chunk[5:].strip("\n"))
                 stream_text += data.get("text", "")
         self.assertIn(text_lora_a, stream_text)
+
+        # Verify lora_target_modules parameter is correctly
+        response = requests.get(DEFAULT_URL_FOR_TEST + "/server_info")
+        self.assertEqual(response.status_code, 200)
+        expected_modules = [
+            "k_proj",
+            "down_proj",
+            "gate_up_proj",
+            "o_proj",
+            "qkv_proj",
+            "gate_proj",
+            "v_proj",
+            "q_proj",
+            "up_proj",
+        ]
+        actual_modules = response.json()["lora_target_modules"]
+
+        self.assertEqual(len(actual_modules), len(expected_modules))
+
+        for module in expected_modules:
+            self.assertIn(module, actual_modules)
+
+
+
+
 #num
     def test_batch_with_different_loras(self):
         # test different loras in batch requests can work properly
@@ -286,11 +311,11 @@ class TestLoraBasicFunction(CustomTestCase):
             f"session_id"
         )
 
-        # First conversation round - establish context
+        # First conversation round
         response1 = requests.post(
             f"{DEFAULT_URL_FOR_TEST}/generate",
             json={
-                "text": "我的宠物是一只猫，叫咪咪",
+                "text": "My pet is a cat named mimi.",
                 "sampling_params": {
                     "temperature": 0,
                     "max_new_tokens": 32,
@@ -309,7 +334,7 @@ class TestLoraBasicFunction(CustomTestCase):
         response2 = requests.post(
             f"{DEFAULT_URL_FOR_TEST}/generate",
             json={
-                "text": "我的宠物叫什么名字？",
+                "text": "What is my pet's name?",
                 "sampling_params": {
                     "temperature": 0,
                     "max_new_tokens": 32,
@@ -324,13 +349,14 @@ class TestLoraBasicFunction(CustomTestCase):
         )
         self.assertEqual(response2.status_code, 200)
         response_text_2 = response2.text
-        self.assertIn("咪咪", response_text_2,
-                      f"Session should remember pet name '咪咪', but got: {response_text_2}")
-        # Second conversation round - verify context
+        self.assertIn("mimi", response_text_2,
+                      f"Session should remember pet name 'mimi', but got: {response_text_2}")
+
+        # Second conversation round use a new session id
         response3 = requests.post(
             f"{DEFAULT_URL_FOR_TEST}/generate",
             json={
-                "text": "我的宠物叫什么名字？",
+                "text": "What is my pet's name?",
                 "sampling_params": {
                     "temperature": 0,
                     "max_new_tokens": 32,
@@ -345,8 +371,8 @@ class TestLoraBasicFunction(CustomTestCase):
         self.assertEqual(response3.status_code, 200)
         response_text_3 = response3.text
 
-        # Verify new session doesn't remember previous context
-        self.assertNotIn("咪咪", response_text_3,
+        # Verify new session doesn't have previous context
+        self.assertNotIn("mimi", response_text_3,
                          f"New session should not remember old context, but got: {response_text_3}")
 
 
