@@ -21,6 +21,7 @@ register_npu_ci(est_time=400, suite="nightly-2-npu-a3", nightly=True)
 
 class TestLoraMemoryEvictionFifo(CustomTestCase):
     """Testcase：Verify the eviction policy works properly, inference request succeeded.
+
     [Test Category] Parameter
     [Test Target] --lora-eviction-policy
     """

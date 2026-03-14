@@ -60,7 +60,6 @@ class TestLoraBasicFunction(CustomTestCase):
     def tearDownClass(cls):
         kill_process_tree(cls.process.pid)
 
-    # update
     def test_lora_use_different_lora(self):
         response = requests.post(
             f"{DEFAULT_URL_FOR_TEST}/generate",
@@ -101,23 +100,11 @@ class TestLoraBasicFunction(CustomTestCase):
         )
         text_lora_b = response.text
 
-        self.assertNotEqual(
-            text_no_lora,
-            text_lora_a,
-            f"same response.text"
-        )
+        self.assertNotEqual(text_no_lora, text_lora_a, f"same response.text")
 
-        self.assertNotEqual(
-            text_no_lora,
-            text_lora_b,
-            f"same response.text"
-        )
+        self.assertNotEqual(text_no_lora, text_lora_b, f"same response.text")
 
-        self.assertNotEqual(
-            text_lora_a,
-            text_lora_b,
-            f"same response.text"
-        )
+        self.assertNotEqual(text_lora_a, text_lora_b, f"same response.text")
 
         # compare the consistency between streaming and non-streaming
         response_stream = requests.post(
@@ -165,8 +152,6 @@ class TestLoraBasicFunction(CustomTestCase):
 
         for module in expected_modules:
             self.assertIn(module, actual_modules)
-
-
 
     def test_lora_with_sampling_parameters(self):
         # test loras with temperature
@@ -223,7 +208,7 @@ class TestLoraBasicFunction(CustomTestCase):
         self.assertIn("city", parsed_json)
 
     def test_lora_kv_cache(self):
-        #test kv cache reuse
+        # test kv cache reuse
         input_ids_first = [1] * 200
         input_ids_second = input_ids_first + [2] * 70
 
@@ -331,6 +316,8 @@ class TestLoraBasicFunction(CustomTestCase):
         # Verify new session doesn't have previous context
         self.assertNotIn("mimi", response_text_3,
                          f"New session should not remember old context, but got: {response_text_3}")
+
+
 '''
 # num
     def test_batch_with_different_loras(self):
@@ -358,9 +345,6 @@ class TestLoraBasicFunction(CustomTestCase):
             self.assertEqual("text", result)
             self.assertGreater(len(result["text"]), 0)
 '''
-
-
-
 
 if __name__ == "__main__":
     unittest.main()
