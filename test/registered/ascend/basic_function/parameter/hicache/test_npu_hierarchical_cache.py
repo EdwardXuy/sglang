@@ -1,6 +1,6 @@
 import logging
-import unittest
 import time
+import unittest
 from types import SimpleNamespace
 
 import requests
@@ -76,19 +76,23 @@ class TestHiCache(CustomTestCase):
         ]
 
         if hicache_size > 0:
-            other_args.extend([
-                "--hicache-size",
-                str(hicache_size),
-            ])
+            other_args.extend(
+                [
+                    "--hicache-size",
+                    str(hicache_size),
+                ]
+            )
 
         if disable_hicache_numa_detect:
             other_args.append("--disable-hicache-numa-detect")
 
         if hicache_storage_backend is not None:
-            other_args.extend([
-                "--hicache-storage-backend",
-                hicache_storage_backend,
-            ])
+            other_args.extend(
+                [
+                    "--hicache-storage-backend",
+                    hicache_storage_backend,
+                ]
+            )
 
         process = popen_launch_server(
             self.model,
@@ -127,7 +131,10 @@ class TestHiCache(CustomTestCase):
 
         try:
             time.sleep(5)
-            prompt = "What is The capital of France?What is The capital of France?What is The capital of France?" * 18
+            prompt = (
+                "What is The capital of France?What is The capital of France?What is The capital of France?"
+                * 18
+            )
             for i in range(2):
                 response = requests.post(
                     f"{DEFAULT_URL_FOR_TEST}/generate",
@@ -143,7 +150,9 @@ class TestHiCache(CustomTestCase):
                 # If the same request is made, the token will be reused.
                 # cached_tokens: Number of tokens cached in KV Cache
                 if i == 0:
-                    self.assertEqual(int(response.json()["meta_info"]["cached_tokens"]), 0)
+                    self.assertEqual(
+                        int(response.json()["meta_info"]["cached_tokens"]), 0
+                    )
                 else:
                     self.assertGreater(
                         int(response.json()["meta_info"]["cached_tokens"]), 0
@@ -168,7 +177,9 @@ class TestHiCache(CustomTestCase):
         try:
             time.sleep(5)
             result = self._test_basic_inference()
-            logging.warning(f"Combined parameters test passed, result: {result[:50]}...")
+            logging.warning(
+                f"Combined parameters test passed, result: {result[:50]}..."
+            )
 
             args = SimpleNamespace(
                 num_shots=5,
@@ -216,7 +227,9 @@ class TestHiCache(CustomTestCase):
             )
             self.assertEqual(response.status_code, 200)
             self.assertGreater(len(response.text), 50)
-            logging.warning(f"Long sequence test passed, result length: {len(response.text)}")
+            logging.warning(
+                f"Long sequence test passed, result length: {len(response.text)}"
+            )
         finally:
             kill_process_tree(self.process.pid)
             self.process = None
