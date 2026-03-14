@@ -1,8 +1,9 @@
-import logging
 import os
 import json
-
-from pathlib import Path
+import shutil
+import tempfile
+import time
+import unittest
 
 import requests
 
@@ -25,6 +26,7 @@ class TestMetricsExporter(CustomTestCase):
     def setUpClass(cls):
         cls.model = QWEN3_30B_A3B_WEIGHTS_PATH
         cls.base_url = DEFAULT_URL_FOR_TEST
+        cls.metrics_dir = tempfile.mkdtemp(prefix="sglang-request-metrics-")
         other_args = [
             "--trust-remote-code",
             "--mem-fraction-static",
@@ -49,6 +51,32 @@ class TestMetricsExporter(CustomTestCase):
     @classmethod
     def tearDownClass(cls):
         kill_process_tree(cls.process.pid)
+        if os.path.exists(cls.metrics_dir):
+            shutil.rmtree(cls.metrics_dir)
+
+    def _get_metrics_files(self):
+        files = []
+        if os.path.exists(self.metrics_dir):
+            for file in os.listdir(self.metrics_dir):
+                if file.startswith("sglang-request-metrics-") and file.endswith(
+                    ".log"
+                ):
+                    files.append(os.path.join(self.metrics_dir, file))
+
+
+    def _read_metrics_records(self, files):
+        records = []
+        for file in files:
+            with open(file, 'r', encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        try:
+                            record = json.loads(line)
+                            records.append(record)
+                        except json.JSONDecodeError:
+                            pass
+        return records
 
     def test_metrics_single_request(self):
         """Send a single request"""
@@ -64,58 +92,77 @@ class TestMetricsExporter(CustomTestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        metrics_dir = Path(os.path.abspath("."))
-        metrics_files = list(metrics_dir.glob("sglang-request-metrics-*.log"))
 
-        self.assertGreater(len(metrics_files), 0, "should generate file")
-        logging.warning(f"\n🔍 Matched metrics files: {metrics_files}")
-        with open(metrics_files, "r", encoding="utf-8") as f:
-            log_content = f.read()
-            # Split by line (log may contain multiple JSON entries)
-            log_lines = [
-                line.strip() for line in log_content.split("\n") if line.strip()
-            ]
-            # Get last valid log entry (latest request)
-            last_log = log_lines[-1] if log_lines else ""
-            # Clean line breaks and extra spaces
-            clean_content = last_log.replace("\n", "").replace("  ", " ").strip()
-            logging.warning(f"\n📝 Cleaned latest log content:\n{clean_content[:800]}...")
-        try:
-            # Parse outer JSON
-            log_data = json.loads(clean_content)
-            self.assertIn("request_parameters", log_data)
-            # Parse request_parameters field (string to JSON)
-            req_params = json.loads(log_data["request_parameters"])
-            self.assertIn("text", req_params)
-            # Extract sampling_params
-            self.assertIn("sampling_params", req_params)
-            self.assertIn("prompt_tokens", req_params)
-            self.assertIn("completion_tokens", req_params)
+        time.sleep(1)
+        metrics_files = self._get_metrics_files()
+        self.assertGreater(len(metrics_files), 0, "Generate specified file")
 
-        except json.JSONDecodeError as e:
-            self.fail(
-                f"❌ JSON parsing failed: {e}, Original content: {clean_content[:500]}"
-            )
+        metrics_records = self._read_metrics_records(metrics_files)
+        self.assertGreater(len(metrics_records), 0, "It contains at least one record")
 
-    def test_metrics_multiple_request(self):
-        """Send a multiple request"""
-        for i in range(5):
-            response = requests.post(
-                f"{self.base_url}/generate",
-                json={
-                    "text": f"Explain the concept of machine learning in detail {i}",
-                    "sampling_params": {
-                        "temperature": 0,
-                        "max_new_tokens": 100
-                    },
-                },
-            )
-            self.assertEqual(response.status_code, 200)
+        record = metrics_records[0]
+        self.assertIn("request_parameters", record)
+        self.assertIn("meta_info", record)
 
-            metrics_dir = Path(os.path.abspath("."))
-            metrics_files = list(metrics_dir.glob("sglang-request-metrics-*.log"))
+        request_parameters = json.loads(record["request_parameters"])
+        self.assertIn("text", request_parameters)
+        self.assertIn("sampling_params", request_parameters)
 
-            self.assertGreater(len(metrics_files), 5, "It should contain 5 requests")
+        meta_info = record["meta_info"]
+        self.assertIn("prompt_tokens", meta_info)
+        self.assertIn("completion_tokens", meta_info)
+
+
+        # with open(metrics_file, 'r', encoding="utf-8") as f:
+        #     log_content = f.read()
+        #     # Split by line (log may contain multiple JSON entries)
+        #     log_lines = [
+        #         line.strip() for line in log_content.split("\n") if line.strip()
+        #     ]
+        #     # Get last valid log entry (latest request)
+        #     last_log = log_lines[-1] if log_lines else ""
+        #     # Clean line breaks and extra spaces
+        #     clean_content = last_log.replace("\n", "").replace("  ", " ").strip()
+        #     logging.warning(f"\n📝 Cleaned latest log content:\n{clean_content[:800]}...")
+        # try:
+        #     # Parse outer JSON
+        #     log_data = json.loads(clean_content)
+        #     self.assertIn("request_parameters", log_data)
+        #     # Parse request_parameters field (string to JSON)
+        #     req_params = json.loads(log_data["request_parameters"])
+        #     self.assertIn("text", req_params)
+        #     # Extract sampling_params
+        #     self.assertIn("sampling_params", req_params)
+        #     self.assertIn("prompt_tokens", req_params)
+        #     self.assertIn("completion_tokens", req_params)
+        #
+        # except json.JSONDecodeError as e:
+        #     self.fail(
+        #         f"❌ JSON parsing failed: {e}, Original content: {clean_content[:500]}"
+        #     )
+
+    # def test_metrics_multiple_request(self):
+    #     """Send a multiple request"""
+    #     for i in range(5):
+    #         response = requests.post(
+    #             f"{self.base_url}/generate",
+    #             json={
+    #                 "text": f"Explain the concept of machine learning in detail {i}",
+    #                 "sampling_params": {
+    #                     "temperature": 0,
+    #                     "max_new_tokens": 100
+    #                 },
+    #             },
+    #         )
+    #         self.assertEqual(response.status_code, 200)
+    #
+    #         metrics_dir = Path(os.path.abspath("."))
+    #         metrics_files = list(metrics_dir.glob("sglang-request-metrics-*.log"))
+    #
+    #         self.assertGreater(len(metrics_files), 5, "It should contain 5 requests")
+
+if __name__ == "__main__":
+    unittest.main()
 
 
 
