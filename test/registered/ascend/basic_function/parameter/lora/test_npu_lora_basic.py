@@ -227,7 +227,7 @@ class TestLoraBasicFunction(CustomTestCase):
         s1, s2 = [
             requests.post(
                 f"{DEFAULT_URL_FOR_TEST}/open_session",
-                 json={"capacity_of_str_len": 1000}
+                json={"capacity_of_str_len": 1000},
             ).json()
             for _ in range(2)
         ]
@@ -271,9 +271,7 @@ class TestLoraBasicFunction(CustomTestCase):
 
         self.assertIn("Mimi", r2.text, f"Session should remember, got: {r2.text}")
         self.assertNotIn(
-            "Mimi",
-            r3.text,
-            f"New session shouldn't remember, got: {r3.text}"
+            "Mimi",r3.text,f"New session shouldn't remember, got: {r3.text}"
         )
 
     def test_lora_with_json_schema(self):
@@ -286,7 +284,7 @@ class TestLoraBasicFunction(CustomTestCase):
                     "age": {"type": "integer"},
                     "city": {"type": "string"},
                 },
-            "required": ["name", "age", "city"],
+                "required": ["name", "age", "city"],
             }
         )
         response = requests.post(

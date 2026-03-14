@@ -31,14 +31,14 @@ class TestLoraBackend(ABC):
     @classmethod
     def setUpClass(cls):
         other_args = [
+            "--tp-size",
+            "1",
             "--enable-lora",
             "--lora-backend",
             f"{cls.lora_backend}",
             "--attention-backend",
             "ascend",
             "--disable-cuda-graph",
-            "--mem-fraction-static",
-            0.8,
             "--lora-path",
             f"tool_calling={LLAMA_3_2_1B_INSTRUCT_TOOL_CALLING_LORA_WEIGHTS_PATH}",
         ]

@@ -29,6 +29,8 @@ class TestMaxLoadedLoras(CustomTestCase):
     @classmethod
     def setUpClass(cls):
         other_args = [
+            "--tp-size",
+            "1",
             "--enable-lora",
             "--max-loaded-loras",
             3,
