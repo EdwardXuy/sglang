@@ -32,6 +32,8 @@ class TestLoraMaxLoraRank(CustomTestCase):
     @classmethod
     def setUpClass(cls):
         other_args = [
+            "--tp-size",
+            "1",
             "--enable-lora",
             "--lora-path",
             f"lora_a={cls.lora_a}",

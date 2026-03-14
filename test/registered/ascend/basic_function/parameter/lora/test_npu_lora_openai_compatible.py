@@ -60,6 +60,8 @@ def setup_class(cls, enable_lora=True):
     cls.lora_adapter_path = get_real_lora_adapter()
 
     other_args = [
+        "--tp-size",
+        "1",
         "--attention-backend",
         "ascend",
         "--disable-cuda-graph",

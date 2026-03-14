@@ -29,14 +29,14 @@ class TestMaxLoadedLoras(CustomTestCase):
     @classmethod
     def setUpClass(cls):
         other_args = [
+            "--tp-size",
+            "1",
             "--enable-lora",
             "--max-loaded-loras",
             3,
             "--attention-backend",
             "ascend",
             "--disable-cuda-graph",
-            "--mem-fraction-static",
-            0.8,
             "--max-loras-per-batch",
             1,
             "--lora-path",
