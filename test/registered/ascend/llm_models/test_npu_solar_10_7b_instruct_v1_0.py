@@ -5,7 +5,7 @@ from sglang.test.ascend.test_ascend_utils import SOLAR_10_7B_INSTRUCT_V1_0_WEIGH
 from sglang.test.test_utils import CustomTestCase
 
 
-class TestAFM(GSM8KAscendMixin, CustomTestCase):
+class TestNpuSolar10_7bInstructV1_0(GSM8KAscendMixin, CustomTestCase):
     """Testcase: Verify that the inference accuracy of the upstage/SOLAR-10.7B-Instruct-v1.0 model on the GSM8K dataset is no less than 0.7.
 
     [Test Category] Model

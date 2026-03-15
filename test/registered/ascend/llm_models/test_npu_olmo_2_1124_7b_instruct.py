@@ -5,7 +5,7 @@ from sglang.test.ascend.test_ascend_utils import OLMO_2_1124_7B_INSTRUCT_WEIGHTS
 from sglang.test.test_utils import CustomTestCase
 
 
-class TestAFM(GSM8KAscendMixin, CustomTestCase):
+class TestNpuOlmo2_1124_7bInstruct(GSM8KAscendMixin, CustomTestCase):
     """Testcase: Verify that the inference accuracy of the allenai/OLMo-2-1124-7B-Instruct model on the GSM8K dataset is no less than 0.74.
 
     [Test Category] Model
