@@ -753,7 +753,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--trouble-shorting",
+        "--trouble-shotting",
         action="store_true",
         help="Used for troubleshorting issues, such as retaining pods",
     )
