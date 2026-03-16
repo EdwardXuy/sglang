@@ -107,3 +107,23 @@ QWEN2_5_MATH_RM_72B_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "Qwen/Qwen2.5
 SKYWORK_REWARD_GEMMA_2_27B_V0_2_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "AI-ModelScope/Skywork-Reward-Gemma-2-27B-v0.2")
 SKYWORK_REWARD_LLAMA_3_1_8B_V0_2_WEIGHTS_PATH = os.path.join(HF_MODEL_WEIGHTS_DIR, "models--Skywork--Skywork-Reward-Llama-3.1-8B-v0.2/snapshots/d4117fbfd81b72f41b96341238baa1e3e90a4ce1")
 # fmt: on
+
+def run_command(cmd, shell=True):
+    """Execute system command and return stdout
+
+    parameter:
+        cmd: command to execute
+        shell:
+        True, Execute command in shell
+        False, Commands are invoked directly without shell parsing
+    return:
+        The result of executing the command
+    """
+    try:
+        result = subprocess.run(
+            cmd, shell=shell, capture_output=True, text=True, check=True
+        )
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        print(f"execute command error: {e}")
+        return None
