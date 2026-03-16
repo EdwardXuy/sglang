@@ -2,7 +2,6 @@ import os
 import re
 import tempfile
 import threading
-import unittest
 from time import sleep
 
 import requests
@@ -74,10 +73,14 @@ class TestNPULoggingBase(CustomTestCase):
             "ascend",
             "--disable-cuda-graph",
         ]
-        cls.out_log_file_obj = tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", delete=False, suffix=".txt")
+        cls.out_log_file_obj = tempfile.NamedTemporaryFile(
+            mode="w+", encoding="utf-8", delete=False, suffix=".txt"
+        )
         cls.out_log_name = cls.out_log_file_obj.name
         cls.out_log_file = cls.out_log_file_obj
-        cls.err_log_file_obj = tempfile.NamedTemporaryFile(mode="w+", encoding="utf-8", delete=False, suffix=".txt")
+        cls.err_log_file_obj = tempfile.NamedTemporaryFile(
+            mode="w+", encoding="utf-8", delete=False, suffix=".txt"
+        )
         cls.err_log_name = cls.err_log_file_obj.name
         cls.err_log_file = cls.err_log_file_obj
         cls.test_prompt = "What is the capital of France?"
@@ -294,7 +297,7 @@ class TestNPULoggingBase(CustomTestCase):
             "1002.0",
             "1004.0",
             "1008.0",
-            "1016.0"
+            "1016.0",
         ]
 
         # --------------------------------------------------------------------------
@@ -526,10 +529,7 @@ class TestNPULoggingBase(CustomTestCase):
                 f"{self.base_url}/generate",
                 json={
                     "text": prompt_template,
-                    "sampling_params": {
-                        "temperature": 0,
-                        "max_new_tokens": max_token
-                    },
+                    "sampling_params": {"temperature": 0, "max_new_tokens": max_token},
                 },
             )
 
