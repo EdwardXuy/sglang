@@ -499,7 +499,7 @@ def run_npu_e2e_test_case(
     sglang_is_in_ci=False,
     install_sglang_from_source=False,
     env="debug",
-    trouble_shorting=False,
+    trouble_shotting=False,
 ):
     """The method for running a npu e2e test case.
     Args:
@@ -547,7 +547,7 @@ def run_npu_e2e_test_case(
                 "sglang_is_in_ci": sglang_is_in_ci,
                 "install_sglang_from_source": install_sglang_from_source,
                 "env": env,
-                "trouble_shorting": trouble_shorting,
+                "trouble_shotting": trouble_shotting,
             }
             create_kube_yaml(
                 kube_yaml_template=KUBE_YAML_TEMPLATE.get(kube_job_type),
@@ -568,7 +568,7 @@ def run_npu_e2e_test_case(
                 "sglang_is_in_ci": sglang_is_in_ci,
                 "install_sglang_from_source": install_sglang_from_source,
                 "env": env,
-                "trouble_shorting": trouble_shorting,
+                "trouble_shotting": trouble_shotting,
             }
             template_key = (
                 KUBE_JOB_MULTI_PD_MIX_GREEN if env == "green" else kube_job_type
@@ -594,7 +594,7 @@ def run_npu_e2e_test_case(
                 "sglang_is_in_ci": sglang_is_in_ci,
                 "install_sglang_from_source": install_sglang_from_source,
                 "env": env,
-                "trouble_shorting": trouble_shorting,
+                "trouble_shotting": trouble_shotting,
             }
             template_key = (
                 KUBE_JOB_MULTI_PD_SEPARATION_GREEN if env == "green" else kube_job_type
@@ -755,7 +755,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--trouble-shotting",
         action="store_true",
-        help="Used for troubleshorting issues, such as retaining pods",
+        help="Used for troubleshotting issues, such as retaining pods",
     )
 
     args = parser.parse_args()
@@ -772,7 +772,7 @@ if __name__ == "__main__":
     sglang_is_in_ci = args.sglang_is_in_ci
     install_sglang_from_source = args.install_sglang_from_source
     env = args.env
-    trouble_shorting = args.trouble_shorting
+    trouble_shotting = args.trouble_shotting
 
     kube_name_space = args.kube_name_space
     kube_job_type = args.kube_job_type
@@ -800,5 +800,5 @@ if __name__ == "__main__":
         sglang_is_in_ci=sglang_is_in_ci,
         install_sglang_from_source=install_sglang_from_source,
         env=env,
-        trouble_shorting=trouble_shorting,
+        trouble_shotting=trouble_shotting,
     )
