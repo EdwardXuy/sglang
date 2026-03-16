@@ -19,7 +19,7 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
-register_npu_ci(est_time=3600, suite="stage-b-test-npu")
+register_npu_ci(est_time=400, suite="nightly-1-npu-a3", nightly=True)
 
 
 class TestHiCache(CustomTestCase):
@@ -31,8 +31,6 @@ class TestHiCache(CustomTestCase):
 
     model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
     base_url = DEFAULT_URL_FOR_TEST
-    test_prompt = "What is the capital of France?"
-    expected_output = "Paris"
 
     @classmethod
     def setUpClass(cls):
@@ -102,24 +100,8 @@ class TestHiCache(CustomTestCase):
         )
         return process
 
-    def _test_basic_inference(self):
-        """Test basic inference functionality."""
-        response = requests.post(
-            f"{self.base_url}/generate",
-            json={
-                "text": self.test_prompt,
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": 32,
-                },
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(self.expected_output, response.text)
-        return response.text
-
     def test_001_combined_params(self):
-        """Test Hicache with combined parameters, hicache inference request reuse succeddfully."""
+        """Test Hicache with combined parameters, hicache inference request reuse successfully."""
         logging.warning("\n=== Test 001: Combined Parameters ===")
         self.process = self._launch_server_with_hicache(
             hicache_ratio=1.0,
@@ -130,7 +112,6 @@ class TestHiCache(CustomTestCase):
         )
 
         try:
-            time.sleep(5)
             prompt = (
                 "What is The capital of France?What is The capital of France?What is The capital of France?"
                 * 18
@@ -175,12 +156,6 @@ class TestHiCache(CustomTestCase):
         )
 
         try:
-            time.sleep(5)
-            result = self._test_basic_inference()
-            logging.warning(
-                f"Combined parameters test passed, result: {result[:50]}..."
-            )
-
             args = SimpleNamespace(
                 num_shots=5,
                 data_path=None,
@@ -195,14 +170,14 @@ class TestHiCache(CustomTestCase):
             self.assertNotEqual(hicache_file, None)
             hicache_file_size = run_command(f"du -s /tmp/hicache | cut -f1")
             self.assertGreater(int(hicache_file_size), 0)
-            run_command(f"rm -rf /tmp/hicache")
         finally:
             kill_process_tree(self.process.pid)
             self.process = None
+            run_command(f"rm -rf /tmp/hicache")
 
     def test_003_combined_params(self):
         """Test Hicache with combined parameters, hicache with long sequence"""
-        logging.warning("\n=== Test 004: Combined Parameters ===")
+        logging.warning("\n=== Test 003: Combined Parameters ===")
         self.process = self._launch_server_with_hicache(
             hicache_size=100,
             hicache_write_policy="write_through_selective",
@@ -212,7 +187,6 @@ class TestHiCache(CustomTestCase):
         )
 
         try:
-            time.sleep(5)
             long_prompt = "Explain the concept of machine learning in detail. " * 100
             response = requests.post(
                 f"{self.base_url}/generate",

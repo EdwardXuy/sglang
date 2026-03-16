@@ -26,7 +26,6 @@ class TestModelOverrideArgs(CustomTestCase):
     [Test Target] model override on NPU
     """
 
-    test_prompt = "What is the capital of France?"
     model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
     base_url = DEFAULT_URL_FOR_TEST
 
@@ -39,7 +38,7 @@ class TestModelOverrideArgs(CustomTestCase):
         if cls.process:
             kill_process_tree(cls.process.pid)
 
-    def _launch_server_with_hicache(
+    def _launch_server_with_overrides(
         self,
         model_override_args='{"num_hidden_layers": 2}',
         preferred_sampling_params='{"temperature": 0.7,  "max_new_tokens": 128}',
@@ -71,7 +70,7 @@ class TestModelOverrideArgs(CustomTestCase):
         response = requests.post(
             f"{self.base_url}/generate",
             json={
-                "text": self.test_prompt,
+                "text": "What is the capital of France?",
                 "sampling_params": {
                     "temperature": 0,
                     "max_new_tokens": 32,
@@ -81,16 +80,15 @@ class TestModelOverrideArgs(CustomTestCase):
         self.assertEqual(response.status_code, 200)
         return response.json()
 
-    def test_001_model_override_args(self):
+    def test_001_batch_processing_requests(self):
         """Test multiple configuration parameters simultaneously overriding, batch processing requests."""
         logging.warning("\n=== Test 001: Override multiple parameters ===")
-        self.process = self._launch_server_with_hicache(
+        self.process = self._launch_server_with_overrides(
             model_override_args='{"num_hidden_layers": 3, "num_key_value_heads": 4}',
             preferred_sampling_params='{"temperature": 0.7,  "max_new_tokens": 127, "min_p": 1}',
         )
 
         try:
-            time.sleep(5)
             response = requests.get(f"{self.base_url}/model_info")
             result = response.json()
             self.assertEqual(result["preferred_sampling_params"]["temperature"], 0.7)
@@ -100,6 +98,7 @@ class TestModelOverrideArgs(CustomTestCase):
             result1 = self._test_basic_inference()
             self.assertIn("text", result1)
             self.assertGreater(len(result1["text"]), 0)
+            # Test request parameters take precedence, in the request parameters, max_new_tokens is set to 32.
             self.assertIn("length", result1["meta_info"]["finish_reason"])
             self.assertEqual(result1["meta_info"]["completion_tokens"], 32)
             logging.warning(
@@ -122,16 +121,15 @@ class TestModelOverrideArgs(CustomTestCase):
             kill_process_tree(self.process.pid)
             self.process = None
 
-    def test_002_model_override_args(self):
+    def test_002_multiple_sampling_parameters(self):
         """Test configuration with multiple sampling parameters."""
         logging.warning("\n=== Test 002: multiple sampling parameters ===")
-        self.process = self._launch_server_with_hicache(
+        self.process = self._launch_server_with_overrides(
             model_override_args='{"num_hidden_layers": 3, "max_position_embeddings": 50, "num_key_value_heads": 4}',
             preferred_sampling_params='{"temperature": 0.7, "top_p": 0.9, "top_k": 40, "max_new_tokens": 256, "min_new_tokens": 1, "logit_bias": {"123": 100}}',
         )
 
         try:
-            time.sleep(5)
             response = requests.get(f"{self.base_url}/model_info")
             result = response.json()
             self.assertEqual(result["preferred_sampling_params"]["temperature"], 0.7)
@@ -149,6 +147,7 @@ class TestModelOverrideArgs(CustomTestCase):
                 f"Inference with multiple sampling: {result1['text'][:50]}..."
             )
 
+            # If `max_position_embeddings` is set to 50, an error will occur if the input length exceeds 50.
             response2 = requests.post(
                 f"{DEFAULT_URL_FOR_TEST}/generate",
                 json={
@@ -174,10 +173,10 @@ class TestModelOverrideArgs(CustomTestCase):
             kill_process_tree(self.process.pid)
             self.process = None
 
-    def test_003_model_override_args(self):
+    def test_003_long_sequence_request(self):
         """Test configuration with multiple sampling penalty parameters, long sequence request."""
         logging.warning("\n=== Test 003: multiple sampling penalty parameters ===")
-        self.process = self._launch_server_with_hicache(
+        self.process = self._launch_server_with_overrides(
             model_override_args='{"num_hidden_layers": 3, "num_key_value_heads": 4}',
             preferred_sampling_params='{"temperature": 0.7, "max_new_tokens": 64, "frequency_penalty": 0.5, "presence_penalty": 0.3, "repetition_penalty": 1.2}',
         )
