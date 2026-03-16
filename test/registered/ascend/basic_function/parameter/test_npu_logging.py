@@ -548,4 +548,3 @@ class TestNPULoggingBase(CustomTestCase):
         content = err_log_file.read()
         self.assertTrue(len(content) > 0)
         self.assertIn(GC_info, content)
-
