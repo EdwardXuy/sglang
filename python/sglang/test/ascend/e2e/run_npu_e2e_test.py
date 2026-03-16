@@ -752,6 +752,12 @@ if __name__ == "__main__":
         help="Environment type",
     )
 
+    parser.add_argument(
+        "--trouble-shorting",
+        action="store_true",
+        help="Used for troubleshorting issues, such as retaining pods",
+    )
+
     args = parser.parse_args()
 
     docker_image_url = args.image
@@ -766,6 +772,7 @@ if __name__ == "__main__":
     sglang_is_in_ci = args.sglang_is_in_ci
     install_sglang_from_source = args.install_sglang_from_source
     env = args.env
+    trouble_shorting = args.trouble_shorting
 
     kube_name_space = args.kube_name_space
     kube_job_type = args.kube_job_type
@@ -793,4 +800,5 @@ if __name__ == "__main__":
         sglang_is_in_ci=sglang_is_in_ci,
         install_sglang_from_source=install_sglang_from_source,
         env=env,
+        trouble_shorting=trouble_shorting,
     )
