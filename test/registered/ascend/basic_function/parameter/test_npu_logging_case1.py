@@ -1,5 +1,4 @@
 import unittest
-import requests
 
 from test_npu_logging import TestNPULoggingBase
 
@@ -42,7 +41,9 @@ class TestNPULoggingCase1(TestNPULoggingBase):
 
         cls.other_args.extend(["--log-requests"])
         cls.other_args.extend(["--log-requests-level", str(cls.log_requests_level)])
-        cls.other_args.extend(["--uvicorn-access-log-exclude-prefixes", *cls.log_exclude_prefixes])
+        cls.other_args.extend(
+            ["--uvicorn-access-log-exclude-prefixes", *cls.log_exclude_prefixes]
+        )
         cls.other_args.extend(["--enable-metrics"])
         cls.other_args.extend(["--tp-size", 2])
         cls.other_args.extend(["--enable-metrics-for-all-scheduler"])
@@ -50,8 +51,12 @@ class TestNPULoggingCase1(TestNPULoggingBase):
         cls.other_args.extend(["--bucket-inter-token-latency", *cls.my_bucket])
         cls.other_args.extend(["--bucket-e2e-request-latency", *cls.my_bucket])
         cls.other_args.extend(["--collect-tokens-histogram"])
-        cls.other_args.extend(["--prompt-tokens-buckets", "custom", *cls.my_tokens_bucket])
-        cls.other_args.extend(["--generation-tokens-buckets", "custom", *cls.my_tokens_bucket])
+        cls.other_args.extend(
+            ["--prompt-tokens-buckets", "custom", *cls.my_tokens_bucket]
+        )
+        cls.other_args.extend(
+            ["--generation-tokens-buckets", "custom", *cls.my_tokens_bucket]
+        )
 
         cls.process = popen_launch_server(
             cls.model,

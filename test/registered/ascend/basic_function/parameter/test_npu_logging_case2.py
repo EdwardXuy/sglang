@@ -1,5 +1,4 @@
 import unittest
-import requests
 
 from test_npu_logging import TestNPULoggingBase
 

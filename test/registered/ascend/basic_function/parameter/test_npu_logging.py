@@ -8,7 +8,6 @@ from time import sleep
 import requests
 
 from sglang.srt.utils import kill_process_tree
-
 from sglang.test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
 from sglang.test.test_utils import (
     DEFAULT_URL_FOR_TEST,
@@ -120,7 +119,9 @@ class TestNPULoggingBase(CustomTestCase):
         # --------------------------------------------------------------------------
         # Base regex: Matches minimum required content in request completion logs (--log-requests=True)
         # Applies to all --log-requests-level values (0-3)
-        cls.message = r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, .*"
+        cls.message = (
+            r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, .*"
+        )
 
         # Level-specific regex patterns for --log-requests-level (0-3)
         # Each pattern validates that logs include level-appropriate content
@@ -133,7 +134,9 @@ class TestNPULoggingBase(CustomTestCase):
 
         # Keywords for extracting token ID arrays from request completion logs
         cls.keyword_Finish = r".*Finish: obj=GenerateReqInput\(.*http_worker_ipc=None, text='just.*"  # Match target log line
-        cls.keyword_output_id_start = "'output_ids': ["  # Start delimiter for token ID array
+        cls.keyword_output_id_start = (
+            "'output_ids': ["  # Start delimiter for token ID array
+        )
         cls.keyword_output_id_end = "], 'meta_info'"  # End delimiter for token ID array
 
         # --------------------------------------------------------------------------
@@ -148,29 +151,79 @@ class TestNPULoggingBase(CustomTestCase):
         # Default bucket boundaries for time-to-first-token latency (seconds)
         # Used if --bucket-time-to-first-token is not explicitly configured
         cls.default_time_to_first_token_bucket = [
-            "0.1", "0.2", "0.4", "0.6", "0.8",
-            "1.0", "2.0", "4.0", "6.0", "8.0",
-            "10.0", "20.0", "40.0", "60.0", "80.0",
-            "100.0", "200.0", "400.0",
+            "0.1",
+            "0.2",
+            "0.4",
+            "0.6",
+            "0.8",
+            "1.0",
+            "2.0",
+            "4.0",
+            "6.0",
+            "8.0",
+            "10.0",
+            "20.0",
+            "40.0",
+            "60.0",
+            "80.0",
+            "100.0",
+            "200.0",
+            "400.0",
         ]
 
         # Default bucket boundaries for inter-token latency (seconds)
         # Used if --bucket-inter-token-latency is not explicitly configured
         cls.default_inter_token_latency_bucket = [
-            "0.002", "0.004", "0.006", "0.008",
-            "0.01", "0.015", "0.02", "0.025", "0.03", "0.035", "0.04", "0.06", "0.08",
-            "0.1", "0.2", "0.4", "0.6", "0.8",
-            "1.0", "2.0", "4.0", "6.0", "8.0",
+            "0.002",
+            "0.004",
+            "0.006",
+            "0.008",
+            "0.01",
+            "0.015",
+            "0.02",
+            "0.025",
+            "0.03",
+            "0.035",
+            "0.04",
+            "0.06",
+            "0.08",
+            "0.1",
+            "0.2",
+            "0.4",
+            "0.6",
+            "0.8",
+            "1.0",
+            "2.0",
+            "4.0",
+            "6.0",
+            "8.0",
         ]
 
         # Default bucket boundaries for end-to-end (E2E) request latency (seconds)
         # Used if --bucket-e2e-request-latency is not explicitly configured
         cls.default_e2e_request_latency_bucket = [
-            "0.1", "0.2", "0.4", "0.6", "0.8",
-            "1.0", "2.0", "4.0", "6.0", "8.0",
-            "10.0", "20.0", "40.0", "60.0", "80.0",
-            "100.0", "200.0", "400.0", "600.0",
-            "1200.0", "1800.0", "2400.0",
+            "0.1",
+            "0.2",
+            "0.4",
+            "0.6",
+            "0.8",
+            "1.0",
+            "2.0",
+            "4.0",
+            "6.0",
+            "8.0",
+            "10.0",
+            "20.0",
+            "40.0",
+            "60.0",
+            "80.0",
+            "100.0",
+            "200.0",
+            "400.0",
+            "600.0",
+            "1200.0",
+            "1800.0",
+            "2400.0",
         ]
 
         # Custom latency bucket boundaries (for testing non-default configurations)
@@ -183,24 +236,64 @@ class TestNPULoggingBase(CustomTestCase):
         # Used if --prompt-tokens-buckets / --generation-tokens-bucket are not explicitly configured
         # Note: Prompt and generation token buckets use identical default boundaries
         cls.default_tokens_bucket = [
-            "100.0", "300.0", "500.0", "700.0",
-            "1000.0", "1500.0", "2000.0", "3000.0", "4000.0", "5000.0", "6000.0", "7000.0", "8000.0", "9000.0",
-            "10000.0", "12000.0", "15000.0", "20000.0", "22000.0", "25000.0",
-            "30000.0", "35000.0", "40000.0", "66000.0", "99000.0",
-            "132000.0", "300000.0", "600000.0", "900000.0",
+            "100.0",
+            "300.0",
+            "500.0",
+            "700.0",
+            "1000.0",
+            "1500.0",
+            "2000.0",
+            "3000.0",
+            "4000.0",
+            "5000.0",
+            "6000.0",
+            "7000.0",
+            "8000.0",
+            "9000.0",
+            "10000.0",
+            "12000.0",
+            "15000.0",
+            "20000.0",
+            "22000.0",
+            "25000.0",
+            "30000.0",
+            "35000.0",
+            "40000.0",
+            "66000.0",
+            "99000.0",
+            "132000.0",
+            "300000.0",
+            "600000.0",
+            "900000.0",
             "1.1e+06",
         ]
 
         # Custom token count bucket boundaries (for testing custom configurations)
         cls.my_tokens_bucket = [
-            "100.0", "1000.0", "10000.0", "100000.0", "300000.0", "600000.0", "900000.0",
+            "100.0",
+            "1000.0",
+            "10000.0",
+            "100000.0",
+            "300000.0",
+            "600000.0",
+            "900000.0",
         ]
 
         # Two-Sided Exponential (TSE) Bucket Strategy Configuration
         # Format: [base_value, exponential_factor, number_of_steps]
         cls.my_tse_set = ["1000", "2", "8"]
         # Precomputed custom bucket boundaries using the TSE strategy
-        cls.my_tse_bucket = ["984.0", "992.0", "996.0", "998.0", "1000.0", "1002.0", "1004.0", "1008.0", "1016.0"]
+        cls.my_tse_bucket = [
+            "984.0",
+            "992.0",
+            "996.0",
+            "998.0",
+            "1000.0",
+            "1002.0",
+            "1004.0",
+            "1008.0",
+            "1016.0"
+        ]
 
         # --------------------------------------------------------------------------
         # 5. --tokenizer-metrics-custom-labels Configuration
@@ -261,7 +354,9 @@ class TestNPULoggingBase(CustomTestCase):
         out_log_file.seek(0)
         content = out_log_file.read()
         self.assertTrue(len(content) > 0)
-        self.assertIsNotNone(re.search(self.log_request_message_dict[str(log_requests_level)], content))
+        self.assertIsNotNone(
+            re.search(self.log_request_message_dict[str(log_requests_level)], content)
+        )
         # The total number of generated tokens should equal the configured maximum number of generated tokens
         lines = self.get_lines_with_keyword(self.out_log_name, self.keyword_Finish)
         finish_message = lines[0]["content"]
@@ -270,19 +365,34 @@ class TestNPULoggingBase(CustomTestCase):
         # Step 3: Validate token count preservation rules in logs:
         if log_requests_level >= 2:
             # Extract the content of output_ids to count the number of generated tokens recorded in the logs
-            output_ids_start_index = finish_message.find(self.keyword_output_id_start) + len(
-                self.keyword_output_id_start)
+            output_ids_start_index = finish_message.find(
+                self.keyword_output_id_start
+            ) + len(self.keyword_output_id_start)
             output_ids_end_index = finish_message.find(self.keyword_output_id_end)
-            output_ids_list_str = finish_message[output_ids_start_index:output_ids_end_index].strip()
+            output_ids_list_str = finish_message[
+                output_ids_start_index:output_ids_end_index
+            ].strip()
             if log_requests_level == 2:
                 # When --log-requests-level=2, the log records a maximum of 2048 tokens (truncated content)
                 self.assertIn("] ... [", output_ids_list_str)
                 output_ids_list_str = output_ids_list_str.replace("] ... [", ", ")
-                token_id_count = len([x.strip() for x in re.split(r",\s*", output_ids_list_str) if x.strip()])
+                token_id_count = len(
+                    [
+                        x.strip()
+                        for x in re.split(r",\s*", output_ids_list_str)
+                        if x.strip()
+                    ]
+                )
                 self.assertTrue(token_id_count == 2048)
             else:
                 # When --log-requests_level=3, the log records all generated token content (no truncation)
-                token_id_count = len([x.strip() for x in re.split(r",\s*", output_ids_list_str) if x.strip()])
+                token_id_count = len(
+                    [
+                        x.strip()
+                        for x in re.split(r",\s*", output_ids_list_str)
+                        if x.strip()
+                    ]
+                )
                 self.assertTrue(token_id_count > 2048)
 
     def _verify_log_exclude_prefixes(self, if_enable, out_log_file):
@@ -367,10 +477,14 @@ class TestNPULoggingBase(CustomTestCase):
                 - False: Expect metrics only for TP rank 0 (TP rank 1 metrics absent)
         """
         response = requests.get(f"{self.base_url}/metrics", timeout=10)
-        message_0 = (f'sglang:num_decode_transfer_queue_reqs{{engine_type="unified",model_name="{self.model}"'
-                     f',moe_ep_rank="0",pp_rank="0",tp_rank="0"}}')
-        message_1 = (f'sglang:num_decode_transfer_queue_reqs{{engine_type="unified",model_name="{self.model}"'
-                     f',moe_ep_rank="0",pp_rank="0",tp_rank="1"}}')
+        message_0 = (
+            f'sglang:num_decode_transfer_queue_reqs{{engine_type="unified",model_name="{self.model}"'
+            f',moe_ep_rank="0",pp_rank="0",tp_rank="0"}}'
+        )
+        message_1 = (
+            f'sglang:num_decode_transfer_queue_reqs{{engine_type="unified",model_name="{self.model}"'
+            f',moe_ep_rank="0",pp_rank="0",tp_rank="1"}}'
+        )
         self.assertIn(message_0, response.text)
         if if_enable:
             self.assertIn(message_1, response.text)
@@ -398,11 +512,11 @@ class TestNPULoggingBase(CustomTestCase):
         response = requests.get(f"{self.base_url}/metrics", timeout=10)
         self.assertEqual(response.status_code, 200)
         metrics_content = response.text
-        message = f'sglang:time_to_first_token_seconds_bucket{{{self.my_label}="'
+        message = f"sglang:time_to_first_token_seconds_bucket{{{self.my_label}="
         self.assertIn(message, metrics_content)
-        message = f'sglang:inter_token_latency_seconds_bucket{{{self.my_label}='
+        message = f"sglang:inter_token_latency_seconds_bucket{{{self.my_label}="
         self.assertIn(message, metrics_content)
-        message = f'sglang:e2e_request_latency_seconds_bucket{{{self.my_label}='
+        message = f"sglang:e2e_request_latency_seconds_bucket{{{self.my_label}="
         self.assertIn(message, metrics_content)
 
     def _verify_gc_warning_threshold(self, err_log_file):
@@ -416,7 +530,9 @@ class TestNPULoggingBase(CustomTestCase):
         Args:
             err_log_file (file object): Open file object of the error log file
         """
-        prompt_template = "just return me a string with of 10000 characters: " + "A" * 5000
+        prompt_template = (
+            "just return me a string with of 10000 characters: " + "A" * 5000
+        )
         max_token = 1000
 
         def send_request():
@@ -425,7 +541,10 @@ class TestNPULoggingBase(CustomTestCase):
                     f"{self.base_url}/generate",
                     json={
                         "text": prompt_template,
-                        "sampling_params": {"temperature": 0, "max_new_tokens": max_token},
+                        "sampling_params": {
+                            "temperature": 0,
+                            "max_new_tokens": max_token
+                        },
                     },
                 )
             except Exception as e:

@@ -1,5 +1,4 @@
 import unittest
-import requests
 
 from test_npu_logging import TestNPULoggingBase
 
@@ -39,8 +38,12 @@ class TestNPULoggingCase3(TestNPULoggingBase):
         cls.other_args.extend(["--log-requests"])
         cls.other_args.extend(["--log-requests-level", str(cls.log_requests_level)])
         cls.other_args.extend(["--enable-metrics"])
-        cls.other_args.extend(["--tokenizer-metrics-custom-labels-header", cls.labels_header])
-        cls.other_args.extend(["--tokenizer-metrics-allowed-custom-labels", cls.my_label])
+        cls.other_args.extend(
+            ["--tokenizer-metrics-custom-labels-header", cls.labels_header]
+        )
+        cls.other_args.extend(
+            ["--tokenizer-metrics-allowed-custom-labels", cls.my_label]
+        )
 
         cls.process = popen_launch_server(
             cls.model,
