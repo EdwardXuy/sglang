@@ -2,7 +2,7 @@ import unittest
 
 from sglang.test.ascend.e2e.test_npu_performance_utils import (
     QWEN3_235B_A22B_EAGLE_MODEL_PATH,
-    QWEN3_235B_W8A8_MODEL_PATH,
+    QWEN3_235B_MODEL_PATH,
     TestAscendPerformanceTestCaseBase,
 )
 from sglang.test.ci.ci_register import register_npu_ci
@@ -17,18 +17,12 @@ register_npu_ci(
 QWEN3_235B_ENVS = {
     "PYTORCH_NPU_ALLOC_CONF": "expandable_segments:True",
     "SGLANG_DISAGGREGATION_BOOTSTRAP_TIMEOUT": "600",
-    "HCCL_BUFFSIZE": "570",
+    "HCCL_BUFFSIZE": "1600",
     "HCCL_SOCKET_IFNAME": "lo",
     "GLOO_SOCKET_IFNAME": "lo",
     "HCCL_OP_EXPANSION_MODE": "AIV",
     "SGLANG_ENABLE_OVERLAP_PLAN_STREAM": "1",
     "SGLANG_ENABLE_SPEC_V2": "1",
-    "SGLANG_SCHEDULER_DECREASE_PREFILL_IDLE": "1",
-    "SGLANG_PREFILL_DELAYER_MAX_DELAY_PASSES": "100",
-    "SGLANG_NPU_PROFILING": "0",
-    "SGLANG_NPU_PROFILING_BS": "27",
-    "SGLANG_DEEPEP_NUM_MAX_DISPATCH_TOKENS_PER_RANK": "188416",
-    "SGLANG_NPU_FUSED_MOE_MODE": "2",
 }
 
 QWEN3_235B_OTHER_ARGS = [
@@ -41,72 +35,49 @@ QWEN3_235B_OTHER_ARGS = [
     "ascend",
     "--device",
     "npu",
-    "--quantization",
-    "modelslim",
     "--max-running-requests",
-    432,
-    "--context-length",
-    8192,
+    "1",
     "--dtype",
     "bfloat16",
     "--chunked-prefill-size",
-    94208,
+    "-1",
     "--max-prefill-tokens",
-    458880,
-    "--sampling-backend",
-    "ascend",
-    "--ep-dispatch-algorithm",
-    "static",
-    "--init-expert-location",
-    "/home/weights/hot_map/235B_3_5k_bs26_decode.pt",
-    "--disable-radix-cache",
-    "--moe-a2a-backend",
-    "ascend_fuseep",
+    "16384",
+    "--speculative-draft-model-quantization",
+    "unquant",
     "--speculative-algorithm",
     "EAGLE3",
     "--speculative-draft-model-path",
     QWEN3_235B_A22B_EAGLE_MODEL_PATH,
     "--speculative-num-steps",
-    "3",
+    "4",
     "--speculative-eagle-topk",
     "1",
     "--speculative-num-draft-tokens",
-    "4",
-    "--speculative-draft-model-quantization",
-    "unquant",
+    "5",
+    "--disable-radix-cache",
+    "--enable-dp-lm-head",
     "--tp",
     "16",
-    "--dp-size",
-    "16",
-    "--enable-dp-attention",
-    "--enable-dp-lm-head",
     "--mem-fraction-static",
-    "0.8",
+    "0.78",
     "--cuda-graph-bs",
     "1",
-    "2",
-    "4",
-    "8",
-    "16",
-    "20",
-    "24",
-    "26",
-    "27",
 ]
 
 
 class TestQwen235B(TestAscendPerformanceTestCaseBase):
-    model = QWEN3_235B_W8A8_MODEL_PATH
+    model = QWEN3_235B__MODEL_PATH
     other_args = QWEN3_235B_OTHER_ARGS
     envs = QWEN3_235B_ENVS
     dataset_name = "random"
-    max_concurrency = 432
-    num_prompts = int(max_concurrency) * 4
-    input_len = 3500
+    max_concurrency = 1
+    num_prompts = 1
+    input_len = 11000
     output_len = 1500
     random_range_ratio = 1
-    tpot = 50.1
-    # T: 290@50ms.   800I: 1.1*T
+    tpot = 7.82
+    # T: 205@50ms.   800I: 1.8*T
     output_token_throughput = 6189
 
     def test_qwen3_235b(self):
