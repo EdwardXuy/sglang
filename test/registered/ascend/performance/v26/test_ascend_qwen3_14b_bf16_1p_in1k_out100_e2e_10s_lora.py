@@ -83,6 +83,7 @@ class TestQwen14B(TestAscendPerformanceTestCaseBase):
     output_len = 100
     random_range_ratio = 1
     request_rate = 7
+    seed = 1000
     mean_e2e_latency = 10000
     output_token_throughput = 682
 
