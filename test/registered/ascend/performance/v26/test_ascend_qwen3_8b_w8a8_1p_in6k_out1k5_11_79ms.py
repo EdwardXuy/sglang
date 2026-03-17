@@ -44,8 +44,6 @@ QWEN3_8B_OTHER_ARGS = [
     "--disable-radix-cache",
     "--chunked-prefill-size",
     -1,
-    "--speculative-draft-model-quantization",
-    "unquant",
     "--tp-size",
     2,
     "--mem-fraction-static",

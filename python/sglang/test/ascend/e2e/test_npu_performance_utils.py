@@ -38,6 +38,13 @@ DEEPSEEK_V32_W8A8_MODEL_PATH = (
 )
 QWEN3_8B_W8A8_MODEL_PATH = "/root/.cache/modelscope/hub/models/Qwen/Qwen3-8B-W8A8"
 QWEN3_8B_EAGLE_MODEL_PATH = "/root/.cache/modelscope/hub/models/Qwen/Qwen3-8B_eagle3"
+QWEN3_14B_MODEL_PATH = "/root/.cache/modelscope/hub/models/Qwen/Qwen3-14B"
+QWEN3_14B_W8A8_MODEL_PATH = (
+    "/root/.cache/modelscope/hub/models/Qwen/Qwen3-14B-W8A8-Dynamic2"
+)
+QWEN3_14B_EAGLE_MODEL_PATH = (
+    "/root/.cache/modelscope/hub/models/AngelSlim/Qwen3-14B_eagle3"
+)
 QWEN3_30B_A3B_W8A8_MODEL_PATH = (
     "/root/.cache/modelscope/hub/models/Qwen/Qwen3-30B-A3B-w8a8"
 )
