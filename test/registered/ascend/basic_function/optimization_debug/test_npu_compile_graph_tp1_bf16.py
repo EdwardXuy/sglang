@@ -1,8 +1,10 @@
+import os
 import unittest
 from types import SimpleNamespace
 from urllib.parse import urlparse
 
 from sglang.srt.utils import kill_process_tree
+from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.few_shot_gsm8k import run_eval as run_eval_few_shot_gsm8k
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -11,16 +13,20 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
+register_npu_ci(est_time=400, suite="stage-b-test-1-npu-a2", nightly=False)
+
 TEST_MODEL_MATRIX = {
     "/root/.cache/modelscope/hub/models/Qwen/Qwen2.5-7B-Instruct": {
-        "accuracy": 0.85,
-        "latency": 180,
-        "output_throughput": 20,
+        "accuracy": 0.84,
+        "latency": 150,
+        "output_throughput": 30,
     },
 }
 
+os.environ["ASCEND_USE_FIA"] = "true"
 
-class TestAscendTp2Bf16(CustomTestCase):
+
+class TestAscendTp1Bf16(CustomTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -29,13 +35,14 @@ class TestAscendTp2Bf16(CustomTestCase):
         cls.url = urlparse(DEFAULT_URL_FOR_TEST)
         cls.common_args = [
             "--trust-remote-code",
-            "--disable-cuda-graph",
             "--mem-fraction-static",
-            0.8,
+            0.6,
             "--attention-backend",
             "ascend",
-            "--tp-size",
-            2,
+            "--disable-radix-cache",
+            "--enable-torch-compile",
+            "--watchdog-timeout",
+            30000,
         ]
 
     def test_a_gsm8k(self):
@@ -58,7 +65,7 @@ class TestAscendTp2Bf16(CustomTestCase):
                         data_path=None,
                         num_questions=1319,
                         max_new_tokens=512,
-                        parallel=128,
+                        parallel=32,
                         host=f"http://{self.url.hostname}",
                         port=int(self.url.port),
                     )

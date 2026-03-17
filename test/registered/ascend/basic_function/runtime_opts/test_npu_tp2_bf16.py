@@ -3,23 +3,27 @@ from types import SimpleNamespace
 from urllib.parse import urlparse
 
 from sglang.srt.utils import kill_process_tree
+from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.few_shot_gsm8k import run_eval as run_eval_few_shot_gsm8k
 from sglang.test.test_utils import (
+    DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
     CustomTestCase,
     popen_launch_server,
 )
 
+register_npu_ci(est_time=400, suite="stage-b-test-2-npu-a2", nightly=False)
+
 TEST_MODEL_MATRIX = {
-    "Qwen/Qwen3-30B-A3B-Instruct-2507": {
-        "accuracy": 0.90,
+    "/root/.cache/modelscope/hub/models/Qwen/Qwen2.5-7B-Instruct": {
+        "accuracy": 0.85,
         "latency": 180,
         "output_throughput": 20,
     },
 }
 
 
-class TestAscendTp4Bf16(CustomTestCase):
+class TestAscendTp2Bf16(CustomTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -28,17 +32,13 @@ class TestAscendTp4Bf16(CustomTestCase):
         cls.url = urlparse(DEFAULT_URL_FOR_TEST)
         cls.common_args = [
             "--trust-remote-code",
+            "--disable-cuda-graph",
             "--mem-fraction-static",
-            0.7,
-            "--max-running-requests",
-            32,
+            0.8,
             "--attention-backend",
             "ascend",
-            "--disable-radix-cache",
-            "--cuda-graph-max-bs",
-            32,
             "--tp-size",
-            4,
+            2,
         ]
 
     def test_a_gsm8k(self):
@@ -49,7 +49,7 @@ class TestAscendTp4Bf16(CustomTestCase):
                 process = popen_launch_server(
                     model,
                     self.base_url,
-                    timeout=1800,
+                    timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
                     other_args=[
                         *self.common_args,
                     ],

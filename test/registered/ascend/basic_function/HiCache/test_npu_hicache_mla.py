@@ -1,9 +1,9 @@
-import os
 import unittest
 from types import SimpleNamespace
 from urllib.parse import urlparse
 
 from sglang.srt.utils import kill_process_tree
+from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.few_shot_gsm8k import run_eval as run_eval_few_shot_gsm8k
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -12,16 +12,18 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
+register_npu_ci(est_time=400, suite="stage-b-test-4-npu-a3", nightly=False)
+
 TEST_MODEL_MATRIX = {
-    "/root/.cache/modelscope/hub/models/Qwen/Qwen2.5-7B-Instruct": {
-        "accuracy": 0.85,
-        "latency": 180,
-        "output_throughput": 20,
+    "/root/.cache/modelscope/hub/models/vllm-ascend/DeepSeek-V2-Lite-W8A8": {
+        "accuracy": 0.34,
+        "latency": 1000,
+        "output_throughput": 6,
     },
 }
 
 
-class TestAscendTp2Bf16(CustomTestCase):
+class TestAscendMlaHicache(CustomTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -30,18 +32,18 @@ class TestAscendTp2Bf16(CustomTestCase):
         cls.url = urlparse(DEFAULT_URL_FOR_TEST)
         cls.common_args = [
             "--trust-remote-code",
-            "--disable-cuda-graph",
             "--mem-fraction-static",
             0.8,
             "--attention-backend",
             "ascend",
             "--tp-size",
-            2,
-            "--disable-radix-cache",
+            4,
+            "--enable-hierarchical-cache",
+            "--hicache-ratio",
+            1.2,
         ]
 
     def test_a_gsm8k(self):
-        os.environ["ASCEND_USE_FIA"] = "true"
         for model in self.models:
             with self.subTest(model=model):
                 print(f"##=== Testing accuracy: {model} ===##")

@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 import requests
 
 from sglang.srt.utils import kill_process_tree
+from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.few_shot_gsm8k import run_eval
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -20,6 +21,8 @@ from sglang.test.test_utils import (
     is_in_ci,
     popen_launch_server,
 )
+
+register_npu_ci(est_time=400, suite="stage-b-test-1-npu-a2", nightly=False)
 
 if "ASCEND_RT_VISIBLE_DEVICES" not in os.environ:
     os.environ["ASCEND_RT_VISIBLE_DEVICES"] = "0,1"

@@ -1,27 +1,28 @@
-import logging
 import unittest
 from types import SimpleNamespace
 from urllib.parse import urlparse
 
 from sglang.srt.utils import kill_process_tree
+from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.few_shot_gsm8k import run_eval as run_eval_few_shot_gsm8k
 from sglang.test.test_utils import (
-    DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
     CustomTestCase,
     popen_launch_server,
 )
 
-logger = logging.getLogger(__name__)
+register_npu_ci(est_time=400, suite="stage-b-test-4-npu-a3", nightly=False)
 
 TEST_MODEL_MATRIX = {
-    "/root/.cache/modelscope/hub/models/Qwen/Qwen3-30B-A3B-GPTQ-Int4": {
-        "accuracy": 0.85,
+    "Qwen/Qwen3-30B-A3B-Instruct-2507": {
+        "accuracy": 0.90,
+        "latency": 180,
+        "output_throughput": 20,
     },
 }
 
 
-class TestAscendGPTQMoEInt4(CustomTestCase):
+class TestAscendTp4Bf16(CustomTestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -31,22 +32,27 @@ class TestAscendGPTQMoEInt4(CustomTestCase):
         cls.common_args = [
             "--trust-remote-code",
             "--mem-fraction-static",
-            0.8,
+            0.7,
+            "--max-running-requests",
+            32,
             "--attention-backend",
             "ascend",
-            "--quantization",
-            "gptq",
+            "--disable-radix-cache",
+            "--cuda-graph-max-bs",
+            32,
+            "--tp-size",
+            4,
         ]
 
     def test_a_gsm8k(self):
         for model in self.models:
             with self.subTest(model=model):
-                logger.info(f"##=== Testing accuracy: {model} ===##")
+                print(f"##=== Testing accuracy: {model} ===##")
 
                 process = popen_launch_server(
                     model,
                     self.base_url,
-                    timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+                    timeout=1800,
                     other_args=[
                         *self.common_args,
                     ],
