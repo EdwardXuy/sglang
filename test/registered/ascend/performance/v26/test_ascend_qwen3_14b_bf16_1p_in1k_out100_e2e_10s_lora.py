@@ -72,6 +72,49 @@ QWEN3_14B_OTHER_ARGS = [
     8,
 ]
 
+# ===============当前版本需要规避,回退这个PR:18046==============
+import os
+
+
+def delete_specific_lines(file_path, start_line, end_line, backup=True):
+    if start_line > end_line or start_line < 1:
+        raise ValueError("Invalid line range: start line must be ≤ end line and ≥ 1")
+
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"File not found: {file_path}")
+
+    if not os.access(file_path, os.R_OK | os.W_OK):
+        raise PermissionError(f"No read/write permission for: {file_path}")
+
+    if backup:
+        backup_path = f"{file_path}.bak"
+        with open(file_path, "r", encoding="utf-8") as src, open(
+            backup_path, "w", encoding="utf-8"
+        ) as dst:
+            dst.write(src.read())
+        print(f"Backup file created: {backup_path}")
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    new_lines = []
+    for line_num, line_content in enumerate(lines, start=1):
+        if not (start_line <= line_num <= end_line):
+            new_lines.append(line_content)
+
+    with open(file_path, "w", encoding="utf-8") as f:
+        f.writelines(new_lines)
+
+    print(f"Successfully deleted lines {start_line}-{end_line} from {file_path}")
+
+
+target_file = "/usr/local/python3.11.14/lib/python3.11/site-packages/sglang/srt/lora/lora_manager.py"
+try:
+    delete_specific_lines(target_file, 157, 160)
+except Exception as e:
+    print(f"Operation failed: {e}")
+# ===============当前版本需要规避,回退这个PR:18046==============
+
 
 class TestQwen14B(TestAscendPerformanceTestCaseBase):
     model = QWEN3_14B_MODEL_PATH
