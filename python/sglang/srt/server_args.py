@@ -41,7 +41,6 @@ from sglang.srt.utils.common import (
     get_device_memory_capacity,
     get_device_name,
     get_device_sm,
-    get_free_port,
     get_int_env_var,
     get_quantization_config,
     is_blackwell_supported,
@@ -63,11 +62,10 @@ from sglang.srt.utils.common import (
     nullable_str,
     parse_connector_type,
     torch_release,
-    wait_port_available,
     xpu_has_xmx_support,
 )
 from sglang.srt.utils.hf_transformers_utils import check_gguf_file
-from sglang.srt.utils.network import NetworkAddress
+from sglang.srt.utils.network import NetworkAddress, get_free_port, wait_port_available
 from sglang.utils import is_in_ci
 
 logger = logging.getLogger(__name__)
@@ -1476,6 +1474,7 @@ class ServerArgs:
                         assert (
                             self.tp_size == 8
                         ), "Current multi-machine CP support suffers from precision issues. So context parallel only support Single machine(tp_size == 8)"
+                        self.attn_cp_size = self.tp_size
 
                         logger.warning(
                             f"Enable Context Parallel opt for deeeseekv3.2-DSA, Setting dp_size == {self.dp_size} and moe_dense_tp_size == {self.moe_dense_tp_size}, ep_size == {self.ep_size}, tp_size == {self.tp_size}, kv_cache_dtype == {self.kv_cache_dtype}, moe_a2a_backend {self.moe_a2a_backend} "
@@ -2440,7 +2439,6 @@ class ServerArgs:
             assert (
                 self.tp_size % (self.dp_size * self.attn_cp_size) == 0
             ), "tp_size must be divisible by dp_size * attn_cp_size"
-            assert self.pp_size == 1, "PP is not supported with context parallelism"
 
         if self.moe_dp_size > 1:
             # The tp_size is the world size, not the real tensor parallel size
@@ -2984,6 +2982,22 @@ class ServerArgs:
         ) or self.encoder_transfer_backend == "mooncake":
             self.disaggregation_ib_device = self._validate_ib_devices(
                 self.disaggregation_ib_device
+            )
+
+        # Validate model type: only support Qwen models for now
+        hf_config = self.get_model_config().hf_config
+        model_arch = hf_config.architectures[0]
+        if (self.encoder_only or self.language_only) and model_arch not in [
+            "Qwen2VLForConditionalGeneration",
+            "Qwen3VLForConditionalGeneration",
+            "Qwen2_5_VLForConditionalGeneration",
+            "Qwen3VLMoeForConditionalGeneration",
+            "Qwen3OmniMoeForConditionalGeneration",
+            "Qwen2AudioForConditionalGeneration",
+            "Qwen2_5OmniForConditionalGeneration",
+        ]:
+            raise ValueError(
+                f"Model type {model_arch} is not supported for encoder disaggregation, only Qwen models are supported for now."
             )
 
     def _validate_ib_devices(self, device_str: str) -> Optional[str]:
@@ -5721,11 +5735,6 @@ class ServerArgs:
         # Check LoRA
         self.check_lora_server_args()
 
-        # torch 2.9.1 has compatibility issues with cuDNN 9.14 and below,
-        # causing extremely slow nn.Conv3d performance.
-        # TODO(yhyang201): Remove this check when sglang no longer uses torch 2.9.1.
-        self.check_torch_2_9_1_cudnn_compatibility()
-
         # Check speculative decoding
         if self.speculative_algorithm is not None:
             assert (
@@ -5834,49 +5843,6 @@ class ServerArgs:
                 "When enabling two batch overlap, moe_a2a_backend cannot be 'none'."
             )
 
-    def check_torch_2_9_1_cudnn_compatibility(self):
-        if get_bool_env_var("SGLANG_DISABLE_CUDNN_CHECK"):
-            return
-
-        if self.get_model_config().is_multimodal:
-            import torch
-
-            if torch_release[:3] == (2, 9, 1):
-                cudnn_version = None
-                try:
-                    cudnn_version = torch.backends.cudnn.version()
-                except Exception:
-                    cudnn_version = None
-                if cudnn_version is not None:
-                    version_float = float(str(cudnn_version)[:3]) / 100
-                    if version_float < 9.15:
-                        RED = "\033[91m"
-                        BOLD = "\033[1m"
-                        RESET = "\033[0m"
-                        msg = (
-                            f"{RED}{BOLD}"
-                            "CRITICAL WARNING: PyTorch 2.9.1 & CuDNN Compatibility Issue Detected\n"
-                            "--------------------------------------------------------------------------------\n"
-                            f"Current Environment: PyTorch {torch.__version__} | CuDNN {version_float:.2f}\n\n"
-                            "Issue:     There is a KNOWN BUG in PyTorch 2.9.1's `nn.Conv3d` implementation\n"
-                            "           when used with CuDNN versions older than 9.15. This can cause\n"
-                            "           SEVERE PERFORMANCE DEGRADATION and EXCESSIVE MEMORY USAGE.\n\n"
-                            "Reference: https://github.com/pytorch/pytorch/issues/168167\n\n"
-                            "Solution:  You MUST upgrade CuDNN to version 9.15+ to ensure correctness.\n\n"
-                            "Run the following command immediately to fix:\n"
-                            "    pip install nvidia-cudnn-cu12==9.16.0.29\n\n"
-                            "Or you can disable this check by setting env var SGLANG_DISABLE_CUDNN_CHECK=1\n"
-                            "--------------------------------------------------------------------------------\n"
-                            f"{RESET}"
-                        )
-                        raise RuntimeError(msg)
-                else:
-                    RED = "\033[91m"
-                    RESET = "\033[0m"
-                    logger.warning(
-                        f"{RED}WARNING: Could not determine CuDNN version for torch==2.9.1. Please ensure CuDNN >= 9.15 to avoid nn.Conv3d bugs.{RESET}"
-                    )
-
     def check_lora_server_args(self):
         assert self.max_loras_per_batch > 0, "max_loras_per_batch must be positive"
 
@@ -5964,17 +5930,6 @@ class ServerArgs:
                         len(self.lora_target_modules) == 1
                     ), "If 'all' is specified in --lora-target-modules, it should be the only module specified."
                     self.lora_target_modules = set(SUPPORTED_LORA_TARGET_MODULES)
-
-                    # When using the chunked SGMV backend, skip embedding / lm_head layers for now,
-                    # since it does not support these yet (TODO: implement embedding / lm_head support)
-                    if self.lora_backend == "csgmv":
-                        logger.warning(
-                            "LoRA backend 'csgmv' does not yet support embedding or lm_head layers; "
-                            "dropping 'embed_tokens' and 'lm_head' from --lora-target-modules=all. "
-                            "To apply LoRA to these, use --lora-backend triton."
-                        )
-                        self.lora_target_modules.discard("embed_tokens")
-                        self.lora_target_modules.discard("lm_head")
 
             # Ensure sufficient information is provided for LoRA initialization.
             assert self.lora_paths or (
