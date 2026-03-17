@@ -1,6 +1,7 @@
 import logging
 import unittest
 from types import SimpleNamespace
+
 import requests
 
 from sglang.srt.utils import kill_process_tree
