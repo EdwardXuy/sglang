@@ -162,7 +162,7 @@ class TestHiCache(CustomTestCase):
                 max_new_tokens=512,
                 parallel=128,
                 host="http://127.0.0.1",
-                port=21000,
+                port=int(self.base_url.split(":")[-1]),
             )
             run_eval(args)
             hicache_file = run_command(f"ls /tmp/hicache")
