@@ -30,10 +30,14 @@ on:
         default: true
 
 env:
-   DAILY_BUILD_FLAG: ${{ inputs.daily_image_flag || 'true' }}
-   IMAGE: ${{ inputs.image && inputs.image || 'swr.cn-southwest-2.myhuaweicloud.com/dockerhub/lmsysorg/sglang:main-cann8.5.0-a3' }}
-   REF: ${{ inputs.ref && inputs.ref || '' }}
-   JOB_FILTER: ${{ inputs.job_filter && inputs.job_filter || 'all' }}
+#  DAILY_BUILD_FLAG: ${{ inputs.daily_image_flag || true }}
+#  IMAGE: ${{ inputs.image && inputs.image || 'swr.cn-southwest-2.myhuaweicloud.com/dockerhub/lmsysorg/sglang:main-cann8.5.0-a3' }}
+#  REF: ${{ inputs.ref && inputs.ref || '' }}
+#  JOB_FILTER: ${{ inputs.job_filter && inputs.job_filter || 'all' }}
+  DAILY_BUILD_FLAG: true
+  IMAGE: 'swr.cn-southwest-2.myhuaweicloud.com/dockerhub/lmsysorg/sglang:main-cann8.5.0-a3'
+  REF: ''
+  JOB_FILTER: 'all'
 
 concurrency:
   group: release-test-npu-${{ inputs.ref || github.ref }}
@@ -47,8 +51,8 @@ jobs:
     with:
       ref:  ${{ env.REF }}
       job_filter: ${{ env.JOB_FILTER }}
-      image: ${{ env.DAILY_BUILD_FLAG }}
-      is_daily_image: ${{ env.IMAGE }}
+      image: ${{ env.IMAGE }}
+      is_daily_image: ${{ env.DAILY_BUILD_FLAG }}
 
   release-1-npu-a3:
     if: ${{ (github.repository == 'sgl-project/sglang' || github.event_name == 'pull_request') }}
