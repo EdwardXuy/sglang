@@ -93,6 +93,11 @@ NIGHTLY_SUITES = {
         "nightly-4-npu-a3",
         "nightly-8-npu-a3",
         "nightly-16-npu-a3",
+        "release-1-npu-a3",
+        "release-2-npu-a3",
+        "release-4-npu-a3",
+        "release-8-npu-a3",
+        "release-16-npu-a3",
     ],
 }
 

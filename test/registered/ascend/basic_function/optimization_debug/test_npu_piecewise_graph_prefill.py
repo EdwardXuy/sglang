@@ -14,6 +14,7 @@ from sglang.test.test_utils import (
 )
 
 register_npu_ci(est_time=400, suite="stage-b-test-1-npu-a2", nightly=False)
+register_npu_ci(est_time=400, suite="nightly-1-npu-a3", nightly=True)
 
 MODEL = "/root/.cache/modelscope/hub/models/Qwen/Qwen2.5-7B-Instruct"
 GSM8K_EXP_ACCURACY = 0.84
