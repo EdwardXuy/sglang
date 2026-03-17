@@ -94,11 +94,12 @@ class TestQwen14B(TestAscendPerformanceTestCaseBase):
     input_len = 3500
     output_len = 1500
     random_range_ratio = 1
+    warmup_requests = 2
     tpot = 40
     output_token_throughput = 2147
 
     def test_qwen3_14b(self):
-        self.run_throughput()
+        self.run_throughput(run_cycles=1)
 
 
 if __name__ == "__main__":
