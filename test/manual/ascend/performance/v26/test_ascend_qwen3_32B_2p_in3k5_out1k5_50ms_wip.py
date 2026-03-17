@@ -14,8 +14,8 @@ MODEL_CONFIG = {
     "node_envs": {
         "SGLANG_SET_CPU_AFFINITY": "1",
         "PYTORCH_NPU_ALLOC_CONF": "expandable_segments:True",
-        "SGLANG_DEEPEP_NUM_MAX_DISPATCH_TOKENS_PER_RANK": "16",
-        "DEEP_NORMAL_MODE_USE_INT8_QUANT": "1",
+        # "SGLANG_DEEPEP_NUM_MAX_DISPATCH_TOKENS_PER_RANK": "16",
+        # "DEEP_NORMAL_MODE_USE_INT8_QUANT": "1",
         "SGLANG_DISAGGREGATION_BOOTSTRAP_TIMEOUT": "600",
         "HCCL_BUFFSIZE": "1800",
         "HCCL_SOCKET_IFNAME": NIC_NAME,
@@ -23,6 +23,7 @@ MODEL_CONFIG = {
         "HCCL_OP_EXPANSION_MODE": "AIV",
         "SGLANG_ENABLE_OVERLAP_PLAN_STREAM": "1",
         "SGLANG_ENABLE_SPEC_V2": "1",
+        # "ASCEND_RT_VISIBLE_DEVICES":[10,11,12,13],
     },
     "other_args": [
         "--trust-remote-code",
@@ -47,44 +48,40 @@ MODEL_CONFIG = {
         35000,
         "--speculative-algorithm",
         "EAGLE3",
-"--speculative-draft-model-path",
-
+        "--speculative-draft-model-path",
+        "/home/weights/Eagle3-Qwen3-32B-zh",
         "--speculative-num-steps",
-        1,
+        3,
         "--speculative-eagle-topk",
         1,
         "--speculative-num-draft-tokens",
-        2,
-
-
-        "--context-length",
-        8192,
+        4,
+        "--tp-size",
+        4,
+        "--mem-fraction-static",
+        0.845,
+        "--cuda-graph-bs",
+        16,
+        32,
+        64,
+        72,
+        88,
+        90,
+        92,
+        94,
+        96,
+        97,
+        98,
+        99,
+        100,
+        101,
         "--dtype",
         "bfloat16",
-
-
-
-        "--moe-a2a-backend",
-        "deepep",
-        "--deepep-mode",
-        "auto",
-        "--tp-size",
-        16,
-        "--dp-size",
-        4,
-        "--enable-dp-attention",
-        "--enable-dp-lm-head",
-        "--mem-fraction-static",
-        0.7,
-        "--cuda-graph-bs",
-        32,
-        48,
-        64,
     ],
 }
 
 
-class TestGlm46W8A8(TestAscendPerfMultiNodePdMixTestCaseBase):
+class TestQwen332B(TestAscendPerfMultiNodePdMixTestCaseBase):
     model_config = MODEL_CONFIG
     dataset_name = "random"
     max_concurrency = 256
@@ -96,7 +93,7 @@ class TestGlm46W8A8(TestAscendPerfMultiNodePdMixTestCaseBase):
     # T: None   800I: xxxxx.     dev：3192/16@51.19ms
     output_token_throughput = 3192
 
-    def test_qwen3_480b(self):
+    def test_qwen3_32b(self):
         self.run_throughput()
 
 
