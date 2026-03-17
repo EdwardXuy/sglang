@@ -24,7 +24,11 @@ spec:
       spec:
         containers:
         - image: {{ image }}
+          {% if env == "green" %}
+          imagePullPolicy: IfNotPresent
+          {% else %}
           imagePullPolicy: Always
+          {% endif %}
           securityContext:
             privileged: true
           name: sgl-ascend

@@ -28,7 +28,7 @@ spec:
       hostNetwork: True
       containers:
       - image: {{ image }}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
         name: sgl-ascend
@@ -127,7 +127,7 @@ spec:
       hostNetwork: True
       containers:
       - image: {{ image }}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
         name: sgl-ascend
@@ -225,7 +225,7 @@ spec:
       hostNetwork: True
       containers:
       - image: {{ image }}
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         securityContext:
           privileged: true
         name: sgl-ascend
