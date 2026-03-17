@@ -30,14 +30,14 @@ on:
         default: true
 
 env:
-#  DAILY_BUILD_FLAG: ${{ inputs.daily_image_flag || true }}
-#  IMAGE: ${{ inputs.image && inputs.image || 'swr.cn-southwest-2.myhuaweicloud.com/dockerhub/lmsysorg/sglang:main-cann8.5.0-a3' }}
-#  REF: ${{ inputs.ref && inputs.ref || '' }}
-#  JOB_FILTER: ${{ inputs.job_filter && inputs.job_filter || 'all' }}
   DAILY_BUILD_FLAG: true
   IMAGE: 'swr.cn-southwest-2.myhuaweicloud.com/dockerhub/lmsysorg/sglang:main-cann8.5.0-a3'
-  REF: ''
+  ref: ''
   JOB_FILTER: 'all'
+  #  DAILY_BUILD_FLAG: ${{ inputs.daily_image_flag || true }}
+  #  IMAGE: ${{ inputs.image && inputs.image || 'swr.cn-southwest-2.myhuaweicloud.com/dockerhub/lmsysorg/sglang:main-cann8.5.0-a3' }}
+  #  REF: ${{ inputs.ref && inputs.ref || '' }}
+  #  JOB_FILTER: ${{ inputs.job_filter && inputs.job_filter || 'all' }}
 
 concurrency:
   group: release-test-npu-${{ inputs.ref || github.ref }}
@@ -49,7 +49,7 @@ jobs:
     if: ${{ (github.repository == 'sgl-project/sglang' || github.event_name == 'pull_request') }}
     uses: ./.github/workflows/nightly-test-npu.yml
     with:
-      ref:  ${{ env.REF }}
+      ref:  ${{ env.ref }}
       job_filter: ${{ env.JOB_FILTER }}
       image: ${{ env.IMAGE }}
       is_daily_image: ${{ env.DAILY_BUILD_FLAG }}
