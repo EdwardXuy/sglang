@@ -23,7 +23,7 @@ class TestLTSKimi(CustomTestCase):
     model = MODEL_PATH
     dataset_name = "random"
     dataset_path = "/tmp/ShareGPT_V3_unfiltered_cleaned_split.json"
-    backend = ("sglang",)
+    backend = "sglang"
     request_rate = None
     max_concurrency = 96
     num_prompts = 96
