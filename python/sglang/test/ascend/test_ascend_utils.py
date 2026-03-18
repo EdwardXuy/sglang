@@ -874,7 +874,7 @@ def assert_spec_decoding_active(test_case, base_url: str, threshold: float = 1.0
     )
 
 def check_server_health(base_url: str, endpoint: str = "/health") -> bool:
-    """Check whether a SGLang server health endpoint returns HTTP 200.
+    """Check whether a SGLang server health endpoint returns HTTP 200
 
     Parameters:
         base_url: Base URL of the server, e.g. 'http://127.0.0.1:30000'
