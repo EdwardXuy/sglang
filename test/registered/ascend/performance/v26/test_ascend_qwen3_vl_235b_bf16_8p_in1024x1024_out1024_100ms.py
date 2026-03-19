@@ -82,8 +82,8 @@ class TestQwenVl235B(TestAscendPerformanceTestCaseBase):
     output_len = 1024
     random_range_ratio = 1
     seed = 1000
-    tpot = 100
-    output_token_throughput = 4220
+    tpot = 91
+    output_token_throughput = 4500
 
     def test_qwen3_vl_235b(self):
         self.run_throughput()
