@@ -35,8 +35,8 @@ QWEN3_32B_OTHER_ARGS = [
     "ascend",
     "--device",
     "npu",
-    # "--quantization",
-    # "modelslim",
+    "--quantization",
+    "modelslim",
     "--max-running-requests",
     64,
     "--disable-radix-cache",
@@ -73,9 +73,9 @@ QWEN3_32B_OTHER_ARGS = [
 
 
 class TestQwen32B(TestAscendPerformanceTestCaseBase):
-    # model = QWEN3_32B_W8A8_MODEL_PATH
+    model = QWEN3_32B_W8A8_MODEL_PATH
     # model = "/home/weights/Qwen/Qwen3-32B"
-    model = "/root/.cache/modelscope/hub/models/Qwen/Qwen3-32B"
+    # model = "/root/.cache/modelscope/hub/models/Qwen/Qwen3-32B"
     # model = "/root/.cache/modelscope/hub/models/Qwen/Qwen3-32B-w8a8"
     # model = "/root/.cache/modelscope/hub/models/Qwen/Qwen3-32B-W8A8"
     other_args = QWEN3_32B_OTHER_ARGS
