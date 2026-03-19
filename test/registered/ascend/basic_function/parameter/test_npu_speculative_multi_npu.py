@@ -134,6 +134,10 @@ class TestNpuSpeculativeMultiNpu(CustomTestCase):
             "Explain the principles of quantum computing in simple terms.",
         )
 
+        content = response["choices"][0]["message"]["content"]
+        print(f"Q: Explain the principles of quantum computing in simple terms")
+        print(f"A: {content}")
+
         self.assertIn("choices", response)
         self.assertGreater(len(response["choices"]), 0)
         self.assertGreater(

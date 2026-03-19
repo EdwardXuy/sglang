@@ -136,6 +136,10 @@ class TestNpuEagle3Basic(CustomTestCase):
             "List 3 countries and their capitals.",
         )
 
+        content = response["choices"][0]["message"]["content"]
+        print(f"Q: List 3 countries and their capitals")
+        print(f"A: {content}")
+
         self.assertIn("choices", response)
         self.assertGreater(len(response["choices"]), 0)
         self.assertGreater(

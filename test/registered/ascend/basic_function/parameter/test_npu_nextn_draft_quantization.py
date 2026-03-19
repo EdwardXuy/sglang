@@ -128,6 +128,10 @@ class TestNpuNextnDraftQuantization(CustomTestCase):
             "What is the Python programming language?",
         )
 
+        content = response["choices"][0]["message"]["content"]
+        print(f"Q: What is the Python programming language")
+        print(f"A: {content}")
+
         self.assertIn("choices", response)
         self.assertGreater(len(response["choices"]), 0)
         self.assertGreater(

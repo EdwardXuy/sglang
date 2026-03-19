@@ -131,6 +131,10 @@ class TestNpuNextnBasic(CustomTestCase):
             "List 3 programming languages and their primary use cases.",
         )
 
+        content = response["choices"][0]["message"]["content"]
+        print(f"Q: List 3 programming languages and their primary use cases")
+        print(f"A; {content}")
+
         self.assertIn("choices", response)
         self.assertGreater(len(response["choices"]), 0)
         self.assertGreater(
