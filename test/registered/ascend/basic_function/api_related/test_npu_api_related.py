@@ -19,7 +19,7 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
-register_npu_ci(est_time=400, suite="nightly-1-npu-a3", nightly=True)
+register_npu_ci(est_time=400, suite="nightly-2-npu-a3", nightly=True)
 
 
 class TestApiRelatedGHFChat(CustomTestCase):
@@ -43,6 +43,8 @@ class TestApiRelatedGHFChat(CustomTestCase):
             "0.8",
             "--attention-backend",
             "ascend",
+            "--tp-size",
+            2,
             "--disable-cuda-graph",
             "--served-model-name",
             cls.custom_model_name,
