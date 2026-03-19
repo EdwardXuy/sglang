@@ -37,7 +37,7 @@ utils.MODEL_WEIGHTS_DIR = LOCAL_MODEL_WEIGHTS_DIR
 utils.HF_MODEL_WEIGHTS_DIR = LOCAL_MODEL_WEIGHTS_DIR
 
 # 覆盖 5 个模型路径常量（使用服务器实际路径）
-utils.QWEN3_0_6B_WEIGHTS_PATH = os.path.join(
+utils.QWEN3_32B_WEIGHTS_PATH = os.path.join(
     LOCAL_MODEL_WEIGHTS_DIR, "Qwen/Qwen3-0.6B"
 )
 utils.QWEN3_30B_A3B_W8A8_WEIGHTS_PATH = os.path.join(
@@ -74,12 +74,12 @@ _ASCEND_BACKEND = "ascend"
 _SERVER_ARGS = [
     "--trust-remote-code",
     "--attention-backend", _ASCEND_BACKEND,
-    #"--quantization", "modelslim",
+    "--quantization", "modelslim",
     "--disable-radix-cache",
     "--speculative-draft-model-quantization", "unquant",
     # --speculative-algorithm NEXTN: use an independent smaller draft LLM.
     "--speculative-algorithm", "NEXTN",
-    "--speculative-draft-model-path", QWEN3_0_6B_WEIGHTS_PATH,
+    "--speculative-draft-model-path", QWEN3_30B_A3B_W8A8_WEIGHTS_PATH,
     # --speculative-num-steps 4: draft model runs 4 auto-regressive steps per iteration.
     "--speculative-num-steps", "4",
     # --speculative-eagle-topk 2: retain 2 candidate paths per step.
