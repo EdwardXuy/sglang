@@ -62,7 +62,7 @@ QWEN3_235B_OTHER_ARGS = [
     "static", 
     "--init-expert-location",
     "/root/.cache/modelscope/hub/models/hot_map/235B_2k_decode.pt",
-    "--speculative-algorithm"
+    "--speculative-algorithm",
     "EAGLE3",
     "--speculative-draft-model-path",
     QWEN3_235B_A22B_EAGLE_MODEL_PATH,
