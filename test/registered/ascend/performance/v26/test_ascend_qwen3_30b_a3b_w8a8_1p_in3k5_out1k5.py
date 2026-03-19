@@ -9,12 +9,12 @@ from sglang.test.ci.ci_register import register_npu_ci
 
 register_npu_ci(
     est_time=1800,
-    suite="nightly-4-npu-a3",
+    suite="nightly-2-npu-a3",
     nightly=True,
     disabled="Currently it is executed by the npu performance workflow.",
 )
 
-QWEN3_32B_ENVS = {
+ENVS = {
     "SGLANG_DISAGGREGATION_BOOTSTRAP_TIMEOUT": "600",
     "PYTORCH_NPU_ALLOC_CONF": "expandable_segments:True",
     "HCCL_SOCKET_IFNAME": "lo",
@@ -25,7 +25,7 @@ QWEN3_32B_ENVS = {
     "SGLANG_NPU_USE_DEEPGEMM": "1",
 }
 
-QWEN3_32B_OTHER_ARGS = [
+OTHER_ARGS = [
     "--trust-remote-code",
     "--nnodes",
     "1",
@@ -38,14 +38,14 @@ QWEN3_32B_OTHER_ARGS = [
     "--quantization",
     "modelslim",
     "--max-running-requests",
-    64,
+    162,
     "--disable-radix-cache",
     "--speculative-draft-model-quantization",
     "unquant",
     "--chunked-prefill-size",
     -1,
     "--max-prefill-tokens",
-    10240,
+    35000,
     "--speculative-algorithm",
     "EAGLE3",
     "--speculative-draft-model-path",
@@ -57,16 +57,26 @@ QWEN3_32B_OTHER_ARGS = [
     "--speculative-num-draft-tokens",
     4,
     "--tp-size",
-    # 2,
-    4,
+    2,
     "--mem-fraction-static",
-    0.915,
+    0.87,
     "--cuda-graph-bs",
-    16,
-    32,
-    60,
-    63,
-    64,
+    1,
+    5,
+    15,
+    40,
+    70,
+    100,
+    120,
+    130,
+    140,
+    146,
+    150,
+    154,
+    156,
+    158,
+    160,
+    162,
     "--dtype",
     "bfloat16",
 ]
@@ -75,20 +85,18 @@ QWEN3_32B_OTHER_ARGS = [
 class TestQwen32B(TestAscendPerformanceTestCaseBase):
     # model = QWEN3_32B_W8A8_MODEL_PATH
     # model = "/home/weights/Qwen/Qwen3-32B"
-    # model = "/root/.cache/modelscope/hub/models/Qwen/Qwen3-32B"
-    # model = "/root/.cache/modelscope/hub/models/Qwen/Qwen3-32B-w8a8"
-    model = "/root/.cache/modelscope/hub/models/Qwen/Qwen3-32B-W8A8"
-    other_args = QWEN3_32B_OTHER_ARGS
-    envs = QWEN3_32B_ENVS
+    model = "/root/.cache/modelscope/hub/models/Qwen/Qwen3-30B-A3B-W8A8"
+    other_args = OTHER_ARGS
+    envs = ENVS
     dataset_name = "random"
     max_concurrency = 162
     num_prompts = 324
-    input_len = 2048
-    output_len = 2048
+    input_len = 3584
+    output_len = 1536
     random_range_ratio = 1
     # tpot = 50
-    # output_token_throughput = 1710
     tpot = 100
+    # output_token_throughput = 1100
     output_token_throughput = 0
 
     def test_qwen3_32b(self):
