@@ -75,11 +75,13 @@ class TestQwenVl235B(TestAscendPerformanceTestCaseBase):
     dataset_name = "image"
     image_resolution = "1024x1024"
     image_count = 1
+    request_rate = 512
     max_concurrency = 512
     num_prompts = 2048
     input_len = 0
     output_len = 1024
     random_range_ratio = 1
+    seed = 1000
     tpot = 100
     output_token_throughput = 4220
 
