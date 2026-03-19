@@ -76,6 +76,7 @@ _SERVER_ARGS = [
     "--attention-backend", _ASCEND_BACKEND,
     "--quantization", "modelslim",
     "--disable-radix-cache",
+    "--speculative-draft-model-quantization", "unquant",
     # --speculative-algorithm NEXTN: use an independent smaller draft LLM.
     "--speculative-algorithm", "NEXTN",
     "--speculative-draft-model-path", QWEN3_0_6B_WEIGHTS_PATH,
