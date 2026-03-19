@@ -78,6 +78,9 @@ QWEN3_VL_8B_MODEL_PATH = "/root/.cache/modelscope/hub/models/Qwen/Qwen3-VL-8B-In
 QWEN3_VL_235B_MODEL_PATH = (
     "/root/.cache/modelscope/hub/models/Qwen/Qwen3-VL-235B-A22B-Instruct"
 )
+QWEN2_5_VL_72B_MODEL_PATH = (
+    "/root/.cache/modelscope/hub/models/Qwen/Qwen2.5-VL-72B-Instruct-w8a8"
+)
 KIMI_K2_5_W4A8_MODEL_PATH = "/root/.cache/modelscope/hub/models/Eco-Tech/Kimi-K2.5-w4a8"
 
 ROUND_ROBIN = "round_robin"
