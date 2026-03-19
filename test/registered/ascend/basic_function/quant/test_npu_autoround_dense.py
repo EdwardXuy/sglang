@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from urllib.parse import urlparse
 
 from sglang.srt.utils import kill_process_tree
+from sglang.test.ascend.test_ascend_utils import QWEN3_8B_INT4_AUTOROUND_WEIGHTS_PATH
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.few_shot_gsm8k import run_eval as run_eval_few_shot_gsm8k
 from sglang.test.test_utils import (
@@ -19,7 +20,7 @@ register_npu_ci(est_time=400, suite="nightly-1-npu-a3", nightly=True)
 logger = logging.getLogger(__name__)
 
 TEST_MODEL_MATRIX = {
-    "/root/.cache/modelscope/hub/models/Intel/Qwen3-8B-int4-AutoRound": {
+    QWEN3_8B_INT4_AUTOROUND_WEIGHTS_PATH: {
         "accuracy": 0.85,
     },
 }
