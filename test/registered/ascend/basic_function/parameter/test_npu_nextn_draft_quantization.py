@@ -76,7 +76,7 @@ _SERVER_ARGS = [
     "--speculative-algorithm", "NEXTN",
     "--speculative-draft-model-path", QWEN3_0_6B_WEIGHTS_PATH,
     "--speculative-num-steps", "4",
-    "--speculative-eagle-topk", "2",
+    "--speculative-eagle-topk", "1",
     "--speculative-num-draft-tokens", "7",
     # --speculative-draft-model-quantization unquant: load draft model in full
     # precision regardless of the target model quantization scheme.

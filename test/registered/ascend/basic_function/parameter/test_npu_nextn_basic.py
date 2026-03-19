@@ -82,7 +82,7 @@ _SERVER_ARGS = [
     # --speculative-num-steps 4: draft model runs 4 auto-regressive steps per iteration.
     "--speculative-num-steps", "4",
     # --speculative-eagle-topk 2: retain 2 candidate paths per step.
-    "--speculative-eagle-topk", "2",
+    "--speculative-eagle-topk", "1",
     # --speculative-num-draft-tokens 7: maximum draft tokens submitted for verification.
     "--speculative-num-draft-tokens", "7",
     # --speculative-attention-mode decode: draft attention in single-token decode mode.
