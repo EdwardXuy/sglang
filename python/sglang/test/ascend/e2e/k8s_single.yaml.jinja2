@@ -66,6 +66,7 @@ spec:
               huawei.com/Ascend910: {{ npu_size }}
               {% endif %}
               cpu: "76"
+              memory: 128Gi
             limits:
               {% if env in ["ci", "debug"] %}
               huawei.com/ascend-1980: {{ npu_size }}
@@ -74,9 +75,14 @@ spec:
               huawei.com/Ascend910: {{ npu_size }}
               {% endif %}
               cpu: "76"
+              memory: 128Gi
           volumeMounts:
           - name: ascend-driver
             mountPath: /usr/local/Ascend/driver
+          - name: shm-volume
+            mountPath: /dev/shm
+          - name: info
+            mountPath: /etc/ascend_install.info
           - name: localtime
             mountPath: /etc/localtime
           - name: share
@@ -100,6 +106,13 @@ spec:
         - name: ascend-driver
           hostPath:
             path: /usr/local/Ascend/driver
+        - name: shm-volume
+          emptyDir:
+            medium: Memory
+            sizeLimit: "16Gi"
+        - name: info
+          hostPath:
+            path: /etc/ascend_install.info
         - name: localtime
           hostPath:
             path: /etc/localtime
