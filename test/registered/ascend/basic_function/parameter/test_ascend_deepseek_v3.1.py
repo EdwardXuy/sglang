@@ -27,7 +27,7 @@ class TestAscendDeepseekV31(CustomTestCase):
     """
 
     TEST_MODEL_MATRIX = {
-        "/home/weights/DeepSeek-V3.1": {
+        "/home/weights/DeepSeek-R1-0528-w4a8-per-channel": {
             "accuracy": 0.9,
             "latency": 150,
             "output_throughput": 30,
@@ -48,8 +48,8 @@ class TestAscendDeepseekV31(CustomTestCase):
             "ascend",
             "--tp", 16,
             "--device", "npu",
-            # "--quantization",
-            # "modelslim",
+            "--quantization",
+            "modelslim",
             "--watchdog-timeout", 9000,
             "--cuda-graph-bs",
             4,
