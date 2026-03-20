@@ -13,8 +13,6 @@ register_npu_ci(
     disabled="https://github.com/Ascend/sglang/issues/94"
 )
 
-DEEPSEEK_V32_EXP_MODEL_PATH = DEEPSEEK_V3_2_W8A8_WEIGHTS_PATH
-
 BASE_ARGS = [
     "--trust-remote-code",
     "--attention-backend",
@@ -68,10 +66,11 @@ class TestDeepseekV32CPSingleNode(unittest.TestCase):
 
     def test_deepseek_v32_cp_variants(self):
         """Run accuracy tests for DeepSeek V3.2 CP variants."""
+        self.model = DEEPSEEK_V3_2_W8A8_WEIGHTS_PATH
         variants = [
             # Variant: in-seq-split CP mode with DP+MTP
             ModelLaunchSettings(
-                DEEPSEEK_V32_EXP_MODEL_PATH,
+                self.model,
                 tp_size=8,
                 extra_args=BASE_ARGS + DP_ARGS + MTP_ARGS + CP_IN_SEQ_SPLIT_ARGS,
                 env={"SGLANG_ENABLE_SPEC_V2": "1"},
@@ -79,7 +78,7 @@ class TestDeepseekV32CPSingleNode(unittest.TestCase):
             ),
             # Variant: round-robin-split CP mode (TP only, no DP)
             ModelLaunchSettings(
-                DEEPSEEK_V32_EXP_MODEL_PATH,
+                self.model,
                 tp_size=8,
                 extra_args=BASE_ARGS + MTP_ARGS + CP_ROUND_ROBIN_ARGS,
                 env={"SGLANG_ENABLE_SPEC_V2": "1"},
