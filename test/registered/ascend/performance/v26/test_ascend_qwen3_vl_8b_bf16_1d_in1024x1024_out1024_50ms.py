@@ -68,10 +68,9 @@ class TestQwenVl8B(TestAscendPerformanceTestCaseBase):
     dataset_path = None
     image_resolution = "1024x1024"
     image_count = 1
-    request_rate = 30
     max_concurrency = 96
     num_prompts = 384
-    input_len = 0
+    input_len = 1
     output_len = 1024
     random_range_ratio = 1
     tpot = 50
