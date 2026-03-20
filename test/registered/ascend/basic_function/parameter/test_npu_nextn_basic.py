@@ -88,7 +88,7 @@ _SERVER_ARGS = [
     "--speculative-num-draft-tokens", "7",
     # --speculative-attention-mode decode: draft attention in single-token decode mode.
     "--speculative-attention-mode", "decode",
-    "--tp-size", "16",
+    "--tp-size", "8",
     "--mem-fraction-static", "0.4",
     "--disable-cuda-graph",
     "--dtype", "bfloat16",
