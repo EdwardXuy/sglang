@@ -2,12 +2,14 @@ import os
 import tempfile
 import unittest
 import shutil
-
-import requests
 import torch
+import requests
 
 from sglang.srt.utils import kill_process_tree
-from sglang.test.ascend.test_ascend_utils import QWEN3_32B_WEIGHTS_PATH, run_command
+from sglang.test.ascend.test_ascend_utils import (
+    QWEN3_32B_WEIGHTS_PATH,
+    run_command,
+)
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -31,15 +33,6 @@ class TestNpuDebugTensorDumps(CustomTestCase):
     PP_SIZE = 2
     TP_DIR_NUM = TP_SIZE * PP_SIZE
     dump_folder = tempfile.mkdtemp(prefix="tensor_folder")
-    # dump_file = tempfile.mkstemp(prefix="input", suffix=".json")
-    # input_data = {
-    #     "input_ids": [10, 20, 30, 40, 50],
-    #     "positions": [0, 1, 2, 0, 1],
-    #     "seq_lens": [3, 2],
-    #     "req_pool_indices": [7, 3],
-    # }
-    # with open(dump_file, "w", encoding="utf-8") as f:
-    #     json.dump(input_data, f, ensure_ascii=False)
 
     model = QWEN3_32B_WEIGHTS_PATH
     base_args = [
@@ -55,8 +48,6 @@ class TestNpuDebugTensorDumps(CustomTestCase):
         PP_SIZE,
         "--debug-tensor-dump-output-folder",
         dump_folder,
-        # "--debug-tensor-dump-input-file",
-        # dump_file,
         "--debug-tensor-dump-layers",
         "2",
         "3",
