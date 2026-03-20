@@ -42,7 +42,7 @@ QWEN3_14B_OTHER_ARGS = [
     "--mem-fraction-static",
     0.8,
     "--tp-size",
-    1,
+    2,
     "--dp-size",
     1,
     "--sampling-backend",
