@@ -53,7 +53,7 @@ _SERVER_ARGS = [
     "--attention-backend", _ASCEND_BACKEND,
     "--disable-radix-cache",
     # 启用 NEXTN 算法（即 MTP）
-    "--speculative-algorithm", "NEXTN",
+    "--speculative-algorithm", "EAGLE",
     # 注意：DeepSeek-V3.2 内置 MTP，不需要指定 --speculative-draft-model-path
     "--speculative-num-steps", "3",          # 推测步数（DeepSeek 推荐值）
     "--speculative-eagle-topk", "1",         # 分支因子
