@@ -7,8 +7,7 @@ import unittest
 
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ascend.test_ascend_utils import (
-    QWEN3_0_6B_WEIGHTS_PATH,
-    QWEN3_30B_A3B_W8A8_WEIGHTS_PATH,
+    DEEPSEEK_V3_2_W8A8_WEIGHTS_PATH,
     assert_spec_decoding_active,
     send_inference_request,
 )
@@ -23,23 +22,19 @@ _ASCEND_BACKEND = "ascend"
 
 _SERVER_ARGS = [
     "--trust-remote-code",
-    "--attention-backend", _ASCEND_BACKEND,
-    "--quantization", "modelslim",
     "--disable-radix-cache",
-    "--speculative-draft-model-quantization", "unquant",
-    # --speculative-algorithm NEXTN: use an independent smaller draft LLM.
-    "--speculative-algorithm", "NEXTN",
-    "--speculative-draft-model-path", QWEN3_0_6B_WEIGHTS_PATH,
-    # --speculative-num-steps 4: draft model runs 4 auto-regressive steps per iteration.
-    "--speculative-num-steps", "4",
-    # --speculative-eagle-topk 2: retain 2 candidate paths per step.
+    # Use NEXTN algorithm (MTP) – no draft model needed
+    "--speculative-algorithm", "NEXTN", #or EAGLE
+    # Number of auto-regressive steps per iteration (tune based on GPU memory)
+    "--speculative-num-steps", "2",   # 3 for EAGLE: Lower for memory, increase for speed
+    # Branching factor (1 = greedy, >1 for speculative sampling, SPEC-V2 now only support 1)
     "--speculative-eagle-topk", "1",
-    # --speculative-num-draft-tokens 7: maximum draft tokens submitted for verification.
-    "--speculative-num-draft-tokens", "7",
-    # --speculative-attention-mode decode: draft attention in single-token decode mode.
+    # Maximum draft tokens to verify per step
+    "--speculative-num-draft-tokens", "3", # 5 for EAGLE
     "--speculative-attention-mode", "decode",
-    "--tp-size", "1",
-    "--mem-fraction-static", "0.7",
+    # Tensor parallelism – adjust according to available NPUs
+    "--tp-size", "16",                # 16 for large model with 8+ NPUs
+    "--mem-fraction-static", "0.9", # 0.85 for EAGLE
     "--disable-cuda-graph",
     "--dtype", "bfloat16",
 ]
@@ -50,14 +45,18 @@ class TestNpuNextnBasic(CustomTestCase):
     [Test Category] Parameter
     [Test Target] --speculative-algorithm; --speculative-num-steps;
                   --speculative-eagle-topk; --speculative-num-draft-tokens;
-    [Model] Qwen/Qwen3-30B-A3B-w8a8; Qwen/Qwen3-0.6B
+    [Model] DeepSeek-V3.2-W8A8 (vllm-ascend/DeepSeek-V3.2-W8A8)
     """
 
     @classmethod
     def setUpClass(cls) -> None:
         cls.base_url = DEFAULT_URL_FOR_TEST
+        os.environ.update({
+            "SGLANG_ENABLE_OVERLAP_PLAN_STREAM": "1",
+            "SGLANG_ENABLE_SPEC_V2": "1",
+        })
         cls.process = popen_launch_server(
-            QWEN3_30B_A3B_W8A8_WEIGHTS_PATH,
+            DEEPSEEK_V3_2_W8A8_WEIGHTS_PATH,
             cls.base_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH * 5,
             other_args=_SERVER_ARGS,
@@ -76,7 +75,7 @@ class TestNpuNextnBasic(CustomTestCase):
           3. Assert avg_spec_accept_length > 1.0 (multi-token acceptance confirmed).
         """
         response = send_inference_request(
-            self.base_url, QWEN3_30B_A3B_W8A8_WEIGHTS_PATH,
+            self.base_url, DEEPSEEK_V3_2_W8A8_WEIGHTS_PATH,
             "List 3 programming languages and their primary use cases.",
         )
 
