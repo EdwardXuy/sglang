@@ -69,6 +69,8 @@ OTHER_ARGS = [
     66,
     "--dtype",
     "bfloat16",
+    "--context-length",
+    262144,
 ]
 
 
