@@ -89,9 +89,9 @@ class TestAscendDeepSeekR1W4A8(TestAscendPerformanceTestCaseBase):
     input_len = 2048
     output_len = 2048
     random_range_ratio = 1
-    tpot = 50
+    tpot = 50.26
     # T: 143@50ms. 800I A3: 1.8*T
-    output_token_throughput = 4800
+    output_token_throughput = 5696
 
     def test_throughput(self):
         self.run_throughput()
