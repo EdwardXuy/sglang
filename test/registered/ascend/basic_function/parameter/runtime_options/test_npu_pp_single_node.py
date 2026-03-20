@@ -18,7 +18,7 @@ from sglang.test.test_utils import (
     popen_launch_server,
     run_bench_one_batch_server,
 )
-from test.ascend.test_ascend_utils import LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH, DEEPSEEK_CODER_V2_LITE_WEIGHTS_PATH, \
+from sglang.test.ascend.test_ascend_utils import LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH, DEEPSEEK_CODER_V2_LITE_WEIGHTS_PATH, \
     GLM_4_5V_WEIGHTS_PATH, QWEN3_0_6B_WEIGHTS_PATH, QWEN3_30B_A3B_INSTRUCT_2507_WEIGHTS_PATH, QWEN3_32B_WEIGHTS_PATH, \
     QWEN3_8B_WEIGHTS_PATH, QWEN3_VL_4B_INSTRUCT_WEIGHTS_PATH
 

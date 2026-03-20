@@ -1,10 +1,10 @@
 import json
+import re
 import unittest
 
-import requests
+import openai
 
 from sglang.srt.utils import kill_process_tree
-from sglang.test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -12,55 +12,162 @@ from sglang.test.test_utils import (
     CustomTestCase,
     popen_launch_server,
 )
+from test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
 
 register_npu_ci(est_time=400, suite="nightly-1-npu-a3", nightly=True)
 
 
-class TestAscendApi(CustomTestCase):
-    """Testcase: Verify that the basic functions of the API interfaces work properly and the returned parameters are consistent with the configurations.
+class TestJSONModeMixin:
+    """Mixin class containing JSON mode test methods"""
 
-    [Test Category] Interface
-    [Test Target] /health; /health_generate; /ping; /model_info; /server_info; /get_load; /v1/models; /v1/models/{model:path}; /generate
-    """
+    def test_json_mode_response(self):
+        """Test that response_format json_object (also known as "JSON mode") produces valid JSON even when JSON is not mentioned in the system prompt."""
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful AI assistant that provides concise answers.",
+                },
+                {"role": "user", "content": "What is the capital of Bulgaria?"},
+            ],
+            temperature=0,
+            max_tokens=128,
+            response_format={"type": "json_object"},
+        )
+        text = response.choices[0].message.content
+
+        print(f"Response ({len(text)} characters): {text}")
+
+        # Verify the response is valid JSON
+        try:
+            js_obj = json.loads(text)
+        except json.JSONDecodeError as e:
+            self.fail(f"Response is not valid JSON. Error: {e}. Response content: {text}")
+
+        # Verify it is a JSON object (dict)
+        self.assertIsInstance(js_obj, dict, f"Response is not a JSON object: {text}")
+        self._verify_whitespace_pattern_constraint(text)
+
+    def test_json_mode_with_streaming(self):
+        """Test that streaming JSON mode (json_object) works correctly even when JSON is not mentioned in the system prompt."""
+        stream = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful AI assistant that provides concise answers.",
+                },
+                {"role": "user", "content": "What is the capital of Bulgaria?"},
+            ],
+            temperature=0,
+            max_tokens=128,
+            response_format={"type": "json_object"},
+            stream=True,
+        )
+
+        # Collect all chunks
+        chunks = []
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                chunks.append(chunk.choices[0].delta.content)
+        full_response = "".join(chunks)
+
+        print(f"Concatenated response ({len(full_response)} characters): {full_response}")
+
+        # Verify the concatenated result is valid JSON
+        try:
+            js_obj = json.loads(full_response)
+        except json.JSONDecodeError as e:
+            self.fail(f"Streamed response is not valid JSON. Error: {e}. Response content: {full_response}")
+
+        self.assertIsInstance(js_obj, dict)
+        self._verify_whitespace_pattern_constraint(full_response)
+
+    def _verify_whitespace_pattern_constraint(self, json_str):
+        """
+        Verify that the --constrained-json-whitespace-pattern parameter only takes effect (JSON output contains newline whitespace)
+        when the grammar backend is outlines/llguidance (pattern: [\n]?); for other backends, the parameter has no effect (no whitespace).
+        """
+        # Detect newline whitespace (\n) in JSON string (matching pattern [\n]?)
+        has_newline_whitespace = bool(re.search(r'\n', json_str))
+        # Detect any whitespace characters
+        has_any_whitespace = bool(re.search(r'[\n\t ]', json_str))
+
+        if self.backend in ["outlines", "llguidance"]:
+            # Expect newline whitespace (parameter takes effect)
+            self.assertTrue(
+                has_newline_whitespace,
+                f"[{self.backend}] --constrained-json-whitespace-pattern=[\\n]? should take effect, but no newline whitespace in JSON! JSON: {json_str}"
+            )
+        else:
+            # Expect no whitespace (parameter has no effect, e.g. xgrammar)
+            self.assertFalse(
+                has_any_whitespace,
+                f"[{self.backend}] --constrained-json-whitespace-pattern should NOT take effect, but whitespace exists in JSON! JSON: {json_str}"
+            )
+
+
+class ServerWithGrammarBackend(CustomTestCase):
+    """Base test class requiring a grammar backend server to be started"""
+
+    backend = "xgrammar"
 
     @classmethod
     def setUpClass(cls):
         cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
+        cls.base_url = DEFAULT_URL_FOR_TEST
+
+        # Server startup arguments: use constrained-json-whitespace-pattern with value [\n]?
         other_args = [
+            "--max-running-requests",
+            "10",
+            "--grammar-backend",
+            cls.backend,
+            "--constrained-json-whitespace-pattern",
+            "[\n]?",
             "--attention-backend",
             "ascend",
-            "--grammar-backend",
-            "xgrammar",
-            "--constrained-json-disable-any-whitespace",
         ]
+
         cls.process = popen_launch_server(
             cls.model,
-            DEFAULT_URL_FOR_TEST,
+            cls.base_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=other_args,
         )
+        cls.client = openai.Client(api_key="EMPTY", base_url=f"{cls.base_url}/v1")
 
     @classmethod
     def tearDownClass(cls):
         kill_process_tree(cls.process.pid)
 
 
-    def test_api_model_info(self):
-        response = requests.post(
-            f"{DEFAULT_URL_FOR_TEST}/generate",
-            json={
-                "text": "The capital of France is",
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": 32,
-                },
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("Paris", response.text)
-        response = requests.get(f"{DEFAULT_URL_FOR_TEST}/model_info")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["model_path"], self.model)
+class TestJSONModeXGrammar(ServerWithGrammarBackend, TestJSONModeMixin):
+    """Testcase: Verify that when the grammar backend is xgrammar, the --constrained-json-whitespace-pattern parameter has no effect (no whitespace in JSON output)
+
+    [Test Category] Parameter
+    [Test Target] --constrained-json-whitespace-pattern
+    """
+    backend = "xgrammar"
+
+
+class TestJSONModeOutlines(ServerWithGrammarBackend, TestJSONModeMixin):
+    """Testcase: Verify that when the grammar backend is outlines, --constrained-json-whitespace-pattern=[\n]? takes effect (JSON output contains newline whitespace)
+
+    [Test Category] Parameter
+    [Test Target] --constrained-json-whitespace-pattern
+    """
+    backend = "outlines"
+
+
+class TestJSONModeLLGuidance(ServerWithGrammarBackend, TestJSONModeMixin):
+    """Testcase: Verify that when the grammar backend is llguidance, --constrained-json-whitespace-pattern=[\n]? takes effect (JSON output contains newline whitespace)
+
+    [Test Category] Parameter
+    [Test Target] --constrained-json-whitespace-pattern
+    """
+    backend = "llguidance"
 
 
 if __name__ == "__main__":
