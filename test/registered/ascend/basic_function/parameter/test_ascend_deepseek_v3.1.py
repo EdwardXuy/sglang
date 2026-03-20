@@ -33,7 +33,7 @@ class TestAscendDeepseekV31(CustomTestCase):
             "output_throughput": 30,
         },
     }
-    extra_args = ["--mem-fraction-static", 0.755, ]
+    extra_args = ["--mem-fraction-static", 0.9, ]
     envs = {}
     num_shots = 5
 
@@ -48,8 +48,8 @@ class TestAscendDeepseekV31(CustomTestCase):
             "ascend",
             "--tp", 16,
             "--device", "npu",
-            "--quantization",
-            "modelslim",
+            # "--quantization",
+            # "modelslim",
             "--watchdog-timeout", 9000,
             "--cuda-graph-bs",
             4,
