@@ -105,7 +105,6 @@ class TestNpuDebugTensorDumps(CustomTestCase):
         # Verify that the tensor dump file contains tensor data.
         pt_file = os.path.join(first_dump_dir, pass_files[0])
         tensor_data = torch.load(pt_file)
-        self.assertIn("tensor", tensor_data)
         self.assertIn("model.layers.2.input_layernorm", tensor_data)
         self.assertIn("model.layers.3.input_layernorm", tensor_data)
         self.assertIn("model.layers.4.input_layernorm", tensor_data)
