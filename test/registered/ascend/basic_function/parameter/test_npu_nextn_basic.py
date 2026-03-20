@@ -53,10 +53,10 @@ _SERVER_ARGS = [
     "--attention-backend", _ASCEND_BACKEND,
     "--disable-radix-cache",
     # 启用 NEXTN 算法（即 MTP）
-    "--speculative-algorithm", "NEXTN",
+    "--speculative-algorithm", "EAGLE",
     # 注意：DeepSeek-V3.2 内置 MTP，不需要指定 --speculative-draft-model-path
     "--speculative-num-steps", "5",          # 推测步数（DeepSeek 推荐值）
-    "--speculative-eagle-topk", "4",         # 分支因子
+    "--speculative-eagle-topk", "1",         # 分支因子
     "--speculative-num-draft-tokens", "8",   # 最大验证容量
     "--speculative-attention-mode", "decode",
     "--tp-size", "8",                         # 根据实际卡数调整（8卡示例）
