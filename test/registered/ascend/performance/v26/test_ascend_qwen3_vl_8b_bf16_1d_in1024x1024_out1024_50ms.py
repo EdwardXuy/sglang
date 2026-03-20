@@ -65,6 +65,7 @@ class TestQwenVl8B(TestAscendPerformanceTestCaseBase):
     envs = QWEN3_VL_8B_ENVS
     backend = "sglang-oai-chat"
     dataset_name = "image"
+    dataset_path = None
     image_resolution = "1024x1024"
     image_count = 1
     request_rate = 30
