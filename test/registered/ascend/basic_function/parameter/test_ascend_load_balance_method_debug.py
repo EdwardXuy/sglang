@@ -1,6 +1,7 @@
 import random
 import unittest
 import time
+from time import sleep
 from types import SimpleNamespace
 from urllib.parse import urlparse
 
@@ -72,6 +73,7 @@ class TestDPAttentionRoundBinLoadBalance(CustomTestCase):
         kill_process_tree(cls.process.pid)
 
     def test_mgsm_en(self):
+        sleep(600)
         args = SimpleNamespace(
             base_url=self.base_url,
             model=self.model_path,
