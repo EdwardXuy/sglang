@@ -6,6 +6,7 @@ import unittest
 
 
 from sglang.srt.utils import kill_process_tree
+from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.ascend.test_ascend_utils import (
     DEEPSEEK_V3_2_W8A8_WEIGHTS_PATH,
     assert_spec_decoding_active,
@@ -18,23 +19,25 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
+register_npu_ci(est_time=400, suite="nightly-8-npu-a3", nightly=True)
+
 _ASCEND_BACKEND = "ascend"
 
 _SERVER_ARGS = [
     "--trust-remote-code",
     "--disable-radix-cache",
     # Use NEXTN algorithm (MTP) – no draft model needed
-    "--speculative-algorithm", "NEXTN", #or EAGLE
+    "--speculative-algorithm", "EAGLE", #or NEXTN
     # Number of auto-regressive steps per iteration (tune based on GPU memory)
-    "--speculative-num-steps", "2",   # 3 for EAGLE: Lower for memory, increase for speed
+    "--speculative-num-steps", "3",   # 2 for NEXTN: Lower for memory, increase for speed
     # Branching factor (1 = greedy, >1 for speculative sampling, SPEC-V2 now only support 1)
     "--speculative-eagle-topk", "1",
     # Maximum draft tokens to verify per step
-    "--speculative-num-draft-tokens", "3", # 5 for EAGLE
+    "--speculative-num-draft-tokens", "5", # 3 for NEXTN
     "--speculative-attention-mode", "decode",
     # Tensor parallelism – adjust according to available NPUs
-    "--tp-size", "16",                # 16 for large model with 8+ NPUs
-    "--mem-fraction-static", "0.9", # 0.85 for EAGLE
+    "--tp-size", "8",                # 16 for large model with 8+ NPUs
+    "--mem-fraction-static", "0.85", # 0.9 for NEXTN
     "--disable-cuda-graph",
     "--dtype", "bfloat16",
 ]

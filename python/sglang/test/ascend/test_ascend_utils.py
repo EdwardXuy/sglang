@@ -1,19 +1,10 @@
-"""
-Common utilities for testing and benchmarking on NPU.
-
-This file contains the following weight path categories:
-- LLM model weights path
-- VLM model weights path
-- Embedding model weights path
-- Rerank model weights path
-- Reward model weights path
-
-Please remember to sort by variable name within each section.
-"""
+"""Common utilities for testing and benchmarking on NPU"""
 
 import asyncio
 import copy
 import os
+import requests as _requests
+import shlex
 import subprocess
 from types import SimpleNamespace
 from typing import Awaitable, Callable, NamedTuple, Optional
@@ -23,6 +14,9 @@ from sglang.srt.utils import kill_process_tree
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
+    _launch_server_process,
+    _try_enable_offline_mode_if_cache_complete,
+    _wait_for_server_health,
     auto_config_device,
     popen_launch_server,
 )
@@ -32,6 +26,34 @@ MODEL_WEIGHTS_DIR = "/root/.cache/modelscope/hub/models/"
 HF_MODEL_WEIGHTS_DIR = "/root/.cache/huggingface/hub/"
 
 # LLM model weights path
+LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "AI-ModelScope/Llama-3.1-8B-Instruct"
+)
+LLAMA_3_2_1B_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "LLM-Research/Llama-3.2-1B")
+LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "LLM-Research/Llama-3.2-1B-Instruct"
+)
+LLAMA_3_2_1B_INSTRUCT_TOOL_CALLING_LORA_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "codelion/Llama-3.2-1B-Instruct-tool-calling-lora"
+)
+LLAMA_3_2_1B_INSTRUCT_TOOL_FAST_LORA_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "suayptalha/FastLlama-3.2-LoRA"
+)
+META_LLAMA_3_1_8B_INSTRUCT = os.path.join(
+    MODEL_WEIGHTS_DIR, "LLM-Research/Meta-Llama-3.1-8B-Instruct"
+)
+
+DEEPSEEK_R1_0528_W8A8_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "vllm-ascend/DeepSeek-R1-0528-W8A8"
+)
+DEEPSEEK_V2_LITE_W8A8_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "vllm-ascend/DeepSeek-V2-Lite-W8A8"
+)
+
+QWEN2_5_7B_INSTRUCT_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "Qwen/Qwen2.5-7B-Instruct"
+)
+
 AFM_4_5B_BASE_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "arcee-ai/AFM-4.5B-Base")
 BAICHUAN2_13B_CHAT_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "baichuan-inc/Baichuan2-13B-Chat"
@@ -71,28 +93,16 @@ GRANITE_3_1_8B_INSTRUCT_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "ibm-granite/granite-3.1-8b-instruct"
 )
 GROK_2_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "huihui-ai/grok-2")
+GROK_2_WEIGHTS_TOKENIZER_PATH = os.path.join(MODEL_WEIGHTS_DIR, "huihui-ai/grok-2/tokenizer.tok.json")
 INTERNLM2_7B_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "Shanghai_AI_Laboratory/internlm2-7b"
 )
 KIMI_K2_THINKING_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "Kimi/Kimi-K2-Thinking")
 LING_LITE_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "inclusionAI/Ling-lite")
-LLAMA_2_7B_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "LLM-Research/Llama-2-7B")
-LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH = os.path.join(
-    MODEL_WEIGHTS_DIR, "AI-ModelScope/Llama-3.1-8B-Instruct"
-)
-LLAMA_3_2_1B_INSTRUCT_TOOL_CALLING_LORA_WEIGHTS_PATH = os.path.join(
-    MODEL_WEIGHTS_DIR, "codelion/Llama-3.2-1B-Instruct-tool-calling-lora"
-)
-LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH = os.path.join(
-    MODEL_WEIGHTS_DIR, "LLM-Research/Llama-3.2-1B-Instruct"
-)
-LLAMA_3_2_1B_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "LLM-Research/Llama-3.2-1B")
 LLAMA_4_SCOUT_17B_16E_INSTRUCT_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "meta-llama/Llama-4-Scout-17B-16E-Instruct"
 )
-META_LLAMA_3_1_8B_INSTRUCT = os.path.join(
-    MODEL_WEIGHTS_DIR, "LLM-Research/Meta-Llama-3.1-8B-Instruct"
-)
+LLAMA_2_7B_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "LLM-Research/Llama-2-7B")
 MIMO_7B_RL_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "XiaomiMiMo/MiMo-7B-RL")
 MINICPM3_4B_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "OpenBMB/MiniCPM3-4B")
 MISTRAL_7B_INSTRUCT_V0_2_WEIGHTS_PATH = os.path.join(
@@ -107,28 +117,14 @@ PERSIMMON_8B_CHAT_WEIGHTS_PATH = os.path.join(
 PHI_4_MULTIMODAL_INSTRUCT_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "microsoft/Phi-4-multimodal-instruct"
 )
-QWEN2_5_7B_INSTRUCT_WEIGHTS_PATH = os.path.join(
-    MODEL_WEIGHTS_DIR, "Qwen/Qwen2.5-7B-Instruct"
-)
 QWEN3_0_6B_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "Qwen/Qwen3-0.6B")
-QWEN3_1_7B_GPTQ_INT8_WEIGHTS_PATH = os.path.join(
-    MODEL_WEIGHTS_DIR, "Qwen/Qwen3-1.7B-GPTQ-Int8"
-)
-QWEN3_235B_A22B_W8A8_WEIGHTS_PATH = os.path.join(
-    MODEL_WEIGHTS_DIR, "vllm-ascend/Qwen3-235B-A22B-W8A8"
-)
+QWEN3_8B_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "Qwen/Qwen3-8B")
 QWEN3_30B_A3B_INSTRUCT_2507_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "Qwen/Qwen3-30B-A3B-Instruct-2507"
 )
-QWEN3_8B_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "Qwen/Qwen3-8B")
-QWEN3_8B_EAGLE3_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "Qwen/Qwen3-8B_eagle3")
+QWEN3_14B_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "Qwen/Qwen3-14B")
+
 QWEN3_32B_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "Qwen/Qwen3-32B")
-QWEN3_CODER_480B_A35B_INSTRUCT_W8A8_QUAROT_WEIGHTS_PATH = os.path.join(
-    MODEL_WEIGHTS_DIR, "Qwen3-Coder-480B-A35B-Instruct-w8a8-QuaRot"
-)
-QWEN3_NEXT_80B_A3B_INSTRUCT_WEIGHTS_PATH = os.path.join(
-    MODEL_WEIGHTS_DIR, "Qwen/Qwen3-Next-80B-A3B-Instruct"
-)
 QWEN3_32B_EAGLE3_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "Qwen/Qwen3-32B-Eagle3")
 QWEN3_32B_W8A8_MINDIE_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "aleoyang/Qwen3-32B-w8a8-MindIE"
@@ -148,6 +144,24 @@ STABLELM_2_1_6B_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "stabilityai/stablelm-2-1_6b"
 )
 XVERSE_MOE_A36B_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "xverse/XVERSE-MoE-A36B")
+EAGLE3_LLAMA3_1_INSTRUCT_8B_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "sglang-EAGLE3-LLaMA3.1-Instruct-8B"
+)
+DEEPSEEK_R1_0528_W4A8_PER_CHANNEL_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "DeepSeek-R1-0528-w4a8-per-channel"
+)
+OLMO_2_1124_7B_INSTRUCT_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "allenai/OLMo-2-1124-7B-Instruct"
+)
+SOLAR_10_7B_INSTRUCT_V1_0_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "upstage/SOLAR-10.7B-Instruct-v1.0"
+)
+STARCODER2_7B_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "bigcode/starcoder2-7b"
+)
+GPT_OSS_120B_BF16_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "eigen-ai-labs/gpt-oss-120b-bf16"
+)
 
 # VLM model weights path
 DEEPSEEK_VL2_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "deepseek-ai/deepseek-vl2")
@@ -206,9 +220,8 @@ QWEN3_30B_A3B_W8A8_WEIGHTS_PATH = os.path.join(
 DEEPSEEK_R1_DISTILL_QWEN_7B_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"
 )
-
-QWEN3_30B_MODELSLIM_INT4_WEIGHTS_PATH = os.path.join(
-    MODEL_WEIGHTS_DIR, "Eco-Tech/Qwen3-30B-A3B-w4a4-LAOS"
+DOTS_OCR_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "rednote-hilab/dots.ocr"
 )
 
 # Embedding model weights path
@@ -235,8 +248,15 @@ BGE_RERANKER_V2_M3_WEIGHTS_PATH = os.path.join(
 )
 
 # Reward model weights path
+SKYWORK_REWARD_GEMMA_2_27B_V0_2_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "AI-ModelScope/Skywork-Reward-Gemma-2-27B-v0.2"
+)
 INTERNLM2_7B_REWARD_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "Shanghai_AI_Laboratory/internlm2-7b-reward"
+)
+SKYWORK_REWARD_LLAMA_3_1_8B_V0_2_WEIGHTS_PATH = os.path.join(
+    HF_MODEL_WEIGHTS_DIR,
+    "models--Skywork--Skywork-Reward-Llama-3.1-8B-v0.2/snapshots/d4117fbfd81b72f41b96341238baa1e3e90a4ce1",
 )
 QWEN2_5_1_5B_APEACH_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "Howeee/Qwen2.5-1.5B-apeach"
@@ -244,17 +264,13 @@ QWEN2_5_1_5B_APEACH_WEIGHTS_PATH = os.path.join(
 QWEN2_5_MATH_RM_72B_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "Qwen/Qwen2.5-Math-RM-72B"
 )
-SKYWORK_REWARD_GEMMA_2_27B_V0_2_WEIGHTS_PATH = os.path.join(
-    MODEL_WEIGHTS_DIR, "AI-ModelScope/Skywork-Reward-Gemma-2-27B-v0.2"
-)
-SKYWORK_REWARD_LLAMA_3_1_8B_V0_2_WEIGHTS_PATH = os.path.join(
-    HF_MODEL_WEIGHTS_DIR,
-    "models--Skywork--Skywork-Reward-Llama-3.1-8B-v0.2/snapshots/d4117fbfd81b72f41b96341238baa1e3e90a4ce1",
-)
-# fmt: on
-
 # Other
 DEEPSEEK_CODER_JSON_PATH = "/__w/sglang/sglang/test/registered/ascend/basic_function/parameter/deepseek_coder.json"
+CONFIG_YAML_PATH = (
+    "/__w/sglang/sglang/test/registered/ascend/basic_function/parameter/config.yaml"
+)
+CONFIG_VALID_YAML_PATH = "/__w/sglang/sglang/test/registered/ascend/basic_function/parameter/config_valid.yaml"
+HOOK_FUNCTION_PATH = "/__w/sglang/sglang/test/registered/ascend/basic_function/parameter/test_ascend_forward_hooks:create_attention_monitor_factory"
 
 
 class ModelTestConfig(NamedTuple):
@@ -549,6 +565,236 @@ def run_bench_serving(
     assert res["completed"] == num_prompts
     return res
 
+
+def popen_launch_server_config(
+    model: str,
+    base_url: str,
+    timeout: float,
+    api_key: Optional[str] = None,
+    other_args: Optional[list[str]] = None,
+    env: Optional[dict] = None,
+    return_stdout_stderr: Optional[tuple] = None,
+    device: str = "auto",
+    pd_separated: bool = False,
+    num_replicas: Optional[int] = None,
+):
+    """Launch a server process with automatic device detection and offline/online retry.
+
+    Args:
+        model: Model path or identifier
+        base_url: Base URL for the server
+        timeout: Timeout for server startup
+        api_key: Optional API key for authentication
+        other_args: Additional command line arguments
+        env: Environment dict for subprocess
+        return_stdout_stderr: Optional tuple for output capture
+        device: Device type ("auto", "cuda", "rocm" or "cpu")
+        pd_separated: Whether to use PD separated mode
+        num_replicas: Number of replicas for mixed PD mode
+
+    Returns:
+        Started subprocess.Popen object
+    """
+    other_args = other_args or []
+
+    # Auto-detect device if needed
+    if device == "auto":
+        device = auto_config_device()
+        other_args = list(other_args)
+        other_args += ["--device", str(device)]
+
+    # CI-specific: Validate cache and enable offline mode if complete
+    if env is None:
+        env = os.environ.copy()
+    else:
+        env = env.copy()
+
+    # Store per-run marker path for potential invalidation
+    per_run_marker_path = None
+    try:
+        from sglang.utils import is_in_ci
+
+        if is_in_ci():
+            per_run_marker_path = _try_enable_offline_mode_if_cache_complete(
+                model, env, other_args
+            )
+    except Exception as e:
+        print(f"CI cache validation failed (non-fatal): {e}")
+
+    # Build server command
+    _, host, port = base_url.split(":")
+    host = host[2:]
+
+    use_mixed_pd_engine = not pd_separated and num_replicas is not None
+    if pd_separated or use_mixed_pd_engine:
+        command = "sglang.launch_pd_server"
+    else:
+        command = "sglang.launch_server"
+
+    command = [
+        "python3",
+        "-m",
+        command,
+        *[str(x) for x in other_args],
+    ]
+
+    if pd_separated or use_mixed_pd_engine:
+        command.extend(["--lb-host", host, "--lb-port", port])
+    else:
+        command.extend(["--host", host, "--port", port])
+
+    if use_mixed_pd_engine:
+        command.extend(["--mixed", "--num-replicas", str(num_replicas)])
+
+    if api_key:
+        command += ["--api-key", api_key]
+
+    print(f"command={shlex.join(command)}")
+
+    # Track if offline mode was enabled for potential retry
+    offline_enabled = env.get("HF_HUB_OFFLINE") == "1"
+
+    # First launch attempt
+    process = _launch_server_process(command, env, return_stdout_stderr, model)
+    success, error_msg = _wait_for_server_health(process, base_url, api_key, timeout)
+
+    # If offline launch failed and offline was enabled, retry with online mode
+    if not success and offline_enabled:
+        print(
+            f"CI_OFFLINE: Offline launch failed ({error_msg}), retrying with online mode..."
+        )
+
+        # Kill failed process
+        try:
+            if process.poll() is None:
+                kill_process_tree(process.pid)
+            else:
+                process.wait(timeout=5)
+        except Exception as e:
+            print(f"CI_OFFLINE: Error cleaning up failed offline process: {e}")
+
+        # Invalidate per-run marker to prevent subsequent tests from using offline
+        if per_run_marker_path and os.path.exists(per_run_marker_path):
+            try:
+                os.remove(per_run_marker_path)
+                print("CI_OFFLINE: Invalidated per-run marker due to offline failure")
+            except Exception as e:
+                print(f"CI_OFFLINE: Failed to remove per-run marker: {e}")
+
+        # Retry with online mode
+        env["HF_HUB_OFFLINE"] = "0"
+        process = _launch_server_process(command, env, return_stdout_stderr, model)
+        success, error_msg = _wait_for_server_health(
+            process, base_url, api_key, timeout
+        )
+
+        if success:
+            print("CI_OFFLINE: Online retry succeeded")
+            return process
+
+        # Online retry also failed
+        try:
+            kill_process_tree(process.pid)
+        except Exception as e:
+            print(f"CI_OFFLINE: Error killing process after online retry failure: {e}")
+
+        if "exited" in error_msg:
+            raise Exception(error_msg + ". Check server logs for errors.")
+        raise TimeoutError(error_msg)
+
+    # First attempt succeeded or offline was not enabled
+    if success:
+        return process
+
+    # First attempt failed and offline was not enabled
+    try:
+        kill_process_tree(process.pid)
+    except Exception as e:
+        print(f"CI_OFFLINE: Error killing process after first attempt failure: {e}")
+
+    if "exited" in error_msg:
+        raise Exception(error_msg + ". Check server logs for errors.")
+    raise TimeoutError(error_msg)
+
+
+def execute_serving_performance_test(
+    host,
+    port,
+    model_path=None,
+    backend="sglang",
+    dataset_name=None,
+    request_rate=None,
+    max_concurrency=None,
+    num_prompts=None,
+    input_len=None,
+    output_len=None,
+    random_range_ratio=1,
+    dataset_path=None,
+):
+    """
+    Usage: Execute performance test by bench_serving tool and write metrics to a file.
+    Parameters: Refer to the bench_serving guide documentation.
+    Return: Metrics dictionary.
+    """
+
+    cmd_args = [
+        "python3",
+        "-m",
+        "sglang.bench_serving",
+        "--host",
+        host,
+        "--port",
+        str(port),
+        "--model",
+        model_path,
+        "--backend",
+        backend,
+    ]
+
+    if dataset_name:
+        cmd_args.extend(["--dataset-name", str(dataset_name)])
+    if dataset_path:
+        cmd_args.extend(["--dataset-path", str(dataset_path)])
+    if request_rate:
+        cmd_args.extend(["--request-rate", str(request_rate)])
+    if max_concurrency:
+        cmd_args.extend(["--max-concurrency", str(max_concurrency)])
+    if num_prompts:
+        cmd_args.extend(["--num-prompts", str(num_prompts)])
+    if input_len:
+        cmd_args.extend(["--random-input-len", str(input_len)])
+    if output_len:
+        cmd_args.extend(["--random-output-len", str(output_len)])
+    if random_range_ratio:
+        cmd_args.extend(["--random-range-ratio", str(random_range_ratio)])
+
+    # Write component version information and metrics to file
+    result_file = os.getenv("METRICS_DATA_FILE")
+    result_file = "./bench_log.txt" if not result_file else result_file
+    print(f"The metrics result file: {result_file}")
+    run_command(
+        f"pip list | grep -E 'sglang|sgl|torch|transformers|deep-ep|memfabric_hybrid' | tee {result_file}"
+    )
+    cann_info = "/usr/local/Ascend/ascend-toolkit/latest/aarch64-linux/ascend_toolkit_install.info"
+    run_command(
+        f"echo \"CANN: $(cat {cann_info} | grep '^version=')\" | tee -a {result_file}"
+    )
+
+    # Run bench_serving
+    command = " ".join(cmd_args)
+    print(f"Command: {command}")
+    metrics = run_command(f"{command} | tee -a {result_file}")
+    print(f"metrics is {metrics}")
+
+    # Extracting key performance indicator data
+    mean_ttft = run_command(f"grep 'Mean TTFT' {result_file} | awk '{{print $4}}'")
+    mean_tpot = run_command(f"grep 'Mean TPOT' {result_file} | awk '{{print $4}}'")
+    total_tps = run_command(
+        f"grep 'Output token throughput' {result_file} | awk '{{print $5}}'"
+    )
+
+    return {"mean_ttft": mean_ttft, "mean_tpot": mean_tpot, "total_tps": total_tps}
+
 def send_inference_request(base_url: str, model: str, prompt: str, max_tokens: int =512) -> dict:
     """
     POST a single-turn chat completion request to a running SGLang server.
@@ -648,3 +894,57 @@ def check_server_health(base_url: str, endpoint: str = "/health") -> bool:
         return response.status_code == 200
     except Exception:
         return False
+
+def send_score_request(
+    base_url,
+    query,
+    items,
+    label_token_ids,
+    apply_softmax=False,
+    item_first=False,
+    timeout=120,
+):
+    """Send a POST request to the /v1/score endpoint.
+
+    Constructs and sends a scoring request to the server running at base_url.
+    Supports both text and pre-tokenized (token ID list) inputs for query and items.
+
+    Args:
+        base_url (str): Server base URL, e.g. "http://localhost:30000".
+        query (str | list[int]): Query as a text string or a list of pre-tokenized
+            token IDs. Must match the type convention of items.
+        items (str | list[str] | list[list[int]]): Candidate items to score.
+            - str: single text item.
+            - list[str]: multiple text items.
+            - list[list[int]]: multiple pre-tokenized items.
+        label_token_ids (list[int]): Token IDs whose log-probabilities are extracted
+            at each item boundary. Each ID must satisfy 0 <= id < vocab_size.
+            The length of each returned score sub-list equals len(label_token_ids).
+        apply_softmax (bool): If True, apply softmax normalization so that each
+            item's score list sums to 1.0. If False, return raw exp(logprob) values
+            in range [0, 1]. Default: False.
+        item_first (bool): If True, concatenate item before query when building the
+            prompt in single-item scoring mode. This parameter is ignored when
+            --multi-item-scoring-delimiter is active on the server. Default: False.
+        timeout (int): HTTP request timeout in seconds. Default: 120.
+
+    Returns:
+        requests.Response: The raw HTTP response. Callers should check
+            response.status_code and call response.json() to parse the result.
+            The JSON body contains a "scores" field: list[list[float]],
+            one sub-list per item, each of length len(label_token_ids).
+    """
+
+    payload = {
+        "query": query,
+        "items": items,
+        "label_token_ids": label_token_ids,
+        "apply_softmax": apply_softmax,
+        "item_first": item_first,
+    }
+    return _requests.post(
+        url=f"{base_url}/v1/score",
+        json=payload,
+        headers={"Content-Type": "application/json"},
+        timeout=timeout,
+    )
