@@ -135,6 +135,8 @@ class _TestDPAttentionFollowBootstrapRoomLoadBalance(
             "--enable-piecewise-cuda-graph",
             "--load-balance-method",
             cls.mode,
+            "--disaggregation-transfer-backend",
+            "ascend",
         ]
         prefill_args += cls.transfer_backend + cls.rdma_devices
         cls.process_prefill = popen_launch_pd_server(
@@ -157,6 +159,8 @@ class _TestDPAttentionFollowBootstrapRoomLoadBalance(
             "2",
             "--load-balance-method",
             cls.mode,
+            "--disaggregation-transfer-backend",
+            "ascend",
             "--base-gpu-id",
             "8",
         ]
