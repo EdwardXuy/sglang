@@ -100,7 +100,7 @@ class _TestDPAttentionFollowBootstrapRoomLoadBalance(
 
     @classmethod
     def setUpClass(cls):
-        cls.model_path = "/home/weights/DeepSeek-R1-0528-W8A8"
+        cls.model_path = "/root/.cache/modelscope/hub/models/vllm-ascend/DeepSeek-R1-0528-W8A8"
         cls.worker_url = "http://127.0.0.1:22222"
         other_args = [
             "--trust-remote-code",
@@ -146,7 +146,7 @@ class _TestDPAttentionFollowBootstrapRoomLoadBalance(
             "--port",
             str(cls.url.port),
             "--model-path",
-            cls.model,
+            cls.model_path,
         ]
         cls.router_process = popen_with_error_check(router_command)
         cls.wait_server_ready(cls.base_url + "/health")
@@ -154,7 +154,7 @@ class _TestDPAttentionFollowBootstrapRoomLoadBalance(
     @classmethod
     def tearDownClass(cls):
         kill_process_tree(cls.router_process.pid)
-        kill_process_tree(cls.worker_process.pid)
+        kill_process_tree(cls.process.pid)
 
     @classmethod
     def wait_server_ready(cls, url, timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH):
