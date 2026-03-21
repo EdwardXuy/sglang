@@ -172,44 +172,6 @@ class _TestDPAttentionFollowBootstrapRoomLoadBalance(
 
             time.sleep(5)
 
-    @classmethod
-    def setUpClass(cls):
-        # cls.model_path = DEEPSEEK_R1_0528_W8A8_WEIGHTS_PATH
-        cls.model_path = "/root/.cache/modelscope/hub/models/vllm-ascend/DeepSeek-R1-0528-W8A8"
-        cls.base_url = DEFAULT_URL_FOR_TEST
-        other_args = [
-            "--trust-remote-code",
-            "--tp",
-            "16",
-            "--enable-dp-attention",
-            "--dp",
-            "2",
-            "--enable-torch-compile",
-            "--torch-compile-max-bs",
-            "2",
-            "--load-balance-method",
-            cls.mode,
-            "--attention-backend",
-            "ascend",
-            "--disable-cuda-graph",
-            "--quantization",
-            "modelslim",
-            "--mem-fraction-static",
-            "0.75",
-        ]
-
-        cls.process = popen_launch_server(
-            cls.model_path,
-            cls.base_url,
-            timeout=3 * DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=other_args,
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        kill_process_tree(cls.process.pid)
-
-
 class _TestDPAttentionTotalRequestsLoadBalance(TestDPAttentionRoundBinLoadBalance):
     mode = "total_requests"
 
