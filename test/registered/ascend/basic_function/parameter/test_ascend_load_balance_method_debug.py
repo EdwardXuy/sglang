@@ -41,7 +41,7 @@ class TestDPAttentionRoundBinLoadBalance(CustomTestCase):
     @classmethod
     def setUpClass(cls):
         # cls.model_path = DEEPSEEK_R1_0528_W8A8_WEIGHTS_PATH
-        cls.model_path =  "/root/.cache/modelscope/hub/models/vllm-ascend/DeepSeek-R1-0528-W8A8"
+        cls.model_path = "/root/.cache/modelscope/hub/models/vllm-ascend/DeepSeek-R1-0528-W8A8"
         # cls.model_path = "/home/weights/DeepSeek-R1-0528-W8A8"
         cls.base_url = DEFAULT_URL_FOR_TEST
         other_args = [
@@ -129,6 +129,8 @@ class _TestDPAttentionFollowBootstrapRoomLoadBalance(
             "ascend",
             "--device",
             "npu",
+            "--disaggregation-transfer-backend",
+            "ascend",
             "--disaggregation-mode",
             "prefill",
             "--tp",
@@ -139,8 +141,7 @@ class _TestDPAttentionFollowBootstrapRoomLoadBalance(
             "--enable-piecewise-cuda-graph",
             "--load-balance-method",
             cls.mode,
-            "--disaggregation-transfer-backend",
-            "ascend",
+
         ]
         prefill_args += cls.transfer_backend + cls.rdma_devices
         cls.process_prefill = popen_launch_pd_server(
@@ -158,6 +159,8 @@ class _TestDPAttentionFollowBootstrapRoomLoadBalance(
             "ascend",
             "--device",
             "npu",
+            "--disaggregation-transfer-backend",
+            "ascend",
             "--disaggregation-mode",
             "decode",
             "--tp",
@@ -167,8 +170,7 @@ class _TestDPAttentionFollowBootstrapRoomLoadBalance(
             "2",
             "--load-balance-method",
             cls.mode,
-            "--disaggregation-transfer-backend",
-            "ascend",
+
             "--base-gpu-id",
             "8",
         ]
@@ -179,7 +181,6 @@ class _TestDPAttentionFollowBootstrapRoomLoadBalance(
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=decode_args,
         )
-
 
     def test_mgsm_en(self):
         sleep(600)
