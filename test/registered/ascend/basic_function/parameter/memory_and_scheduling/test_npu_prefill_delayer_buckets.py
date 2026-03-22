@@ -73,15 +73,21 @@ class TestNpuPrefillDelayerBuckets(CustomTestCase):
     #         self.assertIn(f'le="{wait_seconds_bucket}"', metrics_text)
 
     def _get_metrics_lines(self):
-        """辅助方法：获取metrics接口的文本行，按行拆分并过滤空行"""
+        """辅助方法：获取metrics接口的文本行，按行拆分并过滤空行/注释行"""
         try:
             response = requests.get(
                 f"{DEFAULT_URL_FOR_TEST}/metrics",
-                timeout=10  # 增加请求超时
+                timeout=10
             )
-            response.raise_for_status()  # 主动抛出HTTP错误
-            # 拆分并清理行（去除首尾空格、过滤空行）
-            return [line.strip() for line in response.text.splitlines() if line.strip()]
+            response.raise_for_status()
+            # 拆分并清理行（过滤注释行、空行、首尾空格）
+            lines = []
+            for line in response.text.splitlines():
+                stripped_line = line.strip()
+                # 过滤注释行（以#开头）和空行
+                if stripped_line and not stripped_line.startswith("#"):
+                    lines.append(stripped_line)
+            return lines
         except requests.exceptions.RequestException as e:
             self.fail(f"Failed to fetch metrics: {str(e)}")
 
@@ -90,48 +96,55 @@ class TestNpuPrefillDelayerBuckets(CustomTestCase):
         核心断言方法：精准匹配目标指标行，验证桶配置
 
         Args:
-            metric_name: 目标指标名称（如prefill_delayer_forward_passes_buckets）
+            metric_name: 目标指标名称
             expected_buckets: 期望的桶值列表
         """
         metrics_lines = self._get_metrics_lines()
-        target_line = None
 
-        # 1. 筛选目标指标的行（匹配指标名+le标签的行）
-        for line in metrics_lines:
-            if line.startswith(f"{metric_name}_bucket{{") and 'le="' in line:
-                target_line = line
-                break
+        # 筛选所有包含目标指标桶配置的行（关键修正：用in替代startswith）
+        target_lines = [
+            line for line in metrics_lines
+            if metric_name in line and 'le="' in line
+        ]
 
-        # 2. 验证是否找到目标行
-        self.assertIsNotNone(
-            target_line,
-            f"Metric line for {metric_name} not found in /metrics response"
+        # 验证至少找到一行目标行
+        self.assertNotEqual(
+            len(target_lines), 0,
+            f"No lines found for metric {metric_name} in /metrics response. "
+            f"Checked feature: {metric_name}"
         )
 
-        # 3. 提取所有le标签的值并验证
-        # 正则匹配所有le="数值"的部分
-        le_matches = re.findall(r'le="([\d\.]+)"', target_line)
-        le_values = [float(v) for v in le_matches]
+        # 提取所有le标签的值
+        le_values = []
+        for line in target_lines:
+            matches = re.findall(r'le="([\d\.]+)"', line)
+            le_values.extend([float(v) for v in matches])
 
-        # 4. 验证期望的桶值都存在于实际值中
-        for bucket in expected_buckets:
+        # 去重并排序（便于对比）
+        unique_le_values = sorted(list(set(le_values)))
+        expected_buckets_sorted = sorted(expected_buckets)
+
+        # 验证期望的桶值都存在
+        for bucket in expected_buckets_sorted:
             self.assertIn(
                 bucket,
-                le_values,
-                f"Expected bucket {bucket} not found in {metric_name} (actual: {le_values})"
+                unique_le_values,
+                f"Expected bucket {bucket} not found in {metric_name}. "
+                f"Expected: {expected_buckets_sorted}, Actual: {unique_le_values}"
             )
 
     def test_buckets_params(self):
         """Test bucket parameters take effect accurately"""
         # 验证forward passes桶配置
         self._check_bucket_in_metric_line(
-            "prefill_delayer_forward_passes_buckets",
+            "prefill_delayer_forward_passes_bucket",
             self.forward_passes_buckets
         )
 
         # 验证wait seconds桶配置
         self._check_bucket_in_metric_line(
-            "prefill_delayer_wait_seconds_buckets",
+            "prefill_delayer_wait_seconds_bucket",
+
             self.wait_seconds_buckets
         )
 
