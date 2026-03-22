@@ -14,10 +14,10 @@ import torch
 from sglang.bench_serving import run_benchmark
 from sglang.srt.managers.prefill_delayer import PrefillDelayer
 from sglang.srt.utils import kill_process_tree
-from sglang.test.ci.ci_register import register_cuda_ci
+from sglang.test.ascend.test_ascend_utils import QWEN3_0_6B_WEIGHTS_PATH
+from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
-    DEFAULT_MLA_MODEL_NAME_FOR_TEST,
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
     CustomTestCase,
@@ -26,11 +26,7 @@ from sglang.test.test_utils import (
     run_distributed_test,
 )
 
-register_cuda_ci(
-    est_time=300,
-    suite="stage-c-test-8-gpu-h200",
-    disabled="Temporarily disabled",
-)
+register_npu_ci(est_time=400, suite="nightly-8-npu-a3", nightly=True)
 
 WORLD_SIZE = os.environ.get("SGLANG_TEST_WORLD_SIZE", "8")
 
@@ -285,7 +281,7 @@ def _run_throughput_test(
     other_benchmark_args,
     token_usage_low_watermark: float = None,
 ):
-    model = "Qwen/Qwen3-0.6B"
+    model = QWEN3_0_6B_WEIGHTS_PATH
     base_url = DEFAULT_URL_FOR_TEST
 
     process = _launch_server(
@@ -327,7 +323,7 @@ def _assert_throughput_improvement(
     test_case.assertEqual(
         WORLD_SIZE,
         "8",
-        f"This test requires 8 GPUs to properly measure throughput improvement, got {WORLD_SIZE}",
+        f"This test requires 8 NPUs to properly measure throughput improvement, got {WORLD_SIZE}",
     )
 
     enabled = res_enabled["total_throughput"]
@@ -435,7 +431,7 @@ class TestPrefillDelayerAccuracy(CustomTestCase):
         self._run_accuracy_test(prefill_delayer=False)
 
     def _run_accuracy_test(self, prefill_delayer: bool):
-        model = DEFAULT_MLA_MODEL_NAME_FOR_TEST
+        model = DEEPSEEK_CODER_V2_LITE_WEIGHTS_PATH
         base_url = DEFAULT_URL_FOR_TEST
         process = _launch_server(
             prefill_delayer=prefill_delayer,
@@ -492,6 +488,8 @@ def _launch_server(
             "131072",
             "--mem-fraction-static",
             "0.6",
+            "--attention-backend",
+            "ascend",
             "--enable-metrics",
             *(["--enable-prefill-delayer"] if prefill_delayer else []),
             "--prefill-delayer-max-delay-passes",

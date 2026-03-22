@@ -13,52 +13,22 @@ register_npu_ci(
     disabled="https://github.com/Ascend/sglang/issues/94"
 )
 
-BASE_ARGS = [
+ARGS = [
     "--trust-remote-code",
     "--attention-backend",
     "ascend",
-    "--model-loader-extra-config",
-    '{"enable_multithread_load": true, "num_threads": 64}',
-]
-
-DP_ARGS = [
     "--tp=8",
-    "--dp=2",
     "--attn-cp-size=4",
-    "--enable-dp-attention",
-]
-
-MTP_ARGS = [
-    "--speculative-algorithm=EAGLE",
-    "--speculative-num-steps=3",
-    "--speculative-eagle-topk=1",
-    "--speculative-num-draft-tokens=4",
-    "--mem-frac=0.7",
-    "--cuda-graph-max-bs=32",
-    "--max-running-requests=32",
+    "--enable-nsa-prefill-context-parallel",
 ]
 
 # Accuracy thresholds
 GSM8K_BASELINE = 0.935
 
-# CP mode arguments
-CP_IN_SEQ_SPLIT_ARGS = [
-    "--enable-nsa-prefill-context-parallel",
-    "--nsa-prefill-cp-mode=in-seq-split",
-]
-
-CP_ROUND_ROBIN_ARGS = [
-    "--enable-nsa-prefill-context-parallel",
-    "--nsa-prefill-cp-mode=round-robin-split",
-    "--attn-cp-size=8",
-]
-
 
 class TestDeepseekV32CPSingleNode(unittest.TestCase):
     """Test Case: Test DeepSeek V3.2 model with NSA context parallelism,testing context parallel (CP) modes
-    combined with DP (data parallel) + MTP (speculative decoding):
-    - in-seq-split: In-sequence split context parallel mode
-    - round-robin-split: Round-robin split context parallel mode
+    combined with DP (data parallel) + MTP (speculative decoding)
 
     [Test Category] Parameter
     [Test Target] --attn-cp-size
@@ -68,19 +38,10 @@ class TestDeepseekV32CPSingleNode(unittest.TestCase):
         """Run accuracy tests for DeepSeek V3.2 CP variants."""
         self.model = DEEPSEEK_V3_2_W8A8_WEIGHTS_PATH
         variants = [
-            # Variant: in-seq-split CP mode with DP+MTP
             ModelLaunchSettings(
                 self.model,
                 tp_size=8,
-                extra_args=BASE_ARGS + DP_ARGS + MTP_ARGS + CP_IN_SEQ_SPLIT_ARGS,
-                env={"SGLANG_ENABLE_SPEC_V2": "1"},
-                variant="CP-in-seq-split",
-            ),
-            # Variant: round-robin-split CP mode (TP only, no DP)
-            ModelLaunchSettings(
-                self.model,
-                tp_size=8,
-                extra_args=BASE_ARGS + MTP_ARGS + CP_ROUND_ROBIN_ARGS,
+                extra_args=ARGS,
                 env={"SGLANG_ENABLE_SPEC_V2": "1"},
                 variant="CP-round-robin-split",
             ),

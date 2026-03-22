@@ -246,6 +246,9 @@ QWEN2_5_MATH_RM_72B_WEIGHTS_PATH = os.path.join(
 )
 # Other
 DEEPSEEK_CODER_JSON_PATH="/__w/sglang/sglang/test/registered/ascend/basic_function/deepseek_coder.json"
+GPT_OSS_120B_bf16_DRAFT_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "lmsys/gpt-oss-120b-bf16"
+)
 
 class ModelTestConfig(NamedTuple):
     """
