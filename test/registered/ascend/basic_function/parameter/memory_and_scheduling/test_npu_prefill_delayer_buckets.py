@@ -125,13 +125,13 @@ class TestNpuPrefillDelayerBuckets(CustomTestCase):
         """Test bucket parameters take effect accurately"""
         # 验证forward passes桶配置
         self._check_bucket_in_metric_line(
-            self.FORWARD_PASSES_METRIC,
+            "prefill_delayer_forward_passes_buckets",
             self.forward_passes_buckets
         )
 
         # 验证wait seconds桶配置
         self._check_bucket_in_metric_line(
-            self.WAIT_SECONDS_METRIC,
+            "prefill_delayer_wait_seconds_buckets",
             self.wait_seconds_buckets
         )
 
