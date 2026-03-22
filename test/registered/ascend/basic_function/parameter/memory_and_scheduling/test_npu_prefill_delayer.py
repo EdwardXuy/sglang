@@ -213,6 +213,11 @@ class TestPrefillDelayerNegotiate(unittest.TestCase):
 
 
 class TestPrefillDelayerThroughputOnlineServing(CustomTestCase):
+    """Testcase: 在线服务场景：验证开启PrefillDelayer，对比关闭时，吞吐量至少提升5%
+
+    [Test Category] Parameter
+    [Test Target] --enable-prefill-delayer
+    """
     def test_throughput_comparison(self):
         _run_throughput_comparison(
             self,
@@ -235,6 +240,11 @@ class TestPrefillDelayerThroughputOnlineServing(CustomTestCase):
 
 
 class TestPrefillDelayerThroughputOfflineGen(CustomTestCase):
+    """Testcase: 离线生成场景：验证开启PrefillDelayer，对比关闭时，吞吐量至少提升20%
+
+    [Test Category] Parameter
+    [Test Target] --enable-prefill-delayer
+    """
     def test_throughput_comparison(self):
         _run_throughput_comparison(
             self,
@@ -361,9 +371,7 @@ class TestPrefillDelayerTokenUsageLowWatermark(CustomTestCase):
             model=model,
             base_url=base_url,
             prefill_delayer=True,
-            other_args=["--max-total-tokens", "50000"],
-            # e.g. gen throughput is 370 tok/s on H200.
-            # Will need a different threshold on B200
+            other_args=["--max-total-tokens", "50000", "--attention-backend", "ascend",],
             max_delay_passes=3000,
             token_usage_low_watermark=token_usage_low_watermark,
         )
@@ -426,6 +434,11 @@ class TestPrefillDelayerTokenUsageLowWatermark(CustomTestCase):
 
 
 class TestPrefillDelayerAccuracy(CustomTestCase):
+    """Testcase: 验证启用/禁用PrefillDelayer时，模型在mgsm_en数据集上的精度均≥87%
+
+    [Test Category] Parameter
+    [Test Target] --enable-prefill-delayer
+    """
     def test_1_mgsm_en_has_prefill_delayer(self):
         self._run_accuracy_test(prefill_delayer=True)
 
@@ -446,6 +459,8 @@ class TestPrefillDelayerAccuracy(CustomTestCase):
                 # Use this to ensure prefill delayer will be run
                 "--max-total-tokens",
                 "4096",
+                "--attention-backend",
+                "ascend",
             ],
         )
         try:
