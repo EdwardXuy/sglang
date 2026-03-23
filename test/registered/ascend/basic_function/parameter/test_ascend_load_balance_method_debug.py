@@ -1,46 +1,34 @@
 import os
 import unittest
-import requests
-import logging
+from types import SimpleNamespace
 
-from test_disaggregation_utils import TestDisaggregationBase
-# from sglang.test.ascend.test_ascend_utils import LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH
-from sglang.test.ci.ci_register import register_npu_ci
+# from sglang.test.ascend.test_ascend_utils import LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH, get_device_ids
+from sglang.test.run_eval import run_eval
+from sglang.test.ascend.disaggregation_utils import TestDisaggregationBase
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
     popen_launch_pd_server,
 )
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
-)
-logger = logging.getLogger(__name__)
-
-base_port = int(os.environ.get("ASCEND_RT_VISIBLE_DEVICES", "0")[0])
-BASE_PORT_FOR_ASCEND_MF = 20000 + base_port * 1000 + 66
-os.environ["ASCEND_MF_STORE_URL"] = f"tcp://127.0.0.1:{BASE_PORT_FOR_ASCEND_MF}"
+from sglang.test.ci.ci_register import register_npu_ci
 
 register_npu_ci(est_time=400, suite="nightly-4-npu-a3", nightly=True)
 
 
-class TestDisaggregationDecodeTp(TestDisaggregationBase):
-    """Testcase：Verify the correctness of --disaggregation-decode-tp=2 and Prefill/Decode disaggregated services availability on Ascend NPU backend.
+class TestNumReservedDecodeTokens(TestDisaggregationBase):
+    """Testcase: Verify that in the PD disaggregation scenario, the model accuracy remains
+    uncompromised when the Decode service is launched with the parameters --num-reserved-decode-tokens 128
+    and --disaggregation-decode-polling-interval 2 configured.
 
     [Test Category] Parameter
-    [Test Target] --disaggregation-decode-tp; --disaggregation-mode; --disaggregation-transfer-backend
+    [Test Target] --num-reserved-decode-tokens; --disaggregation-decode-polling-interval
     """
 
     @classmethod
     def setUpClass(cls):
-        """Test class initialization: Launch Prefill/Decode disaggregated services and load balancer, then wait for services to be ready"""
-        logger.info(os.environ.get("ASCEND_RT_VISIBLE_DEVICES"))
         super().setUpClass()
         cls.model = "/root/.cache/modelscope/hub/models/AI-ModelScope/Llama-3.1-8B-Instruct"
-
-        cls.env = os.environ.copy()
+        os.environ["ASCEND_MF_STORE_URL"] = "tcp://127.0.0.1:24666"
 
         # Non blocking start servers
         cls.start_prefill()
@@ -54,18 +42,12 @@ class TestDisaggregationDecodeTp(TestDisaggregationBase):
 
     @classmethod
     def start_prefill(cls):
-        # Launch the Prefill service with --disaggregation-decode-tp=2 configuration for Ascend NPU
         prefill_args = (
             [
                 "--disaggregation-mode",
                 "prefill",
-                "--tp",
+                "--disaggregation-decode-tp",
                 "2",
-                "--enable-dp-attention",
-                "--dp",
-                "2",
-                # "--load-balance-method",
-                # "follow_bootstrap_room",
                 "--disaggregation-transfer-backend",
                 "ascend",
                 "--disable-cuda-graph",
@@ -73,39 +55,24 @@ class TestDisaggregationDecodeTp(TestDisaggregationBase):
                 "ascend",
                 "--mem-fraction-static",
                 0.8,
-                # "--quantization",
-                # "modelslim",
             ]
         )
-        env = os.environ.copy()
 
         cls.process_prefill = popen_launch_pd_server(
             cls.model,
             cls.prefill_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=prefill_args,
-            env=env,
         )
 
     @classmethod
     def start_decode(cls):
-        # Launch the Decode service with specified configuration for Ascend NPU (disaggregated architecture)
-        ascend_devices = os.environ.get("ASCEND_RT_VISIBLE_DEVICES", "0,1,2,3")
-        os.environ["ASCEND_RT_VISIBLE_DEVICES"] = ascend_devices
-        base_gpu_id = ascend_devices.split(",")[2] if len(ascend_devices.split(",")) >= 3 else "2"
         decode_args = (
             [
-                "--tp",
-                "2",
-                "--enable-dp-attention",
-                "--dp",
-                "2",
-                # "--load-balance-method",
-                # "follow_bootstrap_room",
                 "--disaggregation-mode",
                 "decode",
                 "--base-gpu-id",
-                base_gpu_id,
+                8,
                 "--disaggregation-transfer-backend",
                 "ascend",
                 "--disable-cuda-graph",
@@ -113,40 +80,30 @@ class TestDisaggregationDecodeTp(TestDisaggregationBase):
                 "ascend",
                 "--mem-fraction-static",
                 0.8,
-                # "--quantization",
-                # "modelslim",
+                "--num-reserved-decode-tokens",
+                128,
+                "--disaggregation-decode-polling-interval",
+                2,
             ]
         )
-        env = os.environ.copy()
         cls.process_decode = popen_launch_pd_server(
             cls.model,
             cls.decode_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=decode_args,
-            env=env,
         )
 
-    def test_disaggregation_decode_tp(self):
-        """Test core functionality of disaggregation-decode-tp parameter.
-
-        Test Steps:
-        1. Verify LB service health (basic availability check)
-        2. Validate inference correctness (France capital = Paris)
-        3. Confirm disaggregation_decode_tp=2 in Prefill server info (parameter validation)
-        """
-
-        response = requests.get(f"{DEFAULT_URL_FOR_TEST}/health_generate")
-        self.assertEqual(response.status_code, 200)
-
-        response = requests.post(
-            f"{DEFAULT_URL_FOR_TEST}/generate",
-            json={
-                "text": "The capital of France is",
-                "sampling_params": {"temperature": 0, "max_new_tokens": 32},
-            },
+    def test_mmlu(self):
+        args = SimpleNamespace(
+            base_url=DEFAULT_URL_FOR_TEST,
+            model=self.model,
+            eval_name="mmlu",
+            num_examples=64,
+            num_threads=32,
         )
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("Paris", response.text)
+
+        metrics = run_eval(args)
+        self.assertGreaterEqual(metrics["score"], 0.2)
 
     @classmethod
     def tearDownClass(cls):
