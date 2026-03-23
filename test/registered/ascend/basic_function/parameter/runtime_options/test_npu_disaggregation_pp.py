@@ -30,8 +30,8 @@ class TestDisaggregationPrefillPPAccuracy(TestDisaggregationBase):
         cls.start_decode()
 
         # Block until both
-        cls.wait_server_ready(cls.prefill_url + "/health", process=cls.process_prefill)
-        cls.wait_server_ready(cls.decode_url + "/health", process=cls.process_decode)
+        cls.wait_server_ready(cls.prefill_url + "/health")
+        cls.wait_server_ready(cls.decode_url + "/health")
 
         cls.launch_lb()
 
@@ -112,8 +112,8 @@ class TestDisaggregationPrefillPPDynamicChunkAccuracy(TestDisaggregationBase):
         cls.start_decode()
 
         # Block until both
-        cls.wait_server_ready(cls.prefill_url + "/health", process=cls.process_prefill)
-        cls.wait_server_ready(cls.decode_url + "/health", process=cls.process_decode)
+        cls.wait_server_ready(cls.prefill_url + "/health")
+        cls.wait_server_ready(cls.decode_url + "/health")
 
         cls.launch_lb()
 
@@ -195,8 +195,8 @@ class TestDisaggregationDecodePPAccuracy(TestDisaggregationBase):
         cls.start_decode()
 
         # Block until both
-        cls.wait_server_ready(cls.prefill_url + "/health", process=cls.process_prefill)
-        cls.wait_server_ready(cls.decode_url + "/health", process=cls.process_decode)
+        cls.wait_server_ready(cls.prefill_url + "/health")
+        cls.wait_server_ready(cls.decode_url + "/health")
 
         cls.launch_lb()
 
