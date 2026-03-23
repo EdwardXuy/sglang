@@ -33,7 +33,7 @@ class TestDeepSeekV32(GSM8KAscendMixin, CustomTestCase):
         "--attn-cp-size",
         "4",
         "--dp-size",
-        "2",
+        "1",
         "--enable-dp-attention",
         "--enable-nsa-prefill-context-parallel",
     ]

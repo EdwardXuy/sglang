@@ -39,24 +39,23 @@ class TestNpuMoeDpSize(CustomTestCase):
             "--tp-size",
             4,
             "--moe-dp-size",
-            4,
+            2,
             "--disable-radix-cache",
         ]
+        cls.process = popen_launch_server(
+            cls.model,
+            cls.base_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=[
+                *cls.common_args,
+            ],
+        )
 
     @classmethod
     def tearDownClass(cls):
         kill_process_tree(cls.process.pid)
 
     def test_a_gsm8k(self):
-        self.process = popen_launch_server(
-            self.model,
-            self.base_url,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=[
-                *self.common_args,
-            ],
-        )
-
         args = SimpleNamespace(
             num_shots=5,
             data_path=None,
