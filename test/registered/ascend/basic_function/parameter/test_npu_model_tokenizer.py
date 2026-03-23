@@ -24,6 +24,7 @@ class TestNpuModelTokenizer(CustomTestCase):
     @classmethod
     def setUpClass(cls):
         cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
+        cls.base_url = DEFAULT_URL_FOR_TEST
         #cls.model_path = tempfile.mkdtemp(prefix="model_path")
         cls.tokenizer_path = tempfile.mkdtemp(prefix="tokenizer_path")
         cls.file_names = [
@@ -33,7 +34,7 @@ class TestNpuModelTokenizer(CustomTestCase):
         ]
         for file_name in cls.file_names:
             if not os.path.exists(cls.tokenizer_path + "/" + file_name):
-                copy2(cls.model_path + "/" + file_name, cls.tokenizer_path)
+                copy2(cls.model + "/" + file_name, cls.tokenizer_path)
         cls.tokenizer_worker_num = 4
         other_args = [
             "--trust-remote-code",
@@ -54,7 +55,9 @@ class TestNpuModelTokenizer(CustomTestCase):
             "--load-format",
             "safetensors",
         ]
-        cls.base_url = DEFAULT_URL_FOR_TEST
+        cls.out_log_file = open("./cache_out_log.txt", "w+", encoding="utf-8")
+        cls.err_log_file = open("./cache_err_log.txt", "w+", encoding="utf-8")
+
         cls.process = popen_launch_server(
             cls.model,
             cls.base_url,
@@ -68,6 +71,8 @@ class TestNpuModelTokenizer(CustomTestCase):
         kill_process_tree(cls.process.pid)
         if os.path.exists(cls.tokenizer_path):
             shutil.rmtree(cls.tokenizer_path)
+        os.remove("./cache_out_log.txt")
+        os.remove("./cache_err_log.txt")
 
 
     def test_model_tokenizer_sending_request(self):
@@ -84,7 +89,14 @@ class TestNpuModelTokenizer(CustomTestCase):
             },
         )
         self.assertEqual(response.status_code, 200)
-        self.assertIn("text", response.json())
+        self.assertIn("Paris", response.json())
+
+        self.err_log_file.seek(0)
+        content = self.err_log_file.read()
+        self.assertIn("Start multi-tokenizer worker process", content)
+        self.assertIn("Registering detokenizer", content)
+        self.out_log_file.close()
+        self.err_log_file.close()
 
 if __name__ == "__main__":
     unittest.main()
