@@ -90,10 +90,6 @@ class TestNumReservedDecodeTokens(TestDisaggregationBase):
                 "ascend",
                 "--mem-fraction-static",
                 0.8,
-                "--num-reserved-decode-tokens",
-                128,
-                "--disaggregation-decode-polling-interval",
-                2,
             ]
         )
         cls.process_decode = popen_launch_pd_server(
