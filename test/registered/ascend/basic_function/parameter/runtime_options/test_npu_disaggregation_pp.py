@@ -1,3 +1,4 @@
+import os
 import time
 import unittest
 from types import SimpleNamespace
@@ -13,6 +14,9 @@ from sglang.test.ascend.test_ascend_utils import LLAMA_3_1_8B_INSTRUCT_WEIGHTS_P
 
 register_npu_ci(est_time=400, suite="nightly-8-npu-a3", nightly=True)
 
+base_port = int(os.environ.get("ASCEND_RT_VISIBLE_DEVICES", "0")[0])
+BASE_PORT_FOR_ASCEND_MF = 20000 + base_port * 1000 + 66
+os.environ["ASCEND_MF_STORE_URL"] = f"tcp://127.0.0.1:{BASE_PORT_FOR_ASCEND_MF}"
 
 class TestDisaggregationPrefillPPAccuracy(TestDisaggregationBase):
     """Test Case: Verify the accuracy of base model when only prefill enables PP parallelism in PD disaggregation scenario
@@ -34,6 +38,11 @@ class TestDisaggregationPrefillPPAccuracy(TestDisaggregationBase):
         cls.wait_server_ready(cls.decode_url + "/health")
 
         cls.launch_lb()
+
+    @classmethod
+    def tearDownClass(cls):
+        os.environ.pop("ASCEND_MF_STORE_URL")
+        super().tearDownClass()
 
     @classmethod
     def start_prefill(cls):
@@ -118,6 +127,12 @@ class TestDisaggregationPrefillPPDynamicChunkAccuracy(TestDisaggregationBase):
         cls.launch_lb()
 
     @classmethod
+    def tearDownClass(cls):
+        # Test class cleanup: Remove the Ascend MF store environment variable and call parent class cleanup to terminate all processes
+        os.environ.pop("ASCEND_MF_STORE_URL")
+        super().tearDownClass()
+
+    @classmethod
     def start_prefill(cls):
         prefill_args = [
             "--trust-remote-code",
@@ -199,6 +214,12 @@ class TestDisaggregationDecodePPAccuracy(TestDisaggregationBase):
         cls.wait_server_ready(cls.decode_url + "/health")
 
         cls.launch_lb()
+
+    @classmethod
+    def tearDownClass(cls):
+        # Test class cleanup: Remove the Ascend MF store environment variable and call parent class cleanup to terminate all processes
+        os.environ.pop("ASCEND_MF_STORE_URL")
+        super().tearDownClass()
 
     @classmethod
     def start_prefill(cls):
