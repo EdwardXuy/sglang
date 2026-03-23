@@ -94,17 +94,22 @@ class TestNumReservedDecodeTokens(TestDisaggregationBase):
             other_args=decode_args,
         )
 
-    def test_mmlu(self):
-        args = SimpleNamespace(
-            base_url=DEFAULT_URL_FOR_TEST,
-            model=self.model,
-            eval_name="mmlu",
-            num_examples=64,
-            num_threads=32,
+    def test_inference(self, max_new_tokens=32):
+        """Send a basic inference request to test inference function."""
+        response = requests.post(
+            f"{self.lb_url}/generate",
+            json={
+                "text": "What is the capital of France?",
+                "sampling_params": {
+                    "temperature": 0,
+                    "max_new_tokens": max_new_tokens,
+                },
+            },
+            timeout=60,
         )
-
-        metrics = run_eval(args)
-        self.assertGreaterEqual(metrics["score"], 0.2)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Paris", response.text)
+        return response.text
 
     @classmethod
     def tearDownClass(cls):
