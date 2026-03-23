@@ -84,7 +84,7 @@ class TestQwen8B(TestAscendPerformanceTestCaseBase):
     input_len = 1024
     output_len = 300
     random_range_ratio = 1
-    tpot = 7.84
+    tpot = 8
     output_token_throughput = 1462
 
     def test_qwen3_8b(self):
