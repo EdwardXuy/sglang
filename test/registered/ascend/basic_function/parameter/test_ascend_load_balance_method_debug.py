@@ -49,10 +49,12 @@ class TestNumReservedDecodeTokens(TestDisaggregationBase):
                 "prefill",
                 # "--disaggregation-decode-tp",
                 "--tp-size",
-                "4",
+                "2",
                 "--enable-dp-attention",
                 "--dp",
                 "2",
+                "--load-balance-method",
+                "follow_bootstrap_room",
                 "--disaggregation-transfer-backend",
                 "ascend",
                 "--disable-cuda-graph",
@@ -60,6 +62,8 @@ class TestNumReservedDecodeTokens(TestDisaggregationBase):
                 "ascend",
                 "--mem-fraction-static",
                 0.8,
+                "--dist-init-addr",
+                "127.0.0.1:10100",
             ]
         )
 
@@ -79,10 +83,12 @@ class TestNumReservedDecodeTokens(TestDisaggregationBase):
                 "--base-gpu-id",
                 8,
                 "--tp-size",
-                "4",
+                "2",
                 "--enable-dp-attention",
                 "--dp",
                 "2",
+                "--load-balance-method",
+                "auto",
                 "--disaggregation-transfer-backend",
                 "ascend",
                 "--disable-cuda-graph",
@@ -90,6 +96,8 @@ class TestNumReservedDecodeTokens(TestDisaggregationBase):
                 "ascend",
                 "--mem-fraction-static",
                 0.8,
+                "--dist-init-addr",
+                "127.0.0.1:10000",
             ]
         )
         cls.process_decode = popen_launch_pd_server(
