@@ -201,5 +201,8 @@ if __name__ == "__main__":
         loader = unittest.TestLoader()
         suite = unittest.TestSuite()
         suite.addTests(loader.loadTestsFromTestCase(_TestDPAttentionFollowBootstrapRoomLoadBalance))
+        suite.addTests(loader.loadTestsFromTestCase(_TestDPAttentionFollowBootstrapRoomLoadBalance))
+        suite.addTests(loader.loadTestsFromTestCase(_TestDPAttentionFollowBootstrapRoomLoadBalance))
+        suite.addTests(loader.loadTestsFromTestCase(_TestDPAttentionFollowBootstrapRoomLoadBalance))
         runner = unittest.TextTestRunner()
         runner.run(suite)
