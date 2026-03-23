@@ -10,7 +10,7 @@ python -m sglang.launch_server \
     --base-gpu-id 4 \
     --tp-size 2 \
     --enable-dp-attention --dp-size 2 \
-    --load-balance-method auto \
+    --load-balance-method follow_bootstrap_room \
     --mem-fraction-static 0.9 \
     --attention-backend ascend \
     --device npu \
