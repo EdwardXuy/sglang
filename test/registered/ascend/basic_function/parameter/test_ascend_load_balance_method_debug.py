@@ -64,8 +64,8 @@ class TestDisaggregationDecodeTp(TestDisaggregationBase):
                 "--enable-dp-attention",
                 "--dp",
                 "2",
-                "--load-balance-method",
-                "follow_bootstrap_room",
+                # "--load-balance-method",
+                # "follow_bootstrap_room",
                 "--disaggregation-transfer-backend",
                 "ascend",
                 "--disable-cuda-graph",
@@ -73,6 +73,8 @@ class TestDisaggregationDecodeTp(TestDisaggregationBase):
                 "ascend",
                 "--mem-fraction-static",
                 0.8,
+                # "--quantization",
+                # "modelslim",
             ]
         )
         env = os.environ.copy()
@@ -98,8 +100,8 @@ class TestDisaggregationDecodeTp(TestDisaggregationBase):
                 "--enable-dp-attention",
                 "--dp",
                 "2",
-                "--load-balance-method",
-                "follow_bootstrap_room",
+                # "--load-balance-method",
+                # "follow_bootstrap_room",
                 "--disaggregation-mode",
                 "decode",
                 "--base-gpu-id",
@@ -111,6 +113,8 @@ class TestDisaggregationDecodeTp(TestDisaggregationBase):
                 "ascend",
                 "--mem-fraction-static",
                 0.8,
+                # "--quantization",
+                # "modelslim",
             ]
         )
         env = os.environ.copy()
