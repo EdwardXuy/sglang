@@ -1,5 +1,6 @@
 import os
 import unittest
+import requests
 from types import SimpleNamespace
 
 # from sglang.test.ascend.test_ascend_utils import LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH, get_device_ids
