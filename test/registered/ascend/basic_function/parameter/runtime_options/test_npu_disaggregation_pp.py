@@ -287,8 +287,10 @@ class TestDisaggregationDecodePPAccuracy(TestDisaggregationBase):
             num_questions=200,
             max_new_tokens=512,
             parallel=128,
-            host=f"http://{self.base_host}",
-            port=int(self.lb_port),
+            # host=f"http://{self.base_host}",
+            # port=int(self.lb_port),
+            host=f"http://{self.url.hostname}",
+            port=int(self.url.port),
         )
         metrics = run_eval(args)
         print(f"{metrics=}")
