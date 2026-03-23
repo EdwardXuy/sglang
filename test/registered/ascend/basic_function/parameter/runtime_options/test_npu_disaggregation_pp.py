@@ -58,12 +58,14 @@ class TestDisaggregationPrefillPPAccuracy(TestDisaggregationBase):
             "--attention-backend",
             "ascend",
         ]
+        env = os.environ.copy()
         prefill_args += cls.transfer_backend + cls.rdma_devices
         cls.process_prefill = popen_launch_pd_server(
             cls.model,
             cls.prefill_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=prefill_args,
+            env=env,
         )
 
     @classmethod
@@ -79,12 +81,14 @@ class TestDisaggregationPrefillPPAccuracy(TestDisaggregationBase):
             "--attention-backend",
             "ascend",
         ]
+        env = os.environ.copy()
         decode_args += cls.transfer_backend + cls.rdma_devices
         cls.process_decode = popen_launch_pd_server(
             cls.model,
             cls.decode_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=decode_args,
+            env=env,
         )
 
     def test_gsm8k(self):
@@ -147,12 +151,14 @@ class TestDisaggregationPrefillPPDynamicChunkAccuracy(TestDisaggregationBase):
             "--attention-backend",
             "ascend",
         ]
+        env = os.environ.copy()
         prefill_args += cls.transfer_backend + cls.rdma_devices
         cls.process_prefill = popen_launch_pd_server(
             cls.model,
             cls.prefill_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=prefill_args,
+            env=env,
         )
 
     @classmethod
@@ -168,12 +174,14 @@ class TestDisaggregationPrefillPPDynamicChunkAccuracy(TestDisaggregationBase):
             "--attention-backend",
             "ascend",
         ]
+        env = os.environ.copy()
         decode_args += cls.transfer_backend + cls.rdma_devices
         cls.process_decode = popen_launch_pd_server(
             cls.model,
             cls.decode_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=decode_args,
+            env=env,
         )
 
     def test_gsm8k(self):
@@ -239,12 +247,14 @@ class TestDisaggregationDecodePPAccuracy(TestDisaggregationBase):
             "--attention-backend",
             "ascend",
         ]
+        env = os.environ.copy()
         prefill_args += cls.transfer_backend + cls.rdma_devices
         cls.process_prefill = popen_launch_pd_server(
             cls.model,
             cls.prefill_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=prefill_args,
+            env=env,
         )
 
     @classmethod
@@ -262,12 +272,14 @@ class TestDisaggregationDecodePPAccuracy(TestDisaggregationBase):
             "--attention-backend",
             "ascend",
         ]
+        env = os.environ.copy()
         decode_args += cls.transfer_backend + cls.rdma_devices
         cls.process_decode = popen_launch_pd_server(
             cls.model,
             cls.decode_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=decode_args,
+            env=env,
         )
 
     def test_gsm8k(self):
