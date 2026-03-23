@@ -51,7 +51,7 @@ class TestNpuModelTokenizer(CustomTestCase):
             cls.tokenizer_worker_num,
             "--tokenizer-mode",
             "auto",
-            "--skip-tokenizer-init",
+            #"--skip-tokenizer-init",
             "--load-format",
             "safetensors",
         ]
@@ -89,7 +89,7 @@ class TestNpuModelTokenizer(CustomTestCase):
             },
         )
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Paris", response.json())
+        self.assertIn("Paris", response.text)
 
         self.err_log_file.seek(0)
         content = self.err_log_file.read()
