@@ -1,6 +1,7 @@
 import unittest
 import os
 import shutil
+from shutil import copy2
 
 import requests
 
@@ -19,45 +20,52 @@ from sglang.test.test_utils import (
 register_npu_ci(est_time=400, suite="nightly-1-npu-a3", nightly=True)
 
 class TestNpuModelTokenizer(CustomTestCase):
-    model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
-    model_path = tempfile.mkdtemp(prefix="model_path")
-    tokenizer_path = tempfile.mkdtemp(prefix="tokenizer_path")
-    tokenizer_worker_num = 4
-    base_args = [
-        "--trust-remote-code",
-        "--mem-fraction-static",
-        "0.8",
-        "--attention-backend",
-        "ascend",
-        "--disable-cuda-graph",
-        "--model-path",
-        model_path,
-        "--tokenizer-path",
-        tokenizer_path,
-        "--tokenizer-worker-num",
-        tokenizer_worker_num,
-        "--tokenizer-mode",
-        "auto",
-        "--skip-tokenizer-init",
-        "--load-format",
-        "safetensors",
-    ]
+
     @classmethod
     def setUpClass(cls):
+        cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
+        #cls.model_path = tempfile.mkdtemp(prefix="model_path")
+        cls.tokenizer_path = tempfile.mkdtemp(prefix="tokenizer_path")
+        cls.file_names = [
+            "tokenizer.json",
+            "tokenizer_config.json",
+            "special_tokens_map.json",
+        ]
+        for file_name in cls.file_names:
+            if not os.path.exists(cls.tokenizer_path + "/" + file_name):
+                copy2(cls.model_path + "/" + file_name, cls.tokenizer_path)
+        cls.tokenizer_worker_num = 4
+        other_args = [
+            "--trust-remote-code",
+            "--mem-fraction-static",
+            "0.8",
+            "--attention-backend",
+            "ascend",
+            "--disable-cuda-graph",
+            "--model-path",
+            cls.model,
+            "--tokenizer-path",
+            cls.tokenizer_path,
+            "--tokenizer-worker-num",
+            cls.tokenizer_worker_num,
+            "--tokenizer-mode",
+            "auto",
+            "--skip-tokenizer-init",
+            "--load-format",
+            "safetensors",
+        ]
         cls.base_url = DEFAULT_URL_FOR_TEST
         cls.process = popen_launch_server(
             cls.model,
             cls.base_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=cls.base_args,
+            other_args=other_args,
         )
 
     @classmethod
     def tearDownClass(cls):
         """Clean up after the test class by killing the server process and removing generated directories."""
         kill_process_tree(cls.process.pid)
-        if os.path.exists(cls.model_path):
-            shutil.rmtree(cls.model_path)
         if os.path.exists(cls.tokenizer_path):
             shutil.rmtree(cls.tokenizer_path)
 
