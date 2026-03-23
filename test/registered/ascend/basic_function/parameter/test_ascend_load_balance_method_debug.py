@@ -130,8 +130,8 @@ class TestNumReservedDecodeTokens(TestDisaggregationBase):
 
     def test_mgsm_en(self):
         args = SimpleNamespace(
-            base_url=self.base_url,
-            model=self.model_path,
+            base_url=self.lb_url,
+            model=self.model,
             eval_name="mgsm_en",
             num_examples=10,
             num_threads=1024,
