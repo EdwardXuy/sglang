@@ -36,7 +36,7 @@ class TestDisaggregationBase(CustomTestCase):
         # config transfer backend and rdma devices
         cls.transfer_backend = [
             "--disaggregation-transfer-backend",
-            envs.SGLANG_TEST_PD_DISAGG_BACKEND.get(),
+            "ascend",
         ]
         cls.rdma_devices = [
             "--disaggregation-ib-device",
