@@ -62,6 +62,7 @@ class TestBaseTestWatchdog(CustomTestCase):
 
         # Logs contain service crash keywords
         combined_output = self.stdout.getvalue() + self.stderr.getvalue()
+        print
         expected_timeout_message = "Scheduler watchdog timeout (self.watchdog_timeout=1.0, self.soft=False)"
         expected_crash_message = "SIGQUIT received."
         self.assertIn(
