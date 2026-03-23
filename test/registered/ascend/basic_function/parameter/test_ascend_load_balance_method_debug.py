@@ -61,6 +61,11 @@ class TestDisaggregationDecodeTp(TestDisaggregationBase):
                 "prefill",
                 "--tp",
                 "2",
+                "--enable-dp-attention",
+                "--dp",
+                "2",
+                "--load-balance-method",
+                "follow_bootstrap_room",
                 "--disaggregation-transfer-backend",
                 "ascend",
                 "--disable-cuda-graph",
@@ -88,6 +93,11 @@ class TestDisaggregationDecodeTp(TestDisaggregationBase):
         base_gpu_id = ascend_devices.split(",")[2] if len(ascend_devices.split(",")) >= 3 else "2"
         decode_args = (
             [
+                "--enable-dp-attention",
+                "--dp",
+                "2",
+                "--load-balance-method",
+                "follow_bootstrap_room",
                 "--disaggregation-mode",
                 "decode",
                 "--base-gpu-id",
