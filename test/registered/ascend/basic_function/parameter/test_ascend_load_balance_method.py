@@ -31,7 +31,8 @@ class TestDPAttentionRoundBinLoadBalance(CustomTestCase):
     @classmethod
     def setUpClass(cls):
         # cls.model_path = DEEPSEEK_R1_0528_W8A8_WEIGHTS_PATH
-        cls.model_path = "/root/.cache/modelscope/hub/models//DeepSeek-R1-0528-w4a8-per-channel"
+        # cls.model_path = "/root/.cache/modelscope/hub/models//DeepSeek-R1-0528-w4a8-per-channel"
+        cls.model_path = "/root/.cache/modelscope/hub/models//DeepSeek-R1-0528"
         cls.base_url = DEFAULT_URL_FOR_TEST
         other_args = [
             "--trust-remote-code",
