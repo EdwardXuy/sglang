@@ -38,7 +38,8 @@ export SGLANG_DISAGGREGATION_WAITING_TIMEOUT=3600
 export SGLANG_ENABLE_SPEC_V2=1
 export SGLANG_ENABLE_OVERLAP_PLAN_STREAM=1
 
-MODEL_PATH=/root/.cache/modelscope/hub/models/Qwen/Qwen3.5-27B-W8A8
+#MODEL_PATH=/root/.cache/modelscope/hub/models/Qwen/Qwen3.5-27B-W8A8
+MODEL_PATH=Qwen/Qwen3.5-27B-W8A8
 
 python3 -m sglang.launch_server --model-path ${MODEL_PATH} \
 --quantization modelslim \
