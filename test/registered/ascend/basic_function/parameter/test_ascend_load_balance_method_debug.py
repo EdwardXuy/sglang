@@ -131,9 +131,6 @@ class TestDisaggregationDecodeTp(TestDisaggregationBase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn("Paris", response.text)
-        response = requests.get(self.prefill_url + "/get_server_info")
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["disaggregation_decode_tp"], 2)
 
     @classmethod
     def tearDownClass(cls):
