@@ -132,7 +132,6 @@ class TestDisaggregationPrefillPPDynamicChunkAccuracy(TestDisaggregationBase):
 
     @classmethod
     def tearDownClass(cls):
-        # Test class cleanup: Remove the Ascend MF store environment variable and call parent class cleanup to terminate all processes
         os.environ.pop("ASCEND_MF_STORE_URL")
         super().tearDownClass()
 
@@ -225,7 +224,6 @@ class TestDisaggregationDecodePPAccuracy(TestDisaggregationBase):
 
     @classmethod
     def tearDownClass(cls):
-        # Test class cleanup: Remove the Ascend MF store environment variable and call parent class cleanup to terminate all processes
         os.environ.pop("ASCEND_MF_STORE_URL")
         super().tearDownClass()
 

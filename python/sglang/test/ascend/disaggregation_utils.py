@@ -54,7 +54,6 @@ class TestDisaggregationBase(CustomTestCase):
             "-m",
             "sglang_router.launch_router",
             "--pd-disaggregation",
-            "--mini-lb",
             "--prefill",
             cls.prefill_url,
             "--decode",
