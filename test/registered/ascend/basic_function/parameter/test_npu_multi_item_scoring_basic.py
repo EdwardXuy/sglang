@@ -31,7 +31,7 @@ import sglang.test.ascend.test_ascend_utils as utils
 utils.MODEL_WEIGHTS_DIR = LOCAL_MODEL_WEIGHTS_DIR
 utils.HF_MODEL_WEIGHTS_DIR = LOCAL_MODEL_WEIGHTS_DIR
 utils.QWEN3_32B_WEIGHTS_PATH = os.path.join(
-    LOCAL_MODEL_WEIGHTS_DIR, "Qwen/Qwen3-32B"
+    LOCAL_MODEL_WEIGHTS_DIR, "Qwen/Qwen3-32B")
 
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ascend.test_ascend_utils import QWEN3_32B_WEIGHTS_PATH, send_score_request
