@@ -1,12 +1,18 @@
 """
 Test cases 3.1 + 3.2 + 3.3 (merged):
-  3.3 -- batch_wait_timeout = 0.001 s  (very short, near-zero waiting)
   3.1 -- batch_wait_timeout = 0.01  s  (10 x default of 0.002 s)
   3.2 -- batch_wait_timeout = 0.1   s  (50 x default, long accumulation window)
+  3.3 -- batch_wait_timeout = 0.001 s  (very short, near-zero waiting)
+  3.4 -- batch_wait_timeout = 0       s  (no waiting, batch_size stays at 1)
 
 Internal behaviour (developer notes):
   _dynamic_batch_loop uses asyncio.wait_for to wait up to batch_wait_timeout_s
   for the *next* request to arrive.
+
+  - Zero timeout (0 s):
+      The wait exits immediately without waiting for additional requests.
+      Debug logs should show batch_size=1 throughout (per developer discussion).
+      This is the strictest test of the non-batching fallback path.
 
   - Near-zero timeout (0.001 s):
       The wait exits almost immediately after the first request is dequeued.
@@ -31,10 +37,24 @@ Pattern:
 """
 import unittest
 
+import os
+
+# ============ [Local path override - for local debugging only] ============
+LOCAL_MODEL_WEIGHTS_DIR = "/home/weights"
+import sglang.test.ascend.test_ascend_utils as _utils
+_utils.MODEL_WEIGHTS_DIR = LOCAL_MODEL_WEIGHTS_DIR
+_utils.HF_MODEL_WEIGHTS_DIR = LOCAL_MODEL_WEIGHTS_DIR
+_utils.LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH = os.path.join(
+    LOCAL_MODEL_WEIGHTS_DIR, "LLM-Research/Llama-3.2-1B-Instruct"
+)
+# =========================================================================
+
+
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ascend.test_ascend_utils import (
     LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH,
     send_concurrent_requests,
+    verify_process_terminated,
 )
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
@@ -53,8 +73,9 @@ NUM_CONCURRENT = 8
 class TestDynamicBatchTokenizerTimeout001(CustomTestCase):
     """Testcase: Verify dynamic batch tokenizer with batch_wait_timeout=0.001 s.
     At near-zero timeout the background loop does not wait for more requests
-    to accumulate; the effective tokenization batch_size in debug logs should
-    stay close to 1.  All concurrent requests must still complete correctly.
+    to accumulate (but may allow minimal accumulation window); the effective
+    tokenization batch_size in debug logs should stay close to 1.
+    All concurrent requests must still complete correctly.
 
     [Test Category] Parameter
     [Test Target] --enable-dynamic-batch-tokenizer; --dynamic-batch-tokenizer-batch-timeout
@@ -85,6 +106,7 @@ class TestDynamicBatchTokenizerTimeout001(CustomTestCase):
     @classmethod
     def tearDownClass(cls):
         kill_process_tree(cls.process.pid)
+        verify_process_terminated(cls.process, cls.__name__)
 
     def test_requests_succeed(self):
         # Verify all NUM_REQUESTS concurrent requests complete with the correct
@@ -133,6 +155,16 @@ class TestDynamicBatchTokenizerTimeout1(TestDynamicBatchTokenizerTimeout001):
 
     batch_timeout = 0.1
 
+class TestDynamicBatchTokenizerTimeout0(TestDynamicBatchTokenizerTimeout001):
+    """Testcase: Verify dynamic batch tokenizer with batch_wait_timeout=0.
+    At timeout=0 the background loop does not wait for more requests to
+    accumulate; debug logs should show batch_size=1 throughout.
+    All concurrent requests must still complete correctly.
+
+    [Test Category] Parameter
+    [Test Target] --enable-dynamic-batch-tokenizer; --dynamic-batch-tokenizer-batch-timeout
+    """
+    batch_timeout = 0
 
 if __name__ == "__main__":
     unittest.main()

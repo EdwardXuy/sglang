@@ -20,10 +20,23 @@ Internal behaviour:
 """
 import unittest
 
+import os
+
+# ============ [Local path override - for local debugging only] ============
+LOCAL_MODEL_WEIGHTS_DIR = "/home/weights"
+import sglang.test.ascend.test_ascend_utils as _utils
+_utils.MODEL_WEIGHTS_DIR = LOCAL_MODEL_WEIGHTS_DIR
+_utils.HF_MODEL_WEIGHTS_DIR = LOCAL_MODEL_WEIGHTS_DIR
+_utils.LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH = os.path.join(
+    LOCAL_MODEL_WEIGHTS_DIR, "LLM-Research/Llama-3.2-1B-Instruct"
+)
+# =========================================================================
+
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ascend.test_ascend_utils import (
     LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH,
     send_concurrent_requests,
+    verify_process_terminated,
 )
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
@@ -70,6 +83,7 @@ class TestDynamicBatchTokenizerBatchSize64(CustomTestCase):
     @classmethod
     def tearDownClass(cls):
         kill_process_tree(cls.process.pid)
+        verify_process_terminated(cls.process, cls.__name__)
 
     def test_batch_size_64(self):
         # 80 concurrent requests with batch_size=64: the tokenizer must process
