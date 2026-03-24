@@ -1,3 +1,4 @@
+import logging
 import unittest
 import os
 import shutil
@@ -26,7 +27,6 @@ class TestNpuTokenizer(CustomTestCase):
     def setUpClass(cls):
         cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
         cls.base_url = DEFAULT_URL_FOR_TEST
-        #cls.model_path = tempfile.mkdtemp(prefix="model_path")
         cls.tokenizer_path = tempfile.mkdtemp(prefix="tokenizer_path")
         cls.file_names = [
             "tokenizer.json",
@@ -52,7 +52,6 @@ class TestNpuTokenizer(CustomTestCase):
             cls.tokenizer_worker_num,
             "--tokenizer-mode",
             "auto",
-            #"--skip-tokenizer-init",
             "--load-format",
             "safetensors",
         ]
@@ -77,7 +76,8 @@ class TestNpuTokenizer(CustomTestCase):
         os.remove("./cache_err_log.txt")
 
 
-    def test_model_tokenizer_sending_request(self):
+    def test_model_tokenizer_long_request(self):
+        # Send long request
         long_prompt = "Explain the concept of machine learning in detail. " * 100
         response = requests.post(
             f"{DEFAULT_URL_FOR_TEST}/generate",
@@ -102,7 +102,7 @@ class TestNpuTokenizer(CustomTestCase):
 
 
 class TestNpuModelTokenizer(CustomTestCase):
-
+    # Send concurrent requests
     @classmethod
     def setUpClass(cls):
         cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
@@ -144,25 +144,26 @@ class TestNpuModelTokenizer(CustomTestCase):
         os.remove("./cache_out_log.txt")
         os.remove("./cache_err_log.txt")
 
-    def test_model_tokenizer_request(self):
+    def test_model_tokenizer_concurrent_request(self):
         text1 = "The capital of France is"
-        response = requests.post(
-            f"{DEFAULT_URL_FOR_TEST}/generate",
-            json={
-                "text": text1,
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": 64,
+        for i in range(5):
+            response = requests.post(
+                f"{DEFAULT_URL_FOR_TEST}/generate",
+                json={
+                    "text": text1,
+                    "sampling_params": {
+                        "temperature": 0,
+                        "max_new_tokens": 64,
+                    },
                 },
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("Paris", response.text)
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("Paris", response.text)
 
         self.err_log_file.seek(0)
         content = self.err_log_file.read()
         self.assertIn("Multi-thread loading shards", content)
-        self.assertIn("type=LlamaForCausalLm", content)
+        self.assertIn("type=LlamaForCausalLM", content)
         self.out_log_file.close()
         self.err_log_file.close()
 
@@ -180,11 +181,10 @@ class TestNpuModelTokenizer(CustomTestCase):
                     },
                 },
             )
-            print(f"{response.status_code = }")
             self.assertEqual(response.status_code, 400)
             self.assertIn("The input (1202 tokens) is longer than the model\'s context length (1000 tokens)", response.text)
         except Exception as e:
-            print(f"Error testing: {e}")
+            logging.warning(f"Error testing: {e}")
 
 class TestNpuModelTokenizerMultimodal(CustomTestCase):
 
@@ -201,10 +201,9 @@ class TestNpuModelTokenizerMultimodal(CustomTestCase):
             "--disable-cuda-graph",
             "--enable-multimodal",
             "--revision",
-            "1.0.0"
+            "1.0.0",
             "--model-impl",
             "transformers",
-            # "--is-embedding",
         ]
         cls.out_log_file = open("./cache_out_log.txt", "w+", encoding="utf-8")
         cls.err_log_file = open("./cache_err_log.txt", "w+", encoding="utf-8")
@@ -224,7 +223,7 @@ class TestNpuModelTokenizerMultimodal(CustomTestCase):
         os.remove("./cache_out_log.txt")
         os.remove("./cache_err_log.txt")
 
-    def test_model_tokenizer_request(self):
+    def test_model_tokenizer_stream_request(self):
         text1 = "The capital of France is"
         response = requests.post(
             f"{DEFAULT_URL_FOR_TEST}/generate",
@@ -234,16 +233,95 @@ class TestNpuModelTokenizerMultimodal(CustomTestCase):
                     "temperature": 0,
                     "max_new_tokens": 64,
                 },
+                "stream": True,
             },
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn("Paris", response.text)
+        has_text = False
+        # Stream With Reasoning
+        for line in response.iter_lines():
+            if line:
+                line = line.decode("utf-8")
+                if line.startswith("data:") and not line.startswith("data: [DONE]"):
+                    data = json.loads(line[6:])
+                    if "text" in data and len(data["text"]) > 0:
+                        has_text = True
+        self.assertTrue(
+            has_text,
+            "The text is a stream response",
+        )
 
         self.err_log_file.seek(0)
         content = self.err_log_file.read()
         self.assertIn("type=TransformersForCausalLM", content)
         self.out_log_file.close()
         self.err_log_file.close()
+
+class TestNpuSkipTokenizerInit(CustomTestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
+        cls.base_url = DEFAULT_URL_FOR_TEST
+        cls.tokenizer_worker_num = 7
+        other_args = [
+            "--trust-remote-code",
+            "--mem-fraction-static",
+            "0.8",
+            "--attention-backend",
+            "ascend",
+            "--disable-cuda-graph",
+            "--tokenizer-worker-num",
+            cls.tokenizer_worker_num,
+            "--skip-tokenizer-init",
+            "--model-impl",
+            "auto",
+        ]
+
+        cls.process = popen_launch_server(
+            cls.model,
+            cls.base_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=other_args,
+        )
+
+    @classmethod
+    def tearDownClass(cls):
+        """Clean up after the test class by killing the server process and removing generated directories."""
+        kill_process_tree(cls.process.pid)
+
+    def test_model_tokenizer_error_request(self):
+        long_prompt = "Explain the concept of machine learning in detail."
+        try:
+            response = requests.post(
+                f"{DEFAULT_URL_FOR_TEST}/generate",
+                json={
+                    "text": long_prompt,
+                    "sampling_params": {
+                        "temperature": 0,
+                        "max_new_tokens": 100,
+                    },
+                },
+            )
+            self.assertEqual(response.status_code, 400)
+            self.assertIn("The engine initialized with ship_tokenizer_init=True cannot accept text prompts", response.text)
+        except Exception as e:
+            logging.warning(f"Error testing: {e}")
+
+    def test_model_skip_tokenizer_request(self):
+        response = requests.post(
+            f"{DEFAULT_URL_FOR_TEST}/generate",
+            json={
+                "input_ids": [123, 456],
+                "sampling_params": {
+                    "temperature": 0,
+                    "max_new_tokens": 100,
+                },
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("output_ids", response.text)
 
 
 if __name__ == "__main__":
