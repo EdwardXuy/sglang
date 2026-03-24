@@ -12,7 +12,7 @@ from sglang.test.test_utils import (
 from sglang.test.ascend.disaggregation_utils import TestDisaggregationBase
 from sglang.test.ascend.test_ascend_utils import LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH
 
-register_npu_ci(est_time=400, suite="nightly-8-npu-a3", nightly=True)
+register_npu_ci(est_time=400, suite="nightly-16-npu-a3", nightly=True)
 
 base_port = int(os.environ.get("ASCEND_RT_VISIBLE_DEVICES", "0")[0])
 BASE_PORT_FOR_ASCEND_MF = 20000 + base_port * 1000 + 66
@@ -53,7 +53,7 @@ class TestDisaggregationPrefillPPAccuracy(TestDisaggregationBase):
             "--tp-size",
             "2",
             "--pp-size",
-            "2",
+            "4",
             "--disable-overlap-schedule",
             "--attention-backend",
             "ascend",
@@ -77,7 +77,7 @@ class TestDisaggregationPrefillPPAccuracy(TestDisaggregationBase):
             "--tp-size",
             "2",
             "--base-gpu-id",
-            "4",
+            "8",
             "--attention-backend",
             "ascend",
         ]
@@ -144,7 +144,7 @@ class TestDisaggregationPrefillPPDynamicChunkAccuracy(TestDisaggregationBase):
             "--tp-size",
             "2",
             "--pp-size",
-            "2",
+            "4",
             "--disable-overlap-schedule",
             "--enable-dynamic-chunking",
             "--attention-backend",
@@ -169,7 +169,7 @@ class TestDisaggregationPrefillPPDynamicChunkAccuracy(TestDisaggregationBase):
             "--tp-size",
             "2",
             "--base-gpu-id",
-            "4",
+            "8",
             "--attention-backend",
             "ascend",
         ]
@@ -236,7 +236,7 @@ class TestDisaggregationDecodePPAccuracy(TestDisaggregationBase):
             "--tp-size",
             "2",
             "--pp-size",
-            "2",
+            "4",
             "--pp-async-batch-depth",
             "2",
             "--pp-max-micro-batch-size",
@@ -264,7 +264,7 @@ class TestDisaggregationDecodePPAccuracy(TestDisaggregationBase):
             "--tp-size",
             "2",
             "--pp-size",
-            "2",
+            "4",
             "--base-gpu-id",
             "4",
             "--attention-backend",

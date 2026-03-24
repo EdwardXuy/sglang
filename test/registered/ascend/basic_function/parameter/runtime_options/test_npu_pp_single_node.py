@@ -22,7 +22,7 @@ from sglang.test.ascend.test_ascend_utils import LLAMA_3_1_8B_INSTRUCT_WEIGHTS_P
     GLM_4_5V_WEIGHTS_PATH, QWEN3_0_6B_WEIGHTS_PATH, QWEN3_30B_A3B_INSTRUCT_2507_WEIGHTS_PATH, QWEN3_32B_WEIGHTS_PATH, \
     QWEN3_8B_WEIGHTS_PATH, QWEN3_VL_4B_INSTRUCT_WEIGHTS_PATH
 
-register_npu_ci(est_time=400, suite="nightly-4-npu-a3", nightly=True)
+register_npu_ci(est_time=400, suite="nightly-8-npu-a3", nightly=True)
 
 
 class TestPPAccuracy(unittest.TestCase):
@@ -42,7 +42,7 @@ class TestPPAccuracy(unittest.TestCase):
                 "--tp-size",
                 "2",
                 "--pp-size",
-                "2",
+                "4",
                 "--chunked-prefill-size",
                 "256",
                 "--attention-backend",
@@ -115,7 +115,7 @@ class TestDPAttentionDP2PP2(CustomTestCase):
                 "--tp",
                 "2",
                 "--pp-size",
-                "2",
+                "4",
                 "--enable-dp-attention",
                 "--dp",
                 "2",
@@ -247,7 +247,7 @@ class TestQwenPPAccuracy(unittest.TestCase):
 
     def test_pp_consistency(self):
         baseline = self.run_gsm8k_test(pp_size=1)
-        pp_metrics = self.run_gsm8k_test(pp_size=2)
+        pp_metrics = self.run_gsm8k_test(pp_size=4)
 
         print(f"[Qwen PP Comparison] Baseline: {baseline} | PP: {pp_metrics}")
 
@@ -306,7 +306,7 @@ class TestQwenPPTieWeightsAccuracy(unittest.TestCase):
 
     def test_pp_consistency(self):
         baseline = self.run_gsm8k_test(pp_size=1)
-        pp_metrics = self.run_gsm8k_test(pp_size=2)
+        pp_metrics = self.run_gsm8k_test(pp_size=4)
 
         print(f"[Qwen PP Comparison] Baseline: {baseline} | PP: {pp_metrics}")
 
@@ -365,7 +365,7 @@ class TestQwenMoePPAccuracy(unittest.TestCase):
 
     def test_pp_consistency(self):
         baseline = self.run_gsm8k_test(pp_size=1)
-        pp_metrics = self.run_gsm8k_test(pp_size=2)
+        pp_metrics = self.run_gsm8k_test(pp_size=4)
 
         print(f"[Qwen PP Comparison] Baseline: {baseline} | PP: {pp_metrics}")
 
@@ -424,7 +424,7 @@ class TestQwen35PPAccuracy(unittest.TestCase):
 
     def test_pp_consistency(self):
         baseline = self.run_gsm8k_test(pp_size=1)
-        pp_metrics = self.run_gsm8k_test(pp_size=2)
+        pp_metrics = self.run_gsm8k_test(pp_size=4)
 
         print(f"[Qwen35 PP Comparison] Baseline: {baseline} | PP: {pp_metrics}")
 
@@ -457,7 +457,7 @@ class TestFixedBugs(unittest.TestCase):
             "--tp-size",
             "2",
             "--pp-size",
-            "2",
+            "4",
             "--chunked-prefill",
             "256",
             "--max-running-requests",
@@ -492,7 +492,7 @@ class TestGLM41VPPAccuracy(unittest.TestCase):
                 "--tp-size",
                 "1",
                 "--pp-size",
-                "2",
+                "4",
                 "--chunked-prefill-size",
                 "8192",
                 "--enable-multimodal",
