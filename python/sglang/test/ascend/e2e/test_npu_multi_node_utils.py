@@ -392,8 +392,8 @@ def launch_pd_mix_node(model_config):
     for sa in special_args:
         other_args.append(sa)
 
-    if not "--model-type" in other_args:
-        other_args += ["--model-type", "llm"]
+    # if not "--model-type" in other_args:
+    #     other_args += ["--model-type", "llm"]
 
     for key, value in model_config["node_envs"].items():
         logger.info(f"ENV_VAR_CASE {key}:{value}")
@@ -528,7 +528,7 @@ def launch_pd_separation_node(model_config):
     host_ip = get_host_ip()
     logger.info(f"Starting {role} node on {host_ip} with args: {service_args}")
 
-    common_args = [
+    other_args = [
         "--trust-remote-code",
         "--attention-backend",
         "ascend",
@@ -536,22 +536,18 @@ def launch_pd_separation_node(model_config):
         "npu",
         "--disaggregation-transfer-backend",
         "ascend",
-        "--model-type",
-        "llm",
+        # "--model-type",
+        # "llm",
     ]
 
-    for arg in common_args:
-        if arg not in service_args:
-            service_args.insert(0, arg)
+    other_args.extend(service_args)
 
     try:
         process = popen_launch_server(
             model_config["model_path"],
             f"http://{host_ip}:{PREFILL_DECODE_PORT}",
             timeout=LOCAL_TIMEOUT,
-            other_args=[
-                *service_args,
-            ],
+            other_args=other_args,
         )
     except Exception as e:
         raise RuntimeError(f"Failed to start {role} node on {host_ip}: {e}")
