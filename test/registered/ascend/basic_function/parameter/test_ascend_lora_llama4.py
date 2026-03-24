@@ -42,7 +42,7 @@ class TestLlama4LoRA(CustomTestCase):
                         "--context-length",
                         "262144",
                         "--attention-backend",
-                        "fa3",
+                        "ascend",
                     ],
                 )
             except Exception as e:
