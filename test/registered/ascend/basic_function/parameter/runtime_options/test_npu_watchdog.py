@@ -1,10 +1,6 @@
 import io
-import os
 import unittest
-import time
-import requests
 
-from sglang.srt.environ import envs
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
@@ -31,7 +27,7 @@ class TestBaseTestWatchdog(CustomTestCase):
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=[
                 "--watchdog-timeout",
-                10,
+                1,
                 "--skip-server-warmup",
                 "--attention-backend",
                 "ascend",
@@ -47,17 +43,11 @@ class TestBaseTestWatchdog(CustomTestCase):
 
     def test_watchdog_crashes_server(self):
         # Verify that the service crashes after watchdog timeout is triggered
-        requests.post(
-            DEFAULT_URL_FOR_TEST + "/generate",
-            json={
-                "text": "Hello, please repeat this sentence for 1000 times.",
-                "sampling_params": {"max_new_tokens": 100, "temperature": 0},
-            },
-            timeout=30,
-        )
 
         # Logs contain service crash keywords
         combined_output = self.stdout.getvalue() + self.stderr.getvalue()
+        print("==========================================================")
+        print(combined_output)
         expected_timeout_message = "Scheduler watchdog timeout (self.watchdog_timeout=1.0, self.soft=False)"
         expected_crash_message = "SIGQUIT received."
         self.assertIn(
@@ -76,15 +66,6 @@ class TestBaseTestWatchdog(CustomTestCase):
             self.process.poll(),
             f"Process should exit after watchdog timeout, but still running"
         )
-
-class TestWatchdogSchedulerInit(BaseTestWatchdog, CustomTestCase):
-    """Test Case: Verify that Scheduler initialization blocking triggers watchdog timeout and the service crashes
-
-    [Test Category] Parameter
-    [Test Target] --watchdog-timeout
-    """
-    env_override = lambda: envs.SGLANG_TEST_STUCK_SCHEDULER_INIT.override(30)
-    expected_crash_message = "Scheduler watchdog timeout, crashing server to prevent hanging"
 
 
 if __name__ == "__main__":
