@@ -15,6 +15,7 @@ register_npu_ci(
 )
 
 QWEN3_32B_ENVS = {
+    "SGLANG_SET_CPU_AFFINITY": "1",
     "SGLANG_DISAGGREGATION_BOOTSTRAP_TIMEOUT": "600",
     "PYTORCH_NPU_ALLOC_CONF": "expandable_segments:True",
     "HCCL_SOCKET_IFNAME": "lo",
@@ -84,7 +85,7 @@ class TestQwen32B(TestAscendPerformanceTestCaseBase):
     output_token_throughput = 718
 
     def test_qwen3_32b(self):
-        self.run_throughput(run_cycles=2)
+        self.run_throughput(run_cycles=3)
 
 
 if __name__ == "__main__":
