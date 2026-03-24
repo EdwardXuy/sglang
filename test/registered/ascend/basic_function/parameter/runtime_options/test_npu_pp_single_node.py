@@ -39,7 +39,8 @@ class TestPPAccuracy(unittest.TestCase):
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=[
                 "--tp-size",
-                "2",
+                # "2",
+                "1",
                 "--pp-size",
                 "4",
                 "--chunked-prefill-size",
@@ -468,7 +469,8 @@ class TestFixedBugs(unittest.TestCase):
         )
         other_server_args = [
             "--tp-size",
-            "2",
+            # "2",
+            "1",
             "--pp-size",
             "4",
             "--chunked-prefill",

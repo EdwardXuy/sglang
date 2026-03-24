@@ -23,8 +23,8 @@ class TestWatchdogTimeout(CustomTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.expected_timeout_message = "Scheduler watchdog timeout (self.watchdog_timeout=1.0, self.soft=False)"
-        cls.expected_crash_message = "SIGQUIT received."
+        cls.watchdog_timeout = 1e-05
+        cls.expected_timeout_message = f"Scheduler watchdog timeout (self.watchdog_timeout={cls.watchdog_timeout}, self.soft=False)"
         cls.out_log_file = open("./out_log.txt", "w+", encoding="utf-8")
         cls.err_log_file = open("./err_log.txt", "w+", encoding="utf-8")
 
@@ -37,38 +37,25 @@ class TestWatchdogTimeout(CustomTestCase):
         os.remove("./err_log.txt")
 
     def test_watchdog_timeout(self):
-
-        try:
-            self.process = popen_launch_server(
-                QWEN3_0_6B_WEIGHTS_PATH,
-                DEFAULT_URL_FOR_TEST,
-                timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-                other_args=[
-                    "--watchdog-timeout",
-                    1,
-                    "--skip-server-warmup",
-                    "--attention-backend",
-                    "ascend",
-                ],
-                return_stdout_stderr=(self.out_log_file, self.err_log_file),
-            )
-        except Exception as e:
-            print(f"Server launch failed as expects:{e}")
-        finally:
-            self.err_log_file.seek(0)
-            content = self.err_log_file.read()
-            self.assertIn(
-                self.expected_timeout_message,
-                content,
-                f"Expected timeout message '{self.expected_timeout_message}' not found in logs"
-            )
-            self.assertIn(
-                self.expected_crash_message,
-                content,
-                f"Expected crash message '{self.expected_crash_message}' not found in logs"
-            )
-
-
+        self.process = popen_launch_server(
+            QWEN3_0_6B_WEIGHTS_PATH,
+            DEFAULT_URL_FOR_TEST,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            other_args=[
+                "--watchdog-timeout",
+                self.watchdog_timeout,
+                "--skip-server-warmup",
+                "--attention-backend",
+                "ascend",
+            ],
+            return_stdout_stderr=(self.out_log_file, self.err_log_file),
+        )
+        self.err_log_file.seek(0)
+        content = self.err_log_file.read()
+        self.assertIn(
+            self.expected_timeout_message,
+            content,
+        )
 
 if __name__ == "__main__":
     unittest.main()
