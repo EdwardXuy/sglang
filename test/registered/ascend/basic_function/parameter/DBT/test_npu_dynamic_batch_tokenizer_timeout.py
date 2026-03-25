@@ -1,9 +1,9 @@
 """
 Test cases 3.1 + 3.2 + 3.3 (merged):
+  3.4 -- batch_wait_timeout = 0       s  (no waiting, batch_size stays at 1)
+  3.3 -- batch_wait_timeout = 0.001 s  (very short, near-zero waiting)
   3.1 -- batch_wait_timeout = 0.01  s  (10 x default of 0.002 s)
   3.2 -- batch_wait_timeout = 0.1   s  (50 x default, long accumulation window)
-  3.3 -- batch_wait_timeout = 0.001 s  (very short, near-zero waiting)
-  3.4 -- batch_wait_timeout = 0       s  (no waiting, batch_size stays at 1)
 
 Internal behaviour (developer notes):
   _dynamic_batch_loop uses asyncio.wait_for to wait up to batch_wait_timeout_s
@@ -70,19 +70,17 @@ NUM_REQUESTS = 20
 NUM_CONCURRENT = 8
 
 
-class TestDynamicBatchTokenizerTimeout001(CustomTestCase):
-    """Testcase: Verify dynamic batch tokenizer with batch_wait_timeout=0.001 s.
-    At near-zero timeout the background loop does not wait for more requests
-    to accumulate (but may allow minimal accumulation window); the effective
-    tokenization batch_size in debug logs should stay close to 1.
+class TestDynamicBatchTokenizerTimeout0(CustomTestCase):
+    """Testcase: Verify dynamic batch tokenizer with batch_wait_timeout=0.
+    At timeout=0 the background loop does not wait for more requests to
+    accumulate; debug logs should show batch_size=1 throughout.
     All concurrent requests must still complete correctly.
 
     [Test Category] Parameter
     [Test Target] --enable-dynamic-batch-tokenizer; --dynamic-batch-tokenizer-batch-timeout
     """
-
     model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
-    batch_timeout = 0.001
+    batch_timeout = 0
 
     @classmethod
     def setUpClass(cls):
@@ -132,7 +130,20 @@ class TestDynamicBatchTokenizerTimeout001(CustomTestCase):
             )
 
 
-class TestDynamicBatchTokenizerTimeout01(TestDynamicBatchTokenizerTimeout001):
+class TestDynamicBatchTokenizerTimeout001(TestDynamicBatchTokenizerTimeout0):
+    """Testcase: Verify dynamic batch tokenizer with batch_wait_timeout=0.001 s.
+    At near-zero timeout the background loop does not wait for more requests
+    to accumulate (but may allow minimal accumulation window); the effective
+    tokenization batch_size in debug logs should stay close to 1.
+    All concurrent requests must still complete correctly.
+
+    [Test Category] Parameter
+    [Test Target] --enable-dynamic-batch-tokenizer; --dynamic-batch-tokenizer-batch-timeout
+    """
+    batch_timeout = 0.001
+
+
+class TestDynamicBatchTokenizerTimeout01(TestDynamicBatchTokenizerTimeout0):
     """Testcase: Verify dynamic batch tokenizer with batch_wait_timeout=0.01 s.
     10x larger than the 0.001 s case; under concurrency the loop can accumulate
     several requests before flushing, improving tokenization throughput.
@@ -140,11 +151,9 @@ class TestDynamicBatchTokenizerTimeout01(TestDynamicBatchTokenizerTimeout001):
     [Test Category] Parameter
     [Test Target] --enable-dynamic-batch-tokenizer; --dynamic-batch-tokenizer-batch-timeout
     """
-
     batch_timeout = 0.01
 
-
-class TestDynamicBatchTokenizerTimeout1(TestDynamicBatchTokenizerTimeout001):
+class TestDynamicBatchTokenizerTimeout1(TestDynamicBatchTokenizerTimeout0):
     """Testcase: Verify dynamic batch tokenizer with batch_wait_timeout=0.1 s.
     50x the default (0.002 s).  Long accumulation window maximises batch_size
     visible in debug logs; accuracy and correctness must be unaffected.
@@ -152,19 +161,7 @@ class TestDynamicBatchTokenizerTimeout1(TestDynamicBatchTokenizerTimeout001):
     [Test Category] Parameter
     [Test Target] --enable-dynamic-batch-tokenizer; --dynamic-batch-tokenizer-batch-timeout
     """
-
     batch_timeout = 0.1
-
-class TestDynamicBatchTokenizerTimeout0(TestDynamicBatchTokenizerTimeout001):
-    """Testcase: Verify dynamic batch tokenizer with batch_wait_timeout=0.
-    At timeout=0 the background loop does not wait for more requests to
-    accumulate; debug logs should show batch_size=1 throughout.
-    All concurrent requests must still complete correctly.
-
-    [Test Category] Parameter
-    [Test Target] --enable-dynamic-batch-tokenizer; --dynamic-batch-tokenizer-batch-timeout
-    """
-    batch_timeout = 0
 
 if __name__ == "__main__":
     unittest.main()
