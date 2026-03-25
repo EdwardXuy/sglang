@@ -4,7 +4,7 @@ Data Parallelism (--dp-size 2).
 
 With DP enabled the front-end load-balances requests across multiple model
 replicas.  The dynamic batch tokenizer operates in the front-end
-TokenizerManager before dispatch, so DP should not affect its behaviour.
+TokenizerManager before dispatch, so DP should not affect its behavior.
 
 Requires: 2 NPU cards (suite nightly-2-npu-a3).
 """

@@ -5,7 +5,7 @@ Test cases 3.1 + 3.2 + 3.3 (merged):
   3.1 -- batch_wait_timeout = 0.01  s  (10 x default of 0.002 s)
   3.2 -- batch_wait_timeout = 0.1   s  (50 x default, long accumulation window)
 
-Internal behaviour (developer notes):
+Internal behavior (developer notes):
   _dynamic_batch_loop uses asyncio.wait_for to wait up to batch_wait_timeout_s
   for the *next* request to arrive.
 
@@ -17,7 +17,7 @@ Internal behaviour (developer notes):
   - Near-zero timeout (0.001 s):
       The wait exits almost immediately after the first request is dequeued.
       Under concurrency the effective tokenization batch_size stays close to 1
-      (visible in debug logs).  Behaviour is similar to timeout=0 described
+      (visible in debug logs).  Behavior is similar to timeout=0 described
       in the developer discussion.
 
   - Long timeout (0.1 s):
@@ -155,7 +155,7 @@ class TestDynamicBatchTokenizerTimeout01(TestDynamicBatchTokenizerTimeout0):
 
 class TestDynamicBatchTokenizerTimeout1(TestDynamicBatchTokenizerTimeout0):
     """Testcase: Verify dynamic batch tokenizer with batch_wait_timeout=0.1 s.
-    50x the default (0.002 s).  Long accumulation window maximises batch_size
+    50x the default (0.002 s).  Long accumulation window maximizes batch_size
     visible in debug logs; accuracy and correctness must be unaffected.
 
     [Test Category] Parameter

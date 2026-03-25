@@ -5,7 +5,7 @@ Tensor Parallelism (--tp-size 2).
 The AsyncDynamicbatchTokenizer lives inside TokenizerManager, which runs on
 the front-end (scheduler) process.  TP worker processes handle the forward
 pass independently; the tokenizer layer is TP-transparent.  Enabling TP
-should therefore not affect dynamic batch tokenizer behaviour.
+should therefore not affect dynamic batch tokenizer behavior.
 
 Requires: 2 NPU cards (suite nightly-2-npu-a3).
 """
