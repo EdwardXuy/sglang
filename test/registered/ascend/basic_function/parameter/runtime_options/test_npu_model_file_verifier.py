@@ -57,7 +57,8 @@ class _RealModelTestCase(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.original_model_path = snapshot_download(MODEL_NAME)
+        # cls.original_model_path = snapshot_download(MODEL_NAME)
+        cls.original_model_path = snapshot_download("Qwen/Qwen3-0.6B")
 
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
@@ -286,7 +287,8 @@ class TestModelFileVerifierHF(_RealModelTestCase):
     def test_generate_checksums_from_hf(self):
         checksums_file = os.path.join(self.test_dir, "checksums.json")
         # Pass HF model name directly - tool automatically downloads and generates checksum file
-        result = generate_checksums(source=MODEL_NAME, output_path=checksums_file)
+        # result = generate_checksums(source=MODEL_NAME, output_path=checksums_file)
+        result = generate_checksums(source="Qwen/Qwen3-0.6B", output_path=checksums_file)
 
         # Assert file exists, number of checksums > 0, and each SHA256 is 64 characters (standard hash length)
         self.assertTrue(os.path.exists(checksums_file))
@@ -297,7 +299,8 @@ class TestModelFileVerifierHF(_RealModelTestCase):
     # Test 2: Verify local model with HF repository checksums
     def test_verify_with_hf_checksum(self):
         # Pass HF model name directly - tool automatically fetches remote checksums and verifies local files
-        verify(model_path=self.test_dir, checksums_source=MODEL_NAME)
+        # verify(model_path=self.test_dir, checksums_source=MODEL_NAME)
+        verify(model_path=self.test_dir, checksums_source="Qwen/Qwen3-0.6B")
 
 
 # ======== Real Model E2E Tests ========
@@ -306,7 +309,8 @@ class TestModelFileVerifierHF(_RealModelTestCase):
 class TestModelFileVerifierWithRealModel(_RealModelTestCase):
     def _run_server_test(self, *, corrupt_weights: bool, use_hf_checksum: bool):
         if use_hf_checksum:
-            checksum_arg = MODEL_NAME
+            # checksum_arg = MODEL_NAME
+            checksum_arg = "Qwen/Qwen3-0.6B"
         else:
             checksums_file = os.path.join(self.test_dir, "checksums.json")
             generate_checksums(source=self.test_dir, output_path=checksums_file)
