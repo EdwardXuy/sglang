@@ -20,12 +20,18 @@ ENVS = {
     "PYTORCH_NPU_ALLOC_CONF": "expandable_segments:True",
     "HCCL_SOCKET_IFNAME": "lo",
     "GLOO_SOCKET_IFNAME": "lo",
-    "HCCL_OP_EXPANSION_MODE": "AIV",
+    "INF_NAN_MODE_FORCE_DISABLE": "1",
+    "HCCL_ALGO": "level0:NA;level1:ring",
+    "DP_ROUND_ROBIN": "1",
+    "SGLANG_USE_MAX_DP_ATT" : "1",
+    "ENABLE_PROFILING": "0",
+    "PROFILING_BS": "66",
+    "PROFILING_STAGE": "decode",
+    "PROFILING_STEP": "10",
     "SGLANG_ENABLE_OVERLAP_PLAN_STREAM": "1",
     "SGLANG_ENABLE_SPEC_V2": "1",
-    "SGLANG_NPU_USE_DEEPGEMM": "1",
-    "SGLANG_ALLOW_OVERWRITE_LONGER_CONTEXT_LEN": "1",
-    "SGLANG_CONTEXT_LENGTH": "262144",
+    "SGLANG_SCHEDULER_DECREASE_PREFILL_IDLE": "1",
+    "SGLANG_PREFILL_DELAYER_MAX_DELAY_PASSES": "200",
 }
 
 OTHER_ARGS = [
@@ -89,11 +95,8 @@ class TestQwen32B(TestAscendPerformanceTestCaseBase):
     input_len = 1000
     output_len = 100
     random_range_ratio = 1
-    # E2E < 10s
-    # tpot = ?
-    # output_token_throughput = 1040
-    tpot = 100
-    output_token_throughput = 0
+    mean_e2e_latency=10000
+    output_token_throughput = 1040
 
     def test_qwen3_32b(self):
         self.run_throughput()
