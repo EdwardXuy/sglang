@@ -29,6 +29,7 @@ ENVS = {
     "PROFILING_BS": "162",
     "PROFILING_STAGE": "decode",
     "PROFILING_STEP": "10",
+    "ASCEND_LAUNCH_BLOCKING": "0",
 }
 
 OTHER_ARGS = [
