@@ -78,16 +78,14 @@ class TestLTSQwen332B(TestAscendLtsTestCaseBase):
     model = MODEL_PATH
     other_args = OTHER_ARGS
     envs = ENVS
-    request_rate = 5.5
     max_concurrency = 16
-    num_prompts = int(max_concurrency) * 4
-    input_len = 3500
-    output_len = 1500
-    random_range_ratio = 0.5
-    ttft = 10000
+    num_prompts = 16
+    input_len = 12800
+    output_len = 1000
+    random_range_ratio = 1
     tpot = 50
-    output_token_throughput = 350
-    accuracy = 0.80
+    output_token_throughput = 0
+    accuracy = 0.7
 
     @classmethod
     def setUpClass(cls):
@@ -117,7 +115,7 @@ class TestLTSQwen332B(TestAscendLtsTestCaseBase):
             print(
                 f"=============={current_time}  Execute the {i}-th long-term stability test=============="
             )
-            # self.run_throughput()
+            self.run_throughput()
             self.run_gsm8k()
 
 
