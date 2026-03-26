@@ -23,15 +23,15 @@ class TestDtype(CustomTestCase):
     model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
 
     def test_dtype_options(self):
-        # for i in ["half", "float16", "bfloat16"]:
-        # for i in ["float", "float32"]:
-        for i in ["float32"]:
+        for kv_cache_dtype in ["bfloat16"]:
             other_args = [
                 "--dtype",
-                i,
+                "auto",
                 "--attention-backend",
                 "ascend",
                 "--disable-cuda-graph",
+                "--kv-cache-dtype",
+                kv_cache_dtype,
             ]
             process = popen_launch_server(
                 self.model,
