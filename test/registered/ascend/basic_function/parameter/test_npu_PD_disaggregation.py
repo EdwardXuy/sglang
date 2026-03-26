@@ -50,7 +50,6 @@ class DisaggregationHiCacheBase(PDDisaggregationServerBase):
 
         cls.launch_router()
         cls.wait_server_ready(cls.lb_url + "/health")
-        time.sleep(10)
 
     @classmethod
     def start_prefill(cls):
@@ -67,17 +66,17 @@ class DisaggregationHiCacheBase(PDDisaggregationServerBase):
             cls.bootstrap_port,
             "--tp-size",
             "2",
-            # "--enable-hierarchical-cache",
-            # "--hicache-io-backend",
-            # "kernel_ascend",
-            # "--hicache-mem-layout",
-            # "page_first_direct",
+            "--enable-hierarchical-cache",
+            "--hicache-io-backend",
+            "kernel_ascend",
+            "--hicache-mem-layout",
+            "page_first_direct",
             # "--hicache-ratio",
             # "1.2",
             # "--hicache-write-policy",
             # "write_through",
-            # "--hicache-storage-backend",
-            # "file",
+            "--hicache-storage-backend",
+            "file",
             # "--hicache-storage-prefetch-policy",
             # "wait_complete",
             "--mem-fraction-static",
@@ -108,7 +107,6 @@ class DisaggregationHiCacheBase(PDDisaggregationServerBase):
             "-m",
             "sglang_router.launch_router",
             "--pd-disaggregation",
-            "--mini-lb",
             "--prefill",
             cls.prefill_url,
             cls.bootstrap_port,
@@ -166,6 +164,7 @@ class TestDisaggregationDecodeWithHiCache(DisaggregationHiCacheBase):
     """Decode startup parameters, enable offload-kvcache"""
     ascend_devices = os.environ.get("ASCEND_RT_VISIBLE_DEVICES", "0,1,2,3")
     base_gpu_id = ascend_devices.split(",")[2] if len(ascend_devices.split(",")) >= 3 else "2"
+
     @classmethod
     def start_decode(cls):
         decode_args = [
@@ -177,6 +176,7 @@ class TestDisaggregationDecodeWithHiCache(DisaggregationHiCacheBase):
             "--disaggregation-transfer-backend",
             "ascend",
             "--tp-size",
+            2,
             # "--page-size",
             # "128",
             "--mem-fraction-static",
@@ -185,10 +185,10 @@ class TestDisaggregationDecodeWithHiCache(DisaggregationHiCacheBase):
             2,
             # cls.base_gpu_id,
             "--disaggregation-decode-enable-offload-kvcache",
-            # "--hicache-io-backend",
-            # "kernel_ascend",
-            # "--hicache-mem-layout",
-            # "page_first_direct",
+            "--hicache-io-backend",
+            "kernel_ascend",
+            "--hicache-mem-layout",
+            "page_first_direct",
             # "--hicache-ratio",
             # "1.2",
             "--hicache-storage-backend",
