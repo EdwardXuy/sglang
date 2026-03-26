@@ -211,7 +211,7 @@ class TestAscendLtsTestCaseBase(CustomTestCase):
         )
         logger.info(f"---------- Gsm8k accuracy test PASSED ----------")
 
-    def test_mmlu(self):
+    def run_mmlu(self):
         logger.info(f"---------- Start mmlu accuracy test ----------")
         args = SimpleNamespace(
             base_url=self.base_url,
