@@ -15,26 +15,18 @@ unset HTTPS_PROXY
 unset HTTP_PROXY
 unset ASCEND_LAUNCH_BLOCKING
 
-source /usr/local/Ascend/ascend-toolkit/set_env.sh
-source /usr/local/Ascend/nnal/atb/set_env.sh
-export LD_LIBRARY_PATH=/usr/local/Ascend/ascend-toolkit/latest/opp/vendors/customize/op_api/lib/:${LD_LIBRARY_PATH}
-export PATH=/usr/local/Ascend/8.5.0/compiler/bishengir/bin:$PATH
-
-export ASCEND_HOME_PATH=/usr/local/Ascend/ascend-toolkit/latest
+. /usr/local/Ascend/cann/set_env.sh
+. /usr/local/Ascend/nnal/atb/set_env.sh
 
 export PYTORCH_NPU_ALLOC_CONF=expandable_segments:True
 export STREAMS_PER_DEVICE=32
 
-export HCCL_BUFFSIZE=1024
-export DEEPEP_NORMAL_LONG_SEQ_ROUND=5
-export DEEPEP_NORMAL_LONG_SEQ_PER_ROUND_TOKENS=512
-
 MODEL_PATH="/root/.cache/modelscope/hub/models/DeepSeek-V3.2-W8A8"
 
-export SGLANG_NPU_USE_MLAPO=1
+export HCCL_BUFFSIZE=1200
 export DEEP_NORMAL_MODE_USE_INT8_QUANT=1
-export SGLANG_NPU_USE_MULTI_STREAM=1
-export HCCL_OP_EXPANSION_MODE=AIV
+export TASK_QUEUE_ENABLE=2
+
 
 PIPs=('your prefill ip1' 'your prefill ip2')
 IFNAMES=('xxx' 'xxx')
@@ -81,7 +73,10 @@ nohup python3 -m sglang.launch_server --model-path ${MODEL_PATH} \
 --disable-cuda-graph \
 --nnodes $nnodes --node-rank $VC_TASK_INDEX \
 --disaggregation-bootstrap-port 8995 \
---enable-nsa-prefill-context-parallel  --moe-dense-tp-size 1 \
+--moe-dense-tp-size 1 \
+--enable-nsa-prefill-context-parallel \
+--nsa-prefill-cp-mode in-seq-split \
+--attn-cp-size 32 \
 --speculative-algorithm NEXTN --speculative-num-steps 1 --speculative-eagle-topk 1 --speculative-num-draft-tokens 2 \
 --dist-init-addr ${PIPs[0]}:10000 \
 > $PREFILL_LOG_FILE 2>&1 &
@@ -93,7 +88,7 @@ ROUTER_LOG_FILE="./log/launch_router_$(date +'%Y-%m-%d-%H:%M').log"
 export SGLANG_DP_ROUND_ROBIN=1
 nohup python -u -m sglang_router.launch_router \
     --pd-disaggregation \
-    --host 127.0.0.1 \
+    --host 0.0.0.0 \
     --port 6688 \
     --prefill http://${PIPs[0]}:8000 8995\
     --decode http://${DIPs[0]}:8001 \

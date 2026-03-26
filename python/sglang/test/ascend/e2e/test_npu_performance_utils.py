@@ -75,6 +75,9 @@ QWEN3_235B_A22B_EAGLE_MODEL_PATH = (
 QWEN3_480B_W8A8_MODEL_PATH = (
     "/root/.cache/modelscope/hub/models/Qwen3-Coder-480B-A35B-Instruct-w8a8-QuaRot"
 )
+QWEN3_NEXT_80B_A3B_MODEL_PATH = (
+    "/root/.cache/modelscope/hub/models/Qwen/Qwen3-Next-80B-A3B-Instruct"
+)
 QWEN3_NEXT_80B_A3B_W8A8_MODEL_PATH = (
     "/root/.cache/modelscope/hub/models/vllm-ascend/Qwen3-Next-80B-A3B-Instruct-W8A8"
 )
