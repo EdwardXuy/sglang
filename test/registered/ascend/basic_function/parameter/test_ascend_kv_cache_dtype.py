@@ -15,7 +15,7 @@ register_npu_ci(est_time=400, suite="nightly-1-npu-a3", nightly=True)
 
 
 class TestNPUKVCacheDtype(CustomTestCase):
-    """Testcase：Verify set --kv_cache_dtype is auto、 bf16 or bfloat16, request inference successful.
+    """Testcase：Verify set --kv_cache_dtype is auto, bf16 or bfloat16, request inference successful.
 
     [Test Category] Parameter
     [Test Target] --kv_cache_dtype
