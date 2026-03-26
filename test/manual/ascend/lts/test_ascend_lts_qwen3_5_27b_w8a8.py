@@ -74,7 +74,7 @@ ENVS = {
 }
 
 
-class TestLTSQwen332B(TestAscendLtsTestCaseBase):
+class TestLTSQwen3527BW8A8(TestAscendLtsTestCaseBase):
     model = MODEL_PATH
     other_args = OTHER_ARGS
     envs = ENVS
@@ -107,7 +107,7 @@ class TestLTSQwen332B(TestAscendLtsTestCaseBase):
     def tearDownClass(cls):
         kill_process_tree(cls.process.pid)
 
-    def test_lts_qwen3_30b(self):
+    def test_lts_qwen3_5_27b_w8a8(self):
         i = 0
         while True:
             i = i + 1
