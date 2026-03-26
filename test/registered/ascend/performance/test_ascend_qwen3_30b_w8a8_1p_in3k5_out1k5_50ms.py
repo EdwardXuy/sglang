@@ -1,7 +1,7 @@
 import unittest
 
 from sglang.test.ascend.e2e.test_npu_performance_utils import (
-    QWEN3_30B_A3B_W8A8_MODEL_PATH,
+    QWEN3_30B_A3B_W8A8_VLLM_MODEL_PATH,
     QWEN3_A3B_EAGLE_MODEL_PATH,
     TestAscendPerformanceTestCaseBase,
 )
@@ -76,7 +76,7 @@ QWEN3_30B_A3B_OTHER_ARGS = [
 
 
 class TestQwen30B(TestAscendPerformanceTestCaseBase):
-    model = QWEN3_30B_A3B_W8A8_MODEL_PATH
+    model = QWEN3_30B_A3B_W8A8_VLLM_MODEL_PATH
     other_args = QWEN3_30B_A3B_OTHER_ARGS
     envs = QWEN3_30B_A3B_ENVS
     dataset_name = "random"
@@ -85,9 +85,8 @@ class TestQwen30B(TestAscendPerformanceTestCaseBase):
     input_len = 3500
     output_len = 1500
     random_range_ratio = 1
-    tpot = 45.6
-    # T: 1493@51ms       800I: 1.8*T        Dev-800I: 3166@44.35ms
-    output_token_throughput = 2960
+    tpot = 50
+    output_token_throughput = 3200
 
     def test_qwen3_30b(self):
         self.run_throughput()
