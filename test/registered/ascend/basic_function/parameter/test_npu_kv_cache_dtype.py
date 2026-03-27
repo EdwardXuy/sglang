@@ -39,6 +39,8 @@ class TestNPUKVCacheDtype(CustomTestCase):
             "--disable-cuda-graph",
             "--kv-cache-dtype",
             cls.kv_cache_dtype,
+            "--log-level",
+            "0",
         ]
         # cls.out_log_file_obj = tempfile.NamedTemporaryFile(
         #     mode="w+", encoding="utf-8", delete=False, suffix=".txt"
