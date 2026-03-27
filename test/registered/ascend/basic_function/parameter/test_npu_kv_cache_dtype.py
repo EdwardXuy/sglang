@@ -198,7 +198,9 @@ class TestNPUKVCacheDtype(CustomTestCase):
         error = os.read(self.pipe_err_out, 1024 * 1024).decode("utf-8")
         os.close(self.pipe_out)
         os.close(self.pipe_err_out)
+        print("==========================output==============================")
         print(output)
+        print("===========================error==============================")
         print(error)
         # print(self.out.getvalue())
         # print(self.err.getvalue())
@@ -208,7 +210,7 @@ class TestNPUKVCacheDtype(CustomTestCase):
         # print(response.text)
         # print(self.output_buffer.getvalue())
         # self.assertTrue(len(content) > 0)
-        # self.assertIn(f"Using KV Cache dtype: {self.using_kv_cache_dtype}", content)
+        self.assertIn(f"Using KV Cache dtype: {self.using_kv_cache_dtype}", output)
 
 #
 # class TestNPUKVCacheDtypeBf16(TestNPUKVCacheDtype):
