@@ -50,14 +50,18 @@ class TestNPUKVCacheDtype(CustomTestCase):
             "--enable-metrics",
         ]
 
-        cls.logger = logging.getLogger("python.sglang.srt.model_executor.model_runner")
-        cls.log_capture_string = StringIO()
-        ch = logging.StreamHandler(cls.log_capture_string)
-        ch.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        ch.setFormatter(formatter)
-        cls.logger.addHandler(ch)
-
+        cls.logger = logging.getLogger("sglang.srt.model_executor.model_runner")
+        # cls.log_capture_string = StringIO()
+        # ch = logging.StreamHandler(cls.log_capture_string)
+        # ch.setLevel(logging.DEBUG)
+        # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        # ch.setFormatter(formatter)
+        # cls.logger.addHandler(ch)
+        import io
+        from contextlib import redirect_stdout, redirect_stderr
+        cls.f = io.StringIO()
+        redirect_stdout(cls.f)
+        redirect_stderr(cls.f)
 
 
         # cls.out_log_file_obj = tempfile.NamedTemporaryFile(
@@ -148,8 +152,9 @@ class TestNPUKVCacheDtype(CustomTestCase):
         print("========================================================")
         print(content)
         print("========================================================")
-        log_contents = self.log_capture_string.getvalue().strip()
-        print(log_contents)
+        print(self.f.getvalue())
+        # log_contents = self.log_capture_string.getvalue().strip()
+        # print(log_contents)
         # print(response.text)
         # print(self.output_buffer.getvalue())
         # self.assertTrue(len(content) > 0)
