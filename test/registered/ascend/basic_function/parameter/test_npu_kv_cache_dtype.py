@@ -1,6 +1,8 @@
 import os
+import sys
 import tempfile
 import unittest
+from sys import stdout
 
 import requests
 
@@ -45,6 +47,9 @@ class TestNPUKVCacheDtype(CustomTestCase):
             "--log-requests-level",
             "0",
         ]
+
+
+
         # cls.out_log_file_obj = tempfile.NamedTemporaryFile(
         #     mode="w+", encoding="utf-8", delete=False, suffix=".txt"
         # )
@@ -67,6 +72,15 @@ class TestNPUKVCacheDtype(CustomTestCase):
             return_stdout_stderr=(cls.out_log_file, cls.err_log_file),
         )
 
+        cls.old_stdout = sys.stdout
+        cls.old_stderr = sys.stderr
+
+        cls.stdout_pipe = os.pipe()
+        cls.stderr_pipe = os.pipe()
+
+        sys.stdout = os.fdopen(cls.stdout_pipe[0], "w+", encoding="utf-8")
+        sys.stderr = os.fdopen(cls.stderr_pipe[0], "w+", encoding="utf-8")
+
     @classmethod
     def tearDownClass(cls):
         kill_process_tree(cls.process.pid)
@@ -74,6 +88,22 @@ class TestNPUKVCacheDtype(CustomTestCase):
         os.remove(cls.out_log_name)
         cls.err_log_file.close()
         os.remove(cls.err_log_name)
+
+        sys.stdout.close()
+        sys.stderr.close()
+        sys.stdout = cls.old_stdout
+        sys.stderr = cls.old_stderr
+
+        stdout_result = os.read(cls.stdout_pipe[0], 1024 * 1024).decode()
+        stderr_result = os.read(cls.stderr_pipe[0], 1024 * 1024).decode()
+
+        print("========================================================")
+        print(stdout_result)
+        print("========================================================")
+        print(stderr_result)
+
+        os.close(cls.stdout_pipe[0])
+        os.close(cls.stderr_pipe[0])
 
     def test_dtype_options(self):
         response = requests.post(
