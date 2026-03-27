@@ -43,6 +43,7 @@ class TestNPUKVCacheDtype(CustomTestCase):
             "--disable-cuda-graph",
             "--kv-cache-dtype",
             cls.kv_cache_dtype,
+            "--enable-metrics",
         ]
 
 
@@ -69,8 +70,8 @@ class TestNPUKVCacheDtype(CustomTestCase):
             return_stdout_stderr=(cls.out_log_file, cls.err_log_file),
         )
 
-        cls.output_buffer = StringIO()
-        sys.stdout = cls.output_buffer
+        # cls.output_buffer = StringIO()
+        # sys.stdout = cls.output_buffer
 
 
         # cls.old_stdout = sys.stdout
@@ -123,7 +124,9 @@ class TestNPUKVCacheDtype(CustomTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Paris", response.text)
 
-        sys.stdout = sys.__stdout__
+        response = requests.get(f"{self.base_url}/metrics", timeout=10)
+
+        # sys.stdout = sys.__stdout__
         self.out_log_file.seek(0)
         content = self.out_log_file.read()
         print("========================================================")
@@ -133,7 +136,8 @@ class TestNPUKVCacheDtype(CustomTestCase):
         print("========================================================")
         print(content)
         print("========================================================")
-        print(self.output_buffer.getvalue())
+        print(response.text)
+        # print(self.output_buffer.getvalue())
         # self.assertTrue(len(content) > 0)
         # self.assertIn(f"Using KV Cache dtype: {self.using_kv_cache_dtype}", content)
 
