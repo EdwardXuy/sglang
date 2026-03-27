@@ -34,7 +34,8 @@ class TestNPUKVCacheDtype(CustomTestCase):
 
     # model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
     model = "/home/weights/LLM-Research/Llama-3.2-1B-Instruct"
-    kv_cache_dtype = "auto"
+    # kv_cache_dtype = "auto"
+    kv_cache_dtype = "bf16"
     using_kv_cache_dtype = "torch.bfloat16"
 
     @classmethod
@@ -42,7 +43,8 @@ class TestNPUKVCacheDtype(CustomTestCase):
         cls.base_url = DEFAULT_URL_FOR_TEST
         other_args = [
             "--dtype",
-            "auto",
+            # "auto",
+            "float16",
             "--attention-backend",
             "ascend",
             "--disable-cuda-graph",
@@ -169,6 +171,11 @@ class TestNPUKVCacheDtype(CustomTestCase):
         print(content)
         print("========================================================")
         print(self.capture_stdout.getvalue())
+        response = requests.get(
+            f"{self.base_url}/server_info",
+        )
+        self.assertEqual(response.status_code, 200)
+        print(response.text)
         # print(self.f.getvalue())
         # log_contents = self.log_capture_string.getvalue().strip()
         # print(log_contents)
