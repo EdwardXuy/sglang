@@ -54,8 +54,12 @@ class TestNPUKVCacheDtype(CustomTestCase):
             # "--enable-metrics",
         ]
 
-        # cls.old_stdout = os.dup(1)
-        # cls.old_stderr = os.dup(2)
+        cls.old_stdout = os.dup(1)
+        cls.old_stderr = os.dup(2)
+        cls.pipe_out, cls.pipe_in = os.pipe()
+        cls.pipe_err_out, cls.pipe_err_in = os.pipe()
+        os.dup2(cls.pipe_in, 1)
+        os.dup2(cls.pipe_err_in, 2)
         # cls.capture_stdout = StringIO()
         # sys.stdout = os.fdopen(1, "w")
         # sys.stderr = os.fdopen(2, "w")
@@ -104,12 +108,12 @@ class TestNPUKVCacheDtype(CustomTestCase):
         # sys.stdout = cls.output_buffer
 
 
-        cls.old_stdout = sys.stdout
-        cls.old_stderr = sys.stderr
-        cls.out = StringIO()
-        cls.err = StringIO()
-        sys.stdout = cls.out
-        sys.stderr = cls.err
+        # cls.old_stdout = sys.stdout
+        # cls.old_stderr = sys.stderr
+        # cls.out = StringIO()
+        # cls.err = StringIO()
+        # sys.stdout = cls.out
+        # sys.stderr = cls.err
 
         #
         # cls.stdout_pipe = os.pipe()
@@ -133,11 +137,11 @@ class TestNPUKVCacheDtype(CustomTestCase):
 
         # sys.stdout.close()
         # sys.stderr.close()
-        sys.stdout = cls.old_stdout
-        sys.stderr = cls.old_stderr
-        print()
-        print(cls.out.getvalue())
-        print(cls.err.getvalue())
+        # sys.stdout = cls.old_stdout
+        # sys.stderr = cls.old_stderr
+        # print()
+        # print(cls.out.getvalue())
+        # print(cls.err.getvalue())
         #
         # stdout_result = os.read(cls.stdout_pipe[0], 1024 * 1024).decode()
         # stderr_result = os.read(cls.stderr_pipe[0], 1024 * 1024).decode()
@@ -186,8 +190,19 @@ class TestNPUKVCacheDtype(CustomTestCase):
         self.assertEqual(response.status_code, 200)
         print(response.text)
         print("========================================================")
-        print(self.out.getvalue())
-        print(self.err.getvalue())
+        os.dup2(self.old_stdout, 1)
+        os.dup2(self.old_stderr, 2)
+        os.close(cls.pipe_in)
+        os.close(cls.pipe_err_in)
+
+        output = os.read(self.pipe_out, 1024 * 1024).decode("utf-8")
+        error = os.read(self.pipe_err_out, 1024 * 1024).decode("utf-8")
+        os.close(self.pipe_out)
+        os.close(self.pipe_err_out)
+        print(output)
+        print(error)
+        # print(self.out.getvalue())
+        # print(self.err.getvalue())
         # print(self.f.getvalue())
         # log_contents = self.log_capture_string.getvalue().strip()
         # print(log_contents)
