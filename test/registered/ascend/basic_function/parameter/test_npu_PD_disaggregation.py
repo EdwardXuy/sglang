@@ -1,9 +1,11 @@
+import logging
 import os
 import random
 import tempfile
 import time
 import unittest
 from typing import Dict
+import shlex
 
 import requests
 
@@ -37,15 +39,17 @@ class DisaggregationHiCacheBase(PDDisaggregationServerBase):
 
         cls.tokenizer = get_tokenizer(cls.model)
         cls.temp_dir = tempfile.mkdtemp()
+        logging.warning(f"cls.temp_dir = {cls.temp_dir}")
+        cls.bootstrap_port = "8996"
         cls.start_prefill()
         cls.start_decode()
-        cls.bootstrap_port = "8996"
 
         # Block until both
         cls.wait_server_ready(cls.prefill_url + "/health")
         cls.wait_server_ready(cls.decode_url + "/health")
 
         cls.launch_router()
+        cls.wait_server_ready(cls.lb_url + "/health")
 
     @classmethod
     def start_prefill(cls):
@@ -58,7 +62,7 @@ class DisaggregationHiCacheBase(PDDisaggregationServerBase):
             "prefill",
             "--disaggregation-transfer-backend",
             "ascend",
-            "disaggregation-bootstrap-port",
+            "--disaggregation-bootstrap-port",
             cls.bootstrap_port,
             "--tp-size",
             "2",
@@ -67,10 +71,6 @@ class DisaggregationHiCacheBase(PDDisaggregationServerBase):
             "kernel_ascend",
             "--hicache-mem-layout",
             "page_first_direct",
-            "--hicache-ratio",
-            "1.2",
-            "--hicache-write-policy",
-            "write_through",
             "--hicache-storage-backend",
             "file",
             "--hicache-storage-prefetch-policy",
@@ -103,7 +103,6 @@ class DisaggregationHiCacheBase(PDDisaggregationServerBase):
             "-m",
             "sglang_router.launch_router",
             "--pd-disaggregation",
-            "--mini-lb",
             "--prefill",
             cls.prefill_url,
             cls.bootstrap_port,
@@ -114,7 +113,7 @@ class DisaggregationHiCacheBase(PDDisaggregationServerBase):
             "--port",
             cls.lb_port,
         ]
-
+        logging.warning("Starting load balancer:", shlex.join(lb_command))
         cls.process_lb = popen_with_error_check(lb_command)
         cls.wait_server_ready(cls.lb_url + "/health")
 
@@ -159,6 +158,8 @@ class DisaggregationHiCacheBase(PDDisaggregationServerBase):
 
 class TestDisaggregationDecodeWithHiCache(DisaggregationHiCacheBase):
     """Decode startup parameters, enable offload-kvcache"""
+    ascend_devices = os.environ.get("ASCEND_RT_VISIBLE_DEVICES", "0,1,2,3")
+    base_gpu_id = ascend_devices.split(",")[2] if len(ascend_devices.split(",")) >= 3 else "2"
 
     @classmethod
     def start_decode(cls):
@@ -171,24 +172,25 @@ class TestDisaggregationDecodeWithHiCache(DisaggregationHiCacheBase):
             "--disaggregation-transfer-backend",
             "ascend",
             "--tp-size",
-            "2",
-            "--page-size",
-            "128",
+            2,
             "--mem-fraction-static",
             "0.9",
             "--base-gpu-id",
-            "2",
+            2,
+            # cls.base_gpu_id,
             "--disaggregation-decode-enable-offload-kvcache",
             "--hicache-io-backend",
             "kernel_ascend",
             "--hicache-mem-layout",
             "page_first_direct",
-            "--hicache-ratio",
-            "1.2",
             "--hicache-storage-backend",
             "file",
             "--hicache-storage-prefetch-policy",
             "wait_complete",
+            "--num-reserved-decode-tokens",
+            128,
+            "--disaggregation-decode-polling-interval",
+            2,
         ]
 
         env = {
@@ -205,10 +207,9 @@ class TestDisaggregationDecodeWithHiCache(DisaggregationHiCacheBase):
         )
 
     def test_multi_turn_conversation_cache(self):
-        """Test multi-turn conversation scenario with cache hit improvement"""
-
-        # Turn 1
-        initial_prompt = self.gen_prompt(300)
+        logging.warning("====================Testing request=======================")
+        initial_prompt = self.gen_prompt(800)
+        logging.warning(f"initial_prompt = {initial_prompt}")
         response1 = self.send_request(initial_prompt, max_tokens=200, temperature=0.1)
         current_context = initial_prompt + response1["text"]
 
