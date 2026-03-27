@@ -165,7 +165,7 @@ class TestNPUKVCacheDtype(CustomTestCase):
         print("========================================================")
         print(content)
         print("========================================================")
-        print(cls.capture_stdout.getvalue())
+        print(self.capture_stdout.getvalue())
         # print(self.f.getvalue())
         # log_contents = self.log_capture_string.getvalue().strip()
         # print(log_contents)
