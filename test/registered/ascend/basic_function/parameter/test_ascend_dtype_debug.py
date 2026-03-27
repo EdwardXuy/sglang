@@ -34,6 +34,8 @@ class TestDtype(CustomTestCase):
                 "--disable-cuda-graph",
                 "--log-level",
                 "debug",
+                "--base-gpu-id",
+                "8",
             ]
             # out_log_name = "./log_requests_level_out_log.txt"
             # cls.err_log_name = "./log_requests_level_err_log.txt"
