@@ -34,8 +34,8 @@ class TestNPUKVCacheDtype(CustomTestCase):
 
     model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
     # model = "/home/weights/LLM-Research/Llama-3.2-1B-Instruct"
-    # kv_cache_dtype = "auto"
-    kv_cache_dtype = "bf16"
+    kv_cache_dtype = "auto"
+    # kv_cache_dtype = "bf16"
     using_kv_cache_dtype = "torch.bfloat16"
 
     @classmethod
@@ -171,6 +171,12 @@ class TestNPUKVCacheDtype(CustomTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Paris", response.text)
 
+        response = requests.get(
+            f"{self.base_url}/server_info",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(f'"kv_cache_dtype":"{self.kv_cache_dtype}"', response.text)
+
         # response = requests.get(f"{self.base_url}/metrics", timeout=10)
 
         # sys.stdout = sys.__stdout__
@@ -182,13 +188,6 @@ class TestNPUKVCacheDtype(CustomTestCase):
         content = self.out_log_file.read()
         print("========================================================")
         print(content)
-        print("========================================================")
-        # print(self.capture_stdout.getvalue())
-        response = requests.get(
-            f"{self.base_url}/server_info",
-        )
-        self.assertEqual(response.status_code, 200)
-        print(response.text)
         print("========================================================")
         os.dup2(self.old_stdout, 1)
         os.dup2(self.old_stderr, 2)
