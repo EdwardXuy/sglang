@@ -50,6 +50,15 @@ class TestNPUKVCacheDtype(CustomTestCase):
             # "--enable-metrics",
         ]
 
+        cls.old_stdout = os.dup(1)
+        cls.old_stderr = os.dup(2)
+        cls.capture_stdout = StringIO()
+        sys.stdout = os.fdopen(1, "w")
+        sys.stderr = os.fdopen(2, "w")
+
+        os.dup2(sys.stdout.fileno(), 1)
+        os.dup2(sys.stderr.fileno(), 2)
+
         # cls.logger = logging.getLogger("sglang.srt.model_executor.model_runner")
         # cls.log_capture_string = StringIO()
         # ch = logging.StreamHandler(cls.log_capture_string)
@@ -57,11 +66,11 @@ class TestNPUKVCacheDtype(CustomTestCase):
         # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         # ch.setFormatter(formatter)
         # cls.logger.addHandler(ch)
-        import io
-        from contextlib import redirect_stdout, redirect_stderr
-        cls.f = io.StringIO()
-        redirect_stdout(cls.f)
-        redirect_stderr(cls.f)
+        # import io
+        # from contextlib import redirect_stdout, redirect_stderr
+        # cls.f = io.StringIO()
+        # redirect_stdout(cls.f)
+        # redirect_stderr(cls.f)
 
         # old_stdout = cls.f.getvalue().strip()
 
@@ -108,6 +117,9 @@ class TestNPUKVCacheDtype(CustomTestCase):
         cls.err_log_file.close()
         # os.remove(cls.err_log_name)
 
+        os.dup2(cls.old_stdout, 1)
+        os.dup2(cls.old_stderr, 2)
+
         # sys.stdout.close()
         # sys.stderr.close()
         # sys.stdout = cls.old_stdout
@@ -153,7 +165,8 @@ class TestNPUKVCacheDtype(CustomTestCase):
         print("========================================================")
         print(content)
         print("========================================================")
-        print(self.f.getvalue())
+        print(cls.capture_stdout.getvalue())
+        # print(self.f.getvalue())
         # log_contents = self.log_capture_string.getvalue().strip()
         # print(log_contents)
         # print(response.text)
