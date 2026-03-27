@@ -41,6 +41,9 @@ class TestNPUKVCacheDtype(CustomTestCase):
             cls.kv_cache_dtype,
             "--log-level",
             "debug",
+            "--log-requests",
+            "--log-requests-level",
+            "0",
         ]
         # cls.out_log_file_obj = tempfile.NamedTemporaryFile(
         #     mode="w+", encoding="utf-8", delete=False, suffix=".txt"
