@@ -1,17 +1,10 @@
 import os
-import sys
-import tempfile
 import unittest
-from io import StringIO
-from sys import stdout
 import logging
-
 
 import requests
 
-# from scripts.playground.lora.analyzer import filename
 from sglang.srt.utils import kill_process_tree
-from sglang.srt.utils.hf_transformers_utils import cls
 from sglang.test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
@@ -24,7 +17,6 @@ from sglang.test.test_utils import (
 register_npu_ci(est_time=150, suite="nightly-1-npu-a3", nightly=True)
 
 
-
 class TestNPUKVCacheDtype(CustomTestCase):
     """Testcase：Verify set --kv_cache_dtype is auto, bf16 or bfloat16, request inference successful.
 
@@ -33,9 +25,7 @@ class TestNPUKVCacheDtype(CustomTestCase):
     """
 
     model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
-    # model = "/home/weights/LLM-Research/Llama-3.2-1B-Instruct"
     kv_cache_dtype = "auto"
-    # kv_cache_dtype = "bf16"
     using_kv_cache_dtype = "torch.bfloat16"
 
     @classmethod
@@ -49,9 +39,6 @@ class TestNPUKVCacheDtype(CustomTestCase):
             "--disable-cuda-graph",
             "--kv-cache-dtype",
             cls.kv_cache_dtype,
-            "--base-gpu-id",
-            "15",
-            # "--enable-metrics",
         ]
 
         cls.old_stdout = os.dup(1)
@@ -60,102 +47,17 @@ class TestNPUKVCacheDtype(CustomTestCase):
         cls.pipe_err_out, cls.pipe_err_in = os.pipe()
         os.dup2(cls.pipe_in, 1)
         os.dup2(cls.pipe_err_in, 2)
-        # cls.capture_stdout = StringIO()
-        # sys.stdout = os.fdopen(1, "w")
-        # sys.stderr = os.fdopen(2, "w")
-        #
-        # os.dup2(sys.stdout.fileno(), 1)
-        # os.dup2(sys.stderr.fileno(), 2)
 
-        # cls.logger = logging.getLogger("sglang.srt.model_executor.model_runner")
-        # cls.log_capture_string = StringIO()
-        # ch = logging.StreamHandler(cls.log_capture_string)
-        # ch.setLevel(logging.DEBUG)
-        # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        # ch.setFormatter(formatter)
-        # cls.logger.addHandler(ch)
-        # import io
-        # from contextlib import redirect_stdout, redirect_stderr
-        # cls.f = io.StringIO()
-        # redirect_stdout(cls.f)
-        # redirect_stderr(cls.f)
-
-        # old_stdout = cls.f.getvalue().strip()
-
-        # cls.out_log_file_obj = tempfile.NamedTemporaryFile(
-        #     mode="w+", encoding="utf-8", delete=False, suffix=".txt"
-        # )
-        # cls.out_log_name = cls.out_log_file_obj.name
-        # cls.out_log_file = cls.out_log_file_obj
-        # cls.err_log_file_obj = tempfile.NamedTemporaryFile(
-        #     mode="w+", encoding="utf-8", delete=False, suffix=".txt"
-        # )
-        # cls.err_log_name = cls.err_log_file_obj.name
-        # cls.err_log_file = cls.err_log_file_obj
-        # cls.out_log_name = "./log_requests_level_out_log.txt"
-        # cls.err_log_name = "./log_requests_level_err_log.txt"
-        # cls.out_log_file = open(cls.out_log_name, "a+", encoding="utf-8")
-        # cls.err_log_file = open(cls.err_log_name, "a+", encoding="utf-8")
         cls.process = popen_launch_server(
             cls.model,
             cls.base_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=other_args,
-            # return_stdout_stderr=(cls.out_log_file, cls.err_log_file),
         )
-
-        # cls.output_buffer = StringIO()
-        # sys.stdout = cls.output_buffer
-
-
-        # cls.old_stdout = sys.stdout
-        # cls.old_stderr = sys.stderr
-        # cls.out = StringIO()
-        # cls.err = StringIO()
-        # sys.stdout = cls.out
-        # sys.stderr = cls.err
-
-        #
-        # cls.stdout_pipe = os.pipe()
-        # cls.stderr_pipe = os.pipe()
-        #
-        # sys.stdout = os.fdopen(cls.stdout_pipe[0], "w+", encoding="utf-8")
-        # sys.stderr = os.fdopen(cls.stderr_pipe[0], "w+", encoding="utf-8")
 
     @classmethod
     def tearDownClass(cls):
         kill_process_tree(cls.process.pid)
-        # cls.out_log_file.close()
-        # os.remove(cls.out_log_name)
-        # cls.err_log_file.close()
-        # os.remove(cls.err_log_name)
-
-
-
-        # os.dup2(cls.old_stdout, 1)
-        # os.dup2(cls.old_stderr, 2)
-
-        # sys.stdout.close()
-        # sys.stderr.close()
-        # sys.stdout = cls.old_stdout
-        # sys.stderr = cls.old_stderr
-        # print()
-        # print(cls.out.getvalue())
-        # print(cls.err.getvalue())
-        #
-        # stdout_result = os.read(cls.stdout_pipe[0], 1024 * 1024).decode()
-        # stderr_result = os.read(cls.stderr_pipe[0], 1024 * 1024).decode()
-        #
-        #
-        #
-        # os.close(cls.stdout_pipe[0])
-        # os.close(cls.stderr_pipe[0])
-        #
-        # print("========================================================")
-        # print(stdout_result)
-        # print("========================================================")
-        # print(stderr_result)
-
 
     def test_dtype_options(self):
         response = requests.post(
@@ -177,18 +79,6 @@ class TestNPUKVCacheDtype(CustomTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(f'"kv_cache_dtype":"{self.kv_cache_dtype}"', response.text)
 
-        # response = requests.get(f"{self.base_url}/metrics", timeout=10)
-
-        # # sys.stdout = sys.__stdout__
-        # self.out_log_file.seek(0)
-        # content = self.out_log_file.read()
-        # print("========================================================")
-        # print(content)
-        # self.err_log_file.seek(0)
-        # content = self.out_log_file.read()
-        # print("========================================================")
-        # print(content)
-        # print("========================================================")
         os.dup2(self.old_stdout, 1)
         os.dup2(self.old_stderr, 2)
         os.close(self.pipe_in)
@@ -198,28 +88,18 @@ class TestNPUKVCacheDtype(CustomTestCase):
         error = os.read(self.pipe_err_out, 1024 * 1024).decode("utf-8")
         os.close(self.pipe_out)
         os.close(self.pipe_err_out)
-        print("==========================output==============================")
-        print(output)
-        print("===========================error==============================")
-        print(error)
-        # print(self.out.getvalue())
-        # print(self.err.getvalue())
-        # print(self.f.getvalue())
-        # log_contents = self.log_capture_string.getvalue().strip()
-        # print(log_contents)
-        # print(response.text)
-        # print(self.output_buffer.getvalue())
-        # self.assertTrue(len(content) > 0)
-        # self.assertIn(f"Using KV Cache dtype: {self.using_kv_cache_dtype}", output)
+        logger = logging.getLogger()
+        logger.info(output)
+        logger.info(error)
         self.assertIn(f"Using KV cache dtype: {self.using_kv_cache_dtype}", error)
 
-#
-# class TestNPUKVCacheDtypeBf16(TestNPUKVCacheDtype):
-#     kv_cache_dtype = "bf16"
-#
-#
-# class TestNPUKVCacheDtypeBfloat16(TestNPUKVCacheDtype):
-#     kv_cache_dtype = "bfloat16"
+
+class TestNPUKVCacheDtypeBf16(TestNPUKVCacheDtype):
+    kv_cache_dtype = "bf16"
+
+
+class TestNPUKVCacheDtypeBfloat16(TestNPUKVCacheDtype):
+    kv_cache_dtype = "bfloat16"
 
 
 if __name__ == "__main__":
