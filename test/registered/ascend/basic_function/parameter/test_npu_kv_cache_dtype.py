@@ -32,7 +32,8 @@ class TestNPUKVCacheDtype(CustomTestCase):
     [Test Target] --kv_cache_dtype
     """
 
-    model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
+    # model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
+    model = "/home/weights/LLM-Research/Llama-3.2-1B-Instruct"
     kv_cache_dtype = "auto"
     using_kv_cache_dtype = "torch.bfloat16"
 
@@ -47,6 +48,8 @@ class TestNPUKVCacheDtype(CustomTestCase):
             "--disable-cuda-graph",
             "--kv-cache-dtype",
             cls.kv_cache_dtype,
+            "--base-gpu-id",
+            "15",
             # "--enable-metrics",
         ]
 
