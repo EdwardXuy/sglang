@@ -4,6 +4,7 @@ import unittest
 import requests
 
 from sglang.srt.utils import kill_process_tree
+from sglang.test.ascend.test_ascend_utils import QWEN3_0_6B_WEIGHTS_PATH
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -11,7 +12,6 @@ from sglang.test.test_utils import (
     CustomTestCase,
     popen_launch_server,
 )
-from sglang.test.ascend.test_ascend_utils import QWEN3_0_6B_WEIGHTS_PATH
 
 register_npu_ci(est_time=400, suite="nightly-4-npu-a3", nightly=True)
 
@@ -63,10 +63,7 @@ class TestNpuPrefillDelayerBuckets(CustomTestCase):
 
     def _get_metrics_lines(self):
         try:
-            response = requests.get(
-                f"{DEFAULT_URL_FOR_TEST}/metrics",
-                timeout=10
-            )
+            response = requests.get(f"{DEFAULT_URL_FOR_TEST}/metrics", timeout=10)
             response.raise_for_status()
             lines = []
             for line in response.text.splitlines():
@@ -84,14 +81,16 @@ class TestNpuPrefillDelayerBuckets(CustomTestCase):
 
         # Filter all lines containing the target metric's bucket configuration
         target_lines = [
-            line for line in metrics_lines
+            line
+            for line in metrics_lines
             if target_metric_feature in line and 'le="' in line
         ]
 
         self.assertNotEqual(
-            len(target_lines), 0,
+            len(target_lines),
+            0,
             f"No lines found for metric {metric_name} in /metrics response. "
-            f"Checked feature: {target_metric_feature}"
+            f"Checked feature: {target_metric_feature}",
         )
 
         # Extract all values of the le label
@@ -115,25 +114,22 @@ class TestNpuPrefillDelayerBuckets(CustomTestCase):
                 bucket,
                 unique_le_numeric,
                 f"Expected numeric bucket {bucket} not found in {metric_name}. "
-                f"Expected: {expected_numeric_sorted}, Actual: {unique_le_numeric}"
+                f"Expected: {expected_numeric_sorted}, Actual: {unique_le_numeric}",
             )
 
         self.assertTrue(
-            le_has_inf,
-            f"+Inf bucket is missing in metric {metric_name} (required)"
+            le_has_inf, f"+Inf bucket is missing in metric {metric_name} (required)"
         )
 
     def test_buckets_params(self):
         # Verify forward passes buckets take effect
         self._check_bucket_in_metric_line(
-            "sglang:prefill_delayer_wait_forward_passes",
-            self.forward_passes_buckets
+            "sglang:prefill_delayer_wait_forward_passes", self.forward_passes_buckets
         )
 
         # Verify wait seconds buckets take effect
         self._check_bucket_in_metric_line(
-            "sglang:prefill_delayer_wait_seconds",
-            self.wait_seconds_buckets
+            "sglang:prefill_delayer_wait_seconds", self.wait_seconds_buckets
         )
 
 
