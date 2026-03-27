@@ -4,9 +4,12 @@ import tempfile
 import unittest
 from io import StringIO
 from sys import stdout
+import logging
+
 
 import requests
 
+from scripts.playground.lora.analyzer import filename
 from sglang.srt.utils import kill_process_tree
 from sglang.srt.utils.hf_transformers_utils import cls
 from sglang.test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
@@ -20,6 +23,13 @@ from sglang.test.test_utils import (
 
 register_npu_ci(est_time=150, suite="nightly-1-npu-a3", nightly=True)
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()],
+    filename='kv_cache_dtype.log',
+)
+logger = logging.getLogger(__name__)
 
 class TestNPUKVCacheDtype(CustomTestCase):
     """Testcase：Verify set --kv_cache_dtype is auto, bf16 or bfloat16, request inference successful.
@@ -124,7 +134,7 @@ class TestNPUKVCacheDtype(CustomTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Paris", response.text)
 
-        response = requests.get(f"{self.base_url}/metrics", timeout=10)
+        # response = requests.get(f"{self.base_url}/metrics", timeout=10)
 
         # sys.stdout = sys.__stdout__
         self.out_log_file.seek(0)
@@ -136,7 +146,7 @@ class TestNPUKVCacheDtype(CustomTestCase):
         print("========================================================")
         print(content)
         print("========================================================")
-        print(response.text)
+        # print(response.text)
         # print(self.output_buffer.getvalue())
         # self.assertTrue(len(content) > 0)
         # self.assertIn(f"Using KV Cache dtype: {self.using_kv_cache_dtype}", content)
