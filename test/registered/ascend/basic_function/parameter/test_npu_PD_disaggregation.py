@@ -5,7 +5,6 @@ import tempfile
 import time
 import unittest
 from typing import Dict
-import shlex
 
 import requests
 
