@@ -188,7 +188,7 @@ class TestNPUKVCacheDtype(CustomTestCase):
         # content = self.out_log_file.read()
         # print("========================================================")
         # print(content)
-        print("========================================================")
+        # print("========================================================")
         os.dup2(self.old_stdout, 1)
         os.dup2(self.old_stderr, 2)
         os.close(self.pipe_in)
