@@ -54,14 +54,14 @@ class TestNPUKVCacheDtype(CustomTestCase):
             # "--enable-metrics",
         ]
 
-        cls.old_stdout = os.dup(1)
-        cls.old_stderr = os.dup(2)
-        cls.capture_stdout = StringIO()
-        sys.stdout = os.fdopen(1, "w")
-        sys.stderr = os.fdopen(2, "w")
-
-        os.dup2(sys.stdout.fileno(), 1)
-        os.dup2(sys.stderr.fileno(), 2)
+        # cls.old_stdout = os.dup(1)
+        # cls.old_stderr = os.dup(2)
+        # cls.capture_stdout = StringIO()
+        # sys.stdout = os.fdopen(1, "w")
+        # sys.stderr = os.fdopen(2, "w")
+        #
+        # os.dup2(sys.stdout.fileno(), 1)
+        # os.dup2(sys.stderr.fileno(), 2)
 
         # cls.logger = logging.getLogger("sglang.srt.model_executor.model_runner")
         # cls.log_capture_string = StringIO()
@@ -104,8 +104,13 @@ class TestNPUKVCacheDtype(CustomTestCase):
         # sys.stdout = cls.output_buffer
 
 
-        # cls.old_stdout = sys.stdout
-        # cls.old_stderr = sys.stderr
+        cls.old_stdout = sys.stdout
+        cls.old_stderr = sys.stderr
+        cls.out = StringIO()
+        cls.err = StringIO()
+        sys.stdout = cls.out
+        sys.stderr = cls.err
+
         #
         # cls.stdout_pipe = os.pipe()
         # cls.stderr_pipe = os.pipe()
@@ -121,13 +126,15 @@ class TestNPUKVCacheDtype(CustomTestCase):
         cls.err_log_file.close()
         # os.remove(cls.err_log_name)
 
-        os.dup2(cls.old_stdout, 1)
-        os.dup2(cls.old_stderr, 2)
+
+
+        # os.dup2(cls.old_stdout, 1)
+        # os.dup2(cls.old_stderr, 2)
 
         # sys.stdout.close()
         # sys.stderr.close()
-        # sys.stdout = cls.old_stdout
-        # sys.stderr = cls.old_stderr
+        sys.stdout = cls.old_stdout
+        sys.stderr = cls.old_stderr
         #
         # stdout_result = os.read(cls.stdout_pipe[0], 1024 * 1024).decode()
         # stderr_result = os.read(cls.stderr_pipe[0], 1024 * 1024).decode()
@@ -169,12 +176,15 @@ class TestNPUKVCacheDtype(CustomTestCase):
         print("========================================================")
         print(content)
         print("========================================================")
-        print(self.capture_stdout.getvalue())
+        # print(self.capture_stdout.getvalue())
         response = requests.get(
             f"{self.base_url}/server_info",
         )
         self.assertEqual(response.status_code, 200)
         print(response.text)
+        print("========================================================")
+        print(self.out.getvalue())
+        print(self.err.getvalue())
         # print(self.f.getvalue())
         # log_contents = self.log_capture_string.getvalue().strip()
         # print(log_contents)
