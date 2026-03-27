@@ -40,16 +40,20 @@ class TestNPUKVCacheDtype(CustomTestCase):
             "--kv-cache-dtype",
             cls.kv_cache_dtype,
         ]
-        cls.out_log_file_obj = tempfile.NamedTemporaryFile(
-            mode="w+", encoding="utf-8", delete=False, suffix=".txt"
-        )
-        cls.out_log_name = cls.out_log_file_obj.name
-        cls.out_log_file = cls.out_log_file_obj
-        cls.err_log_file_obj = tempfile.NamedTemporaryFile(
-            mode="w+", encoding="utf-8", delete=False, suffix=".txt"
-        )
-        cls.err_log_name = cls.err_log_file_obj.name
-        cls.err_log_file = cls.err_log_file_obj
+        # cls.out_log_file_obj = tempfile.NamedTemporaryFile(
+        #     mode="w+", encoding="utf-8", delete=False, suffix=".txt"
+        # )
+        # cls.out_log_name = cls.out_log_file_obj.name
+        # cls.out_log_file = cls.out_log_file_obj
+        # cls.err_log_file_obj = tempfile.NamedTemporaryFile(
+        #     mode="w+", encoding="utf-8", delete=False, suffix=".txt"
+        # )
+        # cls.err_log_name = cls.err_log_file_obj.name
+        # cls.err_log_file = cls.err_log_file_obj
+        cls.out_log_name = "./log_requests_level_out_log.txt"
+        cls.err_log_name = "./log_requests_level_err_log.txt"
+        cls.out_log_file = open(cls.out_log_name, "w+", encoding="utf-8")
+        cls.err_log_file = open(cls.err_log_name, "w+", encoding="utf-8")
         cls.process = popen_launch_server(
             cls.model,
             cls.base_url,
