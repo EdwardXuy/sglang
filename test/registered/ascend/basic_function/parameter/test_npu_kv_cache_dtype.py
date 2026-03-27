@@ -112,7 +112,7 @@ class TestNPUKVCacheDtype(CustomTestCase):
         # print(stdout_result)
         # print("========================================================")
         # print(stderr_result)
-        sys.stdout = sys.__stdout__
+
 
     def test_dtype_options(self):
         response = requests.post(
@@ -128,6 +128,7 @@ class TestNPUKVCacheDtype(CustomTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Paris", response.text)
 
+        sys.stdout = sys.__stdout__
         self.out_log_file.seek(0)
         content = self.out_log_file.read()
         print("========================================================")
