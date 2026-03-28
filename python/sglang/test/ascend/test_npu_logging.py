@@ -14,7 +14,10 @@ from sglang.test.test_utils import (
 
 
 class TestNPULoggingBase(CustomTestCase):
-    """Testcase：Verify the correct functionality of parameters in the logging feature.
+    """Testcase：Test base class to verify whether the parameters in the logging function are correct.
+
+    Description:
+        Includes methods for initializing data and methods for verifying the correctness of the logging function.
 
     [Test Category] Parameter
     [Test Target] --log-requests; --log-requests-level; --log-requests-target; --uvicorn-access-log-exclude-prefixes;
