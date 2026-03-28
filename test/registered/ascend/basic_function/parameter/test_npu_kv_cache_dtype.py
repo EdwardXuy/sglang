@@ -197,16 +197,16 @@ class TestNPUKVCacheDtype(CustomTestCase):
         # print("=========================================================================")
         # print(output)
         # print("=========================================================================")
-        # self.assertIn(f"Using KV cache dtype: {self.using_kv_cache_dtype}", self.tee_stdout.getvalue() + self.tee_stderr.getvalue())
+        self.assertIn(f"Using KV cache dtype: {self.using_kv_cache_dtype}", output)
 
 
-#
-# class TestNPUKVCacheDtypeBf16(TestNPUKVCacheDtype):
-#     kv_cache_dtype = "bf16"
-#
-#
-# class TestNPUKVCacheDtypeBfloat16(TestNPUKVCacheDtype):
-#     kv_cache_dtype = "bfloat16"
+
+class TestNPUKVCacheDtypeBf16(TestNPUKVCacheDtype):
+    kv_cache_dtype = "bf16"
+
+
+class TestNPUKVCacheDtypeBfloat16(TestNPUKVCacheDtype):
+    kv_cache_dtype = "bfloat16"
 
 
 
