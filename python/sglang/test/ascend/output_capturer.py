@@ -106,5 +106,5 @@ class OutputCapturer:
         for fd in [self.pipe_out, self.pipe_err_out, self.old_stdout, self.old_stderr]:
             try:
                 os.close(fd)
-            except:
+            except (OSError, IOError):
                 pass
