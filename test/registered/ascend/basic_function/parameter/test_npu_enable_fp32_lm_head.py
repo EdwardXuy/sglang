@@ -6,7 +6,7 @@ from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import CustomTestCase
 
 register_npu_ci(
-    est_time=750,
+    est_time=300,
     suite="nightly-4-npu-a3",
     nightly=True,
 )
