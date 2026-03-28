@@ -616,6 +616,7 @@ class Engine(EngineBase):
         configure_logger(server_args)
         _set_envs_and_config(server_args)
         server_args.check_server_args()
+        _set_gc(server_args)
 
         # Allocate ports for inter-process communications
         if port_args is None:
@@ -1142,9 +1143,9 @@ def _set_envs_and_config(server_args: ServerArgs):
             )
         if _is_cuda:
             assert_pkg_version(
-                "sgl-kernel",
-                "0.3.21",
-                "Please reinstall the latest version with `pip install sgl-kernel --force-reinstall`",
+                "sglang-kernel",
+                "0.4.0",
+                "Please reinstall the latest version with `pip install sglang-kernel --force-reinstall`",
             )
 
     # Signal handlers can only be registered from the main thread.
@@ -1177,6 +1178,13 @@ def _set_envs_and_config(server_args: ServerArgs):
 
     # Set mp start method
     mp.set_start_method("spawn", force=True)
+
+
+def _set_gc(server_args: ServerArgs):
+    if gc_threshold := server_args.gc_threshold:
+        import gc
+
+        gc.set_threshold(*gc_threshold)
 
 
 def _wait_for_scheduler_ready(
