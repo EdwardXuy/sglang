@@ -193,7 +193,7 @@ class TestDisaggregationPrefillPPDynamicChunkAccuracy(TestDisaggregationBase):
         time.sleep(5)
 
 
-# @unittest.skipIf(True, "skip")
+# @unittest.skipIf(True, "tp1pp4: ok;   tp1pp2+tp2pp2: KVTransferError,  Scheduler watchdog timeout; tp2pp4: Server failed to start in 600s")
 class TestDisaggregationDecodePPAccuracy(TestDisaggregationBase):
     """Test Case: Verify the accuracy of base model when both prefill and decode enable PP parallelism in PD disaggregation scenario
 

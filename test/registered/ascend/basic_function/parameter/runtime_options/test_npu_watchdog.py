@@ -15,13 +15,14 @@ register_npu_ci(est_time=400, suite="nightly-1-npu-a3", nightly=True)
 
 
 class TestWatchdogTimeout(CustomTestCase):
-    """Testcase:
+    """Testcase: Verify that the service exits immediately after the request scheduling triggers the watchdog timeout.
 
     [Test Category] Parameter
     [Test Target] --watchdog-timeout
     """
 
     def test_watchdog_timeout(self):
+        # Set an extremely small watchdog timeout to ensure the service times out immediately
         watchdog_timeout = 1e-05
         expected_timeout_message = f"Scheduler watchdog timeout (self.watchdog_timeout={watchdog_timeout}, self.soft=False)"
         out_log_file = open("./out_log.txt", "w+", encoding="utf-8")
@@ -47,7 +48,7 @@ class TestWatchdogTimeout(CustomTestCase):
                 content,
             )
         except Exception as e:
-            print(f"Server launch failed as expects:{e}")
+            print(f"Watchdog timeout triggered, service exited: {e}")
         finally:
             kill_process_tree(process.pid)
             out_log_file.close()

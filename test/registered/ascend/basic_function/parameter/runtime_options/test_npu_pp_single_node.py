@@ -17,9 +17,10 @@ from sglang.test.test_utils import (
     popen_launch_server,
     run_bench_one_batch_server,
 )
-from sglang.test.ascend.test_ascend_utils import LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH, DEEPSEEK_CODER_V2_LITE_WEIGHTS_PATH, \
+from sglang.test.ascend.test_ascend_utils import LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH, \
+    DEEPSEEK_CODER_V2_LITE_WEIGHTS_PATH, \
     GLM_4_5V_WEIGHTS_PATH, QWEN3_0_6B_WEIGHTS_PATH, QWEN3_30B_A3B_INSTRUCT_2507_WEIGHTS_PATH, QWEN3_32B_WEIGHTS_PATH, \
-    QWEN3_8B_WEIGHTS_PATH, QWEN3_VL_4B_INSTRUCT_WEIGHTS_PATH
+    QWEN3_8B_WEIGHTS_PATH, QWEN3_VL_4B_INSTRUCT_WEIGHTS_PATH, QWEN3_30B_A3B_WEIGHTS_PATH
 
 register_npu_ci(est_time=400, suite="nightly-8-npu-a3", nightly=True)
 
@@ -146,7 +147,7 @@ class TestDPAttentionDP2PP2(CustomTestCase):
         print(f"{metrics=}")
         self.assertGreater(metrics["score"], 0.8)
 
-@unittest.skipIf(True, "triton.compiler.errors.CompilationError")
+@unittest.skipIf(True, "tp1pp4: triton.compiler.errors.CompilationError")
 class TestQwenVLPPAccuracy(unittest.TestCase):
     """Test Case: Verify the accuracy of Qwen-VL multimodal model under PP parallelism
 
@@ -331,7 +332,7 @@ class TestQwenPPTieWeightsAccuracy(unittest.TestCase):
             ),
         )
 
-@unittest.skipIf(True, "Scheduler watchdog timeout")
+@unittest.skipIf(True, "tp1pp1: Not enough memory; tp2pp2: Scheduler watchdog timeout")
 class TestQwenMoePPAccuracy(unittest.TestCase):
     """Test Case: Verify the accuracy consistency of Qwen3-30B-A3B MOE model between PP=1 and PP=2
 
@@ -341,7 +342,7 @@ class TestQwenMoePPAccuracy(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.base_url = "http://127.0.0.1:23336"  # different ports to avoid conflicts
-        cls.model_name = QWEN3_30B_A3B_INSTRUCT_2507_WEIGHTS_PATH  # replace with your Qwen Model if needed
+        cls.model_name = QWEN3_30B_A3B_WEIGHTS_PATH  # replace with your Qwen Model if needed
 
     def run_gsm8k_test(self, pp_size):
         process = popen_launch_server(
@@ -351,6 +352,8 @@ class TestQwenMoePPAccuracy(unittest.TestCase):
             other_args=[
                 "--pp-size",
                 pp_size,
+                "--tp-size",
+                "2",
                 "--chunked-prefill-size",
                 256,
                 "--attention-backend",
@@ -490,7 +493,7 @@ class TestFixedBugs(unittest.TestCase):
             other_server_args,
         )
 
-@unittest.skipIf(True, "Not enough memory")
+@unittest.skipIf(True, "tp1pp4: Not enough memory; tp2pp4: The self tensor cannot be larger than 8 dimensions")
 class TestGLM41VPPAccuracy(unittest.TestCase):
     """Test Case: Verify the accuracy of GLM multimodal model under PP parallelism
 

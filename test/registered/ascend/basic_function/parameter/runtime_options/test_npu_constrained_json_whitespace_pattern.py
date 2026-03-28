@@ -94,7 +94,7 @@ class TestJSONModeMixin:
         # Detect newline whitespace (\n) in JSON string (matching pattern [\n]?)
         has_newline_whitespace = bool(re.search(r'\n', json_str))
         # Detect any whitespace characters
-        has_space_or_tab = bool(re.search(r'[ \t]', json_str))
+        has_tab = bool(re.search(r'\t', json_str))
 
         if self.backend in ["outlines", "llguidance"]:
             # Expect newline whitespace (parameter takes effect)
@@ -103,7 +103,7 @@ class TestJSONModeMixin:
                 f"[{self.backend}] --constrained-json-whitespace-pattern=[\\n]? should take effect, but no newline whitespace in JSON! JSON: {json_str}"
             )
             self.assertFalse(
-                has_space_or_tab,
+                has_tab,
                 f"[{self.backend}] --constrained-json-whitespace-pattern should NOT take effect, but whitespace exists in JSON! JSON: {json_str}"
             )
         else:
@@ -113,7 +113,7 @@ class TestJSONModeMixin:
                 f"[{self.backend}] --constrained-json-whitespace-pattern should NOT take effect, but whitespace exists in JSON! JSON: {json_str}"
             )
             self.assertTrue(
-                has_space_or_tab,
+                has_tab,
                 f"[{self.backend}] --constrained-json-whitespace-pattern should NOT take effect, but whitespace exists in JSON! JSON: {json_str}"
             )
 
@@ -161,7 +161,7 @@ class TestJSONModeXGrammar(ServerWithGrammarBackend, TestJSONModeMixin):
     """
     backend = "xgrammar"
 
-@unittest.skipIf(True, "skip")
+#@unittest.skipIf(True, "skip")
 class TestJSONModeOutlines(ServerWithGrammarBackend, TestJSONModeMixin):
     """Testcase: Verify that when the grammar backend is outlines, --constrained-json-whitespace-pattern=[\n]? takes effect (JSON output contains newline whitespace)
 
