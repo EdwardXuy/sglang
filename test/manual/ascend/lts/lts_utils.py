@@ -26,22 +26,28 @@ logger = logging.getLogger(__name__)
 
 LONG_SEQ_DEFAULT_CONFIGS = {
     "64k+1k": {
-        "input": 65536,
-        "output": 1024,
+        "input_len": 65536,
+        "output_len": 1024,
+        "max_concurrency": 1,
+        "num_prompts": 4,
         "ttft": 100000,
         "tpot": 350,
         "tps": 10,
     },
     "32k+1k": {
-        "input": 32768,
-        "output": 1024,
+        "input_len": 32768,
+        "output_len": 1024,
+        "max_concurrency": 1,
+        "num_prompts": 4,
         "ttft": 70000,
         "tpot": 250,
         "tps": 10,
     },
     "16k+1k": {
-        "input": 16384,
-        "output": 1024,
+        "input_len": 16384,
+        "output_len": 1024,
+        "max_concurrency": 1,
+        "num_prompts": 4,
         "ttft": 40000,
         "tpot": 200,
         "tps": 10,
@@ -58,44 +64,6 @@ def run_command(cmd, shell=True):
     except subprocess.CalledProcessError as e:
         logger.info(f"command error: {e}")
         return None
-
-
-def run_long_seq_bench_serving(
-    host=None,
-    port=None,
-    dataset_name="random",
-    dataset_path=None,
-    seq_config=None,
-):
-    if seq_config is None:
-        logger.warning(f"seq_config is None")
-        return
-
-    metrics = run_bench_serving(
-        host=host,
-        port=port,
-        input_len=seq_config["input_len"],
-        output_len=seq_config["output_len"],
-        dataset_name=dataset_name,
-        dataset_path=dataset_path,
-        request_rate=1,
-        max_concurrency=1,
-        num_prompts=2,
-        random_range_ratio=1,
-    )
-    logger.info(f"metrics: {metrics}")
-
-    res_ttft = run_command("cat ./bench_log.txt | grep 'Mean TTFT' | awk '{print $4}'")
-    res_tpot = run_command("cat ./bench_log.txt | grep 'Mean TPOT' | awk '{print $4}'")
-    res_output_token_throughput = run_command(
-        "cat ./bench_log.txt | grep 'Output token throughput' | awk '{print $5}'"
-    )
-    res_ttft = res_ttft.strip() if res_ttft else "0"
-    res_tpot = res_tpot.strip() if res_tpot else "0"
-
-    logger.info("res_ttft is " + str(res_ttft))
-    logger.info("res_tpot is " + str(res_tpot))
-    logger.info("res_output_token_throughput is " + str(res_output_token_throughput))
 
 
 class TestAscendLtsTestCaseBase(CustomTestCase):
@@ -231,16 +199,38 @@ class TestAscendLtsTestCaseBase(CustomTestCase):
         )
         logger.info(f"---------- Mmlu accuracy test PASSED ----------")
 
-    def run_all_long_seq_verify(self, long_seq_configs=None):
+    def run_long_seq_testcase(self, long_seq_configs=None):
         if long_seq_configs is None:
             long_seq_configs = LONG_SEQ_DEFAULT_CONFIGS
         for seq_type, seq_config in long_seq_configs.items():
             logger.info(f"---------- Start long seq test: {seq_type} ----------")
-            run_long_seq_bench_serving(
+            metrics = run_bench_serving(
                 host=self.host,
                 port=self.port,
+                input_len=seq_config["input_len"],
+                output_len=seq_config["output_len"],
                 dataset_name=self.dataset_name,
                 dataset_path=self.dataset_path,
-                seq_config=seq_config,
+                request_rate="inf",
+                max_concurrency=seq_config["max_concurrency"],
+                num_prompts=seq_config["num_prompts"],
+                random_range_ratio=1,
             )
+            logger.info(f"metrics: {metrics}")
+
+            if "tpot" in seq_config.keys():
+                self.assertLessEqual(
+                    float(metrics["mean_tpot"]),
+                    seq_config["tpot"],
+                )
+            if "tps" in seq_config.keys():
+                self.assertLessEqual(
+                    float(metrics["total_tps"]),
+                    seq_config["tps"],
+                )
+            if "ttft" in seq_config.keys():
+                self.assertLessEqual(
+                    float(metrics["mean_ttft"]),
+                    seq_config["ttft"],
+                )
             logger.info(f"---------- Finish long seq test: {seq_type} ----------")

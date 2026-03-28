@@ -25,7 +25,7 @@ class TestLTSDeepSeekV32(TestAscendLtsTestCaseBase):
         cls.host = "127.0.0.1"
         cls.port = 6688
 
-    def test_lts_deepseek_v3_2(self):
+    def testLtsDeepseekV32(self):
         i = 0
         while True:
             i = i + 1
@@ -35,7 +35,19 @@ class TestLTSDeepSeekV32(TestAscendLtsTestCaseBase):
             )
             self.run_throughput()
             self.run_gsm8k()
-            self.run_all_long_seq_verify()
+            self.run_long_seq_testcase()
+            long_seq_configs = {
+                "128k+1k": {
+                    "input_len": 131072,
+                    "output_len": 1024,
+                    "max_concurrency": 8,
+                    "num_prompts": 8,
+                    "ttft": 100000,
+                    "tpot": 350,
+                    "tps": 10,
+                }
+            }
+            self.run_long_seq_testcase(long_seq_configs=long_seq_configs)
 
 
 if __name__ == "__main__":

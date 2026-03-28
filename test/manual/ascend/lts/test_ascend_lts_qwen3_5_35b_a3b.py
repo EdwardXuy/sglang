@@ -12,6 +12,7 @@ from sglang.test.test_utils import (
 )
 
 MODEL_PATH = "/root/.cache/modelscope/hub/models/Qwen/Qwen3.5-35B-A3B"
+# 模型最大支持长度：262144
 
 ENVS = {
     "ASCEND_LAUNCH_BLOCKING": "1",
@@ -39,8 +40,8 @@ OTHER_ARGS = [
     1,
     "--node-rank",
     0,
-    "--context-length",
-    32768,
+    # "--context-length",
+    # 32768,
     "--mem-fraction-static",
     0.65,
     "--cuda-graph-bs",
@@ -113,6 +114,7 @@ class TestLtsQwen35(TestAscendLtsTestCaseBase):
             )
             self.run_throughput()
             self.run_gsm8k()
+            self.run_long_seq_testcase()
 
 
 if __name__ == "__main__":

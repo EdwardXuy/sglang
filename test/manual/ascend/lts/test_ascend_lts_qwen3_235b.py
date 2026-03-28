@@ -127,7 +127,7 @@ class TestLTSQwen3235B(TestAscendLtsTestCaseBase):
             )
             self.run_throughput()
             self.run_gsm8k()
-            self.run_all_long_seq_verify()
+            self.run_long_seq_testcase()
 
 
 if __name__ == "__main__":
