@@ -11,77 +11,82 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
-MODEL_PATH = "/root/.cache/modelscope/hub/models/Qwen/Qwen3-30B-A3B-w8a8"
-# MODEL_PATH = "/home/weights/Qwen3-30B-A3B-W8A8"
+MODEL_PATH = "/root/.cache/modelscope/hub/models/Qwen/Qwen3.5-35B-A3B"
 
 ENVS = {
+    "ASCEND_LAUNCH_BLOCKING": "1",
     "SGLANG_SET_CPU_AFFINITY": "1",
-    "PYTORCH_NPU_ALLOC_CONF": "expandable_segments:True",
+    "STREAMS_PER_DEVICE": "32",
     "SGLANG_DISAGGREGATION_BOOTSTRAP_TIMEOUT": "600",
-    "HCCL_BUFFSIZE": "400",
+    "SGLANG_ENABLE_SPEC_V2": "1",
+    "SGLANG_ENABLE_OVERLAP_PLAN_STREAM": "1",
+    "SGLANG_NPU_USE_MULTI_STREAM": "1",
+    "HCCL_BUFFSIZE": "1000",
+    "HCCL_OP_EXPANSION_MODE": "AIV",
     "HCCL_SOCKET_IFNAME": NIC_NAME,
     "GLOO_SOCKET_IFNAME": NIC_NAME,
-    "HCCL_OP_EXPANSION_MODE": "AIV",
 }
 
 OTHER_ARGS = [
     "--trust-remote-code",
-    "--nnodes",
-    "1",
-    "--node-rank",
-    "0",
     "--attention-backend",
     "ascend",
     "--device",
     "npu",
-    "--quantization",
-    "modelslim",
-    "--max-running-requests",
-    78,
-    "--context-length",
-    8192,
-    "--enable-hierarchical-cache",
-    "--hicache-write-policy",
-    "write_through",
-    "--hicache-ratio",
-    3,
-    "--chunked-prefill-size",
-    43008,
-    "--max-prefill-tokens",
-    52500,
     "--tp-size",
-    4,
+    2,
+    "--nnodes",
+    1,
+    "--node-rank",
+    0,
+    "--context-length",
+    32768,
     "--mem-fraction-static",
-    0.68,
+    0.65,
     "--cuda-graph-bs",
-    78,
-    "--dtype",
+    1,
+    2,
+    4,
+    8,
+    16,
+    24,
+    "--enable-multimodal",
+    "--speculative-algorithm",
+    "NEXTN",
+    "--speculative-num-steps",
+    3,
+    "--speculative-eagle-topk",
+    1,
+    "--speculative-num-draft-tokens",
+    4,
+    "--mm-attention-backend",
+    "ascend_attn",
+    "--mamba-ssm-dtype",
     "bfloat16",
-    "--enable-metrics",
+    "--disable-radix-cache",
     "--base-gpu-id",
     0,
 ]
 
 
-class TestLtsQwen3(TestAscendLtsTestCaseBase):
+class TestLtsQwen35(TestAscendLtsTestCaseBase):
     model = MODEL_PATH
     other_args = OTHER_ARGS
     envs = ENVS
-    request_rate = 5.5
+    output_file = "./log/bench_results.jsonl"
     max_concurrency = 16
-    num_prompts = int(max_concurrency) * 4
+    num_prompts = 16
     input_len = 3500
     output_len = 1500
-    random_range_ratio = 0.5
-    ttft = 10000
+    random_range_ratio = 1
     tpot = 50
-    output_token_throughput = 350
+    output_token_throughput = 0
     accuracy = {"gsm8k": 0.80, "mmlu": 0.80}
 
     @classmethod
     def setUpClass(cls):
-        cls.host = "0.0.0.0"
-        cls.port = 30000
+        cls.host = "127.0.0.1"
+        cls.port = 21001
         cls.base_url = f"http://{cls.host}:{cls.port}"
         env = os.environ.copy()
         env.update(cls.envs)
@@ -98,7 +103,7 @@ class TestLtsQwen3(TestAscendLtsTestCaseBase):
     def tearDownClass(cls):
         kill_process_tree(cls.process.pid)
 
-    def testLtsQwen3(self):
+    def testLtsQwen35(self):
         i = 0
         while True:
             i = i + 1

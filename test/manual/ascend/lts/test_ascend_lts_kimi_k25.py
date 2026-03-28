@@ -23,12 +23,13 @@ class TestLTSKimi(TestAscendLtsTestCaseBase):
     ttft = 15000
     tpot = 55
     output_token_throughput = 1350
-    accuracy = 0.90
+    accuracy = {"gsm8k": 0.90, "mmlu": 0.80}
 
     @classmethod
     def setUpClass(cls):
         cls.host = "127.0.0.1"
         cls.port = 8100
+        cls.base_url = f"http://{cls.host}:{cls.port}"
 
     def test_lts_kimi_k25(self):
         i = 0
@@ -60,5 +61,3 @@ if __name__ == "__main__":
         finally:
             sys.stdout = original_stdout
             sys.stderr = original_stderr
-
-    print(f"Test log saved to {log_file}")

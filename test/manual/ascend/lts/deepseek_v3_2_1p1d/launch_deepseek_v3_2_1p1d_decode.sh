@@ -26,13 +26,10 @@ export STREAMS_PER_DEVICE=32
 
 MODEL_PATH="/root/.cache/modelscope/hub/models/DeepSeek-V3.2-W8A8"
 
-export SGLANG_NPU_USE_MULTI_STREAM=1
-export SGLANG_NPU_USE_MLAPO=1
-export HCCL_OP_EXPANSION_MODE=AIV
-export SGLANG_SCHEDULER_SKIP_ALL_GATHER=1
-export TASK_QUEUE_ENABLE=0
 export SGLANG_ENABLE_OVERLAP_PLAN_STREAM=1
 export SGLANG_ENABLE_SPEC_V2=1
+export TASK_QUEUE_ENABLE=0
+export SGLANG_SCHEDULER_SKIP_ALL_GATHER=1
 export HCCL_BUFFSIZE=400
 export SGLANG_DEEPEP_NUM_MAX_DISPATCH_TOKENS_PER_RANK=8
 
@@ -88,7 +85,6 @@ nohup python3 -m sglang.launch_server --model-path ${MODEL_PATH} \
 --disaggregation-transfer-backend ascend \
 --disaggregation-mode decode \
 --prefill-round-robin-balance \
---load-balance-method round_robin \
 --nnodes $nnodes --node-rank $VC_TASK_INDEX \
---dist-init-addr ${DIPs[0]}:10000 --load-balance-method decode_round_robin \
+--dist-init-addr ${DIPs[0]}:10000 \
 > $DECODE_LOG_FILE 2>&1 &

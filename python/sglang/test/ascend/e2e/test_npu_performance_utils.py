@@ -75,6 +75,9 @@ QWEN3_235B_A22B_EAGLE_MODEL_PATH = (
 QWEN3_480B_W8A8_MODEL_PATH = (
     "/root/.cache/modelscope/hub/models/Qwen3-Coder-480B-A35B-Instruct-w8a8-QuaRot"
 )
+QWEN3_NEXT_80B_A3B_MODEL_PATH = (
+    "/root/.cache/modelscope/hub/models/Qwen/Qwen3-Next-80B-A3B-Instruct"
+)
 QWEN3_NEXT_80B_A3B_W8A8_MODEL_PATH = (
     "/root/.cache/modelscope/hub/models/vllm-ascend/Qwen3-Next-80B-A3B-Instruct-W8A8"
 )
@@ -209,6 +212,7 @@ def run_bench_serving(
     image_count=None,
     warmup_requests=None,
     seed=None,
+    output_file=None,
 ):
     metrics_file = os.getenv("METRICS_DATA_FILE")
     result_file = "./bench_log.txt" if not metrics_file else metrics_file
@@ -254,6 +258,8 @@ def run_bench_serving(
         cmd_args.extend(["--warmup-requests", str(warmup_requests)])
     if seed:
         cmd_args.extend(["--seed", str(seed)])
+    if output_file:
+        cmd_args.extend(["--output-file", str(output_file)])
     logger.info(f"Command: {' '.join(cmd_args)}")
 
     # Run benchmark command and capture output
