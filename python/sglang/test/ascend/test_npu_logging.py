@@ -131,14 +131,14 @@ class TestNPULoggingBase(CustomTestCase):
         # Level-specific regex patterns for --log-requests-level (0-3)
         # Each pattern validates that logs include level-appropriate content
         cls.log_request_message_dict = {
-            "0": r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, video_data=None,.*",
+            "0": r".*Finish: obj=GenerateReqInput\(rid='\w+', http_worker_ipc=None, video_data=None,.*",
             "1": r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, video_data=None, sampling_params=.*",
             "2": r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, text=.*",
             "3": r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None, text=.*",
         }
 
         # Keywords for extracting token ID arrays from request completion logs
-        cls.keyword_Finish = r".*Finish: obj=GenerateReqInput\(.*http_worker_ipc=None, text='just.*"  # Match target log line
+        cls.keyword_Finish = r".*Finish: obj=GenerateReqInput\(.*rid='\w+', http_worker_ipc=None"  # Match target log line
         cls.keyword_output_id_start = (
             "'output_ids': ["  # Start delimiter for token ID array
         )
