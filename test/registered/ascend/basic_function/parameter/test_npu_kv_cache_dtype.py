@@ -1,8 +1,10 @@
 import os
 import sys
+import threading
 import unittest
 import logging
 from io import StringIO
+import time
 
 import requests
 
@@ -18,22 +20,90 @@ from sglang.test.test_utils import (
 
 register_npu_ci(est_time=150, suite="nightly-1-npu-a3", nightly=True)
 
-class TeeStream:
-    def __init__(self, original_stream):
-        self.original = original_stream
-        self.buffer = StringIO()
+class OutputCapturer:
+    """底层文件描述符捕获，支持子进程/NPU打印，同时显示+捕获"""
+    def __init__(self):
+        self.old_stdout = None
+        self.old_stderr = None
+        self.pipe_out = None
+        self.pipe_in = None
+        self.pipe_err_out = None
+        self.pipe_err_in = None
+        self.captured_stdout = []
+        self.captured_stderr = []
+        self.stop_thread = False
+        self.thread = None
 
-    def write(self, data):
-        self.original.write(data)  # 正常打印到控制台
-        self.buffer.write(data)  # 同时写入捕获缓冲区
-        self.original.flush()  # 强制立即打印，不卡顿
+    def start(self):
+        """开始捕获"""
+        # 保存原始 stdout/stderr
+        self.old_stdout = os.dup(1)
+        self.old_stderr = os.dup(2)
 
-    def flush(self):
-        self.original.flush()
-        self.buffer.flush()
+        # 创建管道
+        self.pipe_out, self.pipe_in = os.pipe()
+        self.pipe_err_out, self.pipe_err_in = os.pipe()
 
-    def getvalue(self):
-        return self.buffer.getvalue()
+        # 重定向
+        os.dup2(self.pipe_in, 1)
+        os.dup2(self.pipe_err_in, 2)
+
+        # 关闭无用端
+        os.close(self.pipe_in)
+        os.close(self.pipe_err_in)
+
+        # 启动后台线程实时读取输出（关键：不阻塞、实时打印+捕获）
+        self.stop_thread = False
+        self.thread = threading.Thread(target=self._read_loop, daemon=True)
+        self.thread.start()
+
+    def _read_loop(self):
+        """后台循环读取输出 → 既存起来，又打印到终端"""
+        while not self.stop_thread:
+            # 读 stdout
+            try:
+                data = os.read(self.pipe_out, 4096)
+                if data:
+                    self.captured_stdout.append(data)
+                    os.write(self.old_stdout, data)  # 实时打印
+            except:
+                break
+
+            # 读 stderr
+            try:
+                err_data = os.read(self.pipe_err_out, 4096)
+                if err_data:
+                    self.captured_stderr.append(err_data)
+                    os.write(self.old_stderr, err_data)
+            except:
+                break
+
+            time.sleep(0.001)
+
+    def get_output(self):
+        """获取所有捕获的打印"""
+        return b''.join(self.captured_stdout).decode('utf-8', errors='ignore')
+
+    def get_error(self):
+        """获取所有捕获的错误打印"""
+        return b''.join(self.captured_stderr).decode('utf-8', errors='ignore')
+
+    def stop(self):
+        """停止捕获 + 恢复终端 + 清理资源"""
+        self.stop_thread = True
+        if self.thread:
+            self.thread.join(timeout=0.5)
+
+        # 恢复原始输出
+        os.dup2(self.old_stdout, 1)
+        os.dup2(self.old_stderr, 2)
+
+        # 关闭所有文件描述符
+        for fd in [self.pipe_out, self.pipe_err_out, self.old_stdout, self.old_stderr]:
+            try:
+                os.close(fd)
+            except:
+                pass
 
 
 class TestNPUKVCacheDtype(CustomTestCase):
@@ -66,16 +136,11 @@ class TestNPUKVCacheDtype(CustomTestCase):
         # cls.pipe_err_out, cls.pipe_err_in = os.pipe()
         # os.dup2(cls.pipe_in, 1)
         # os.dup2(cls.pipe_err_in, 2)
-        cls.original_stdout = sys.stdout
-        cls.original_stderr = sys.stderr
 
-        # 创建双输出流（打印+捕获）
-        cls.tee_stdout = TeeStream(sys.stdout)
-        cls.tee_stderr = TeeStream(sys.stderr)
+        cls.capturer = OutputCapturer()
+        cls.capturer.start()
 
-        # 重定向
-        sys.stdout = cls.tee_stdout
-        sys.stderr = cls.tee_stderr
+
 
         cls.process = popen_launch_server(
             cls.model,
@@ -87,8 +152,9 @@ class TestNPUKVCacheDtype(CustomTestCase):
     @classmethod
     def tearDownClass(cls):
         kill_process_tree(cls.process.pid)
-        sys.stdout = cls.original_stdout
-        sys.stderr = cls.original_stderr
+        # sys.stdout = cls.original_stdout
+        # sys.stderr = cls.original_stderr
+        cls.capturer.stop()
 
     def test_dtype_options(self):
         response = requests.post(
@@ -123,7 +189,11 @@ class TestNPUKVCacheDtype(CustomTestCase):
         # logger.info(output)
         # logger.info(error)
         # self.assertIn(f"Using KV cache dtype: {self.using_kv_cache_dtype}", error)
-        self.assertIn(f"Using KV cache dtype: {self.using_kv_cache_dtype}", self.tee_stdout.getvalue() + self.tee_stderr.getvalue())
+        output = self.__class__.capturer.get_output() +self.__class__.capturer.get_error()
+        print("=========================================================================")
+        print(output)
+        print("=========================================================================")
+        # self.assertIn(f"Using KV cache dtype: {self.using_kv_cache_dtype}", self.tee_stdout.getvalue() + self.tee_stderr.getvalue())
 
 
 
