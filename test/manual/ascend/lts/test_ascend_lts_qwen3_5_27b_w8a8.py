@@ -80,12 +80,12 @@ class TestLTSQwen3527BW8A8(TestAscendLtsTestCaseBase):
     envs = ENVS
     max_concurrency = 16
     num_prompts = 16
-    input_len = 12800
+    input_len = 128000
     output_len = 1000
     random_range_ratio = 1
     tpot = 50
-    output_token_throughput = 0
-    accuracy = {"gsm8k": 0.7}
+    output_token_throughput = 43
+    accuracy = {"gsm8k": 0.755}
 
     @classmethod
     def setUpClass(cls):
