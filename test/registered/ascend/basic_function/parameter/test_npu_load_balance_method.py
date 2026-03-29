@@ -1,6 +1,7 @@
 import random
 import unittest
 from types import SimpleNamespace
+from urllib.parse import urlparse
 
 import requests
 
@@ -34,6 +35,7 @@ class TestDPAttentionRoundBinLoadBalance(CustomTestCase):
     def setUpClass(cls):
         cls.model_path = DEEPSEEK_R1_0528_W8A8_WEIGHTS_PATH
         cls.base_url = DEFAULT_URL_FOR_TEST
+        cls.url = urlparse(cls.base_url)
         other_args = [
             "--trust-remote-code",
             "--tp",
