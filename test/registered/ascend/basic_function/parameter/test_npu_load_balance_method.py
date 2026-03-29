@@ -130,16 +130,16 @@ if __name__ == "__main__":
         runner = unittest.TextTestRunner()
         runner.run(suite)
     else:
-        # unittest.main()
+        unittest.main()
 
-        loader = unittest.TestLoader()
-        suite = unittest.TestSuite()
-        RUN_FLAG = [
-            TestDPAttentionRoundBinLoadBalance,
-            _TestDPAttentionAutoLoadBalance,
-            _TestDPAttentionTotalRequestsLoadBalance,
-            _TestDPAttentionTotalTokensLoadBalance,
-        ]
-        suite.addTests(loader.loadTestsFromTestCase(TestDPAttentionRoundBinLoadBalance))
-        runner = unittest.TextTestRunner()
-        runner.run(suite)
+        # loader = unittest.TestLoader()
+        # suite = unittest.TestSuite()
+        # RUN_FLAG = [
+        #     TestDPAttentionRoundBinLoadBalance,
+        #     _TestDPAttentionAutoLoadBalance,
+        #     _TestDPAttentionTotalRequestsLoadBalance,
+        #     _TestDPAttentionTotalTokensLoadBalance,
+        # ]
+        # suite.addTests(loader.loadTestsFromTestCase(TestDPAttentionRoundBinLoadBalance))
+        # runner = unittest.TextTestRunner()
+        # runner.run(suite)
