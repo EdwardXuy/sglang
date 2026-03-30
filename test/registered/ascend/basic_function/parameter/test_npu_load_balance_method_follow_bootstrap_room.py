@@ -145,17 +145,40 @@ class _TestNPULoadBalanceMethodPrefillAutoDecodeRoundRobin(TestNPULoadBalanceMet
     prefill_load_balance_method = "auto"
     decode_load_balance_method = "round_robin"
 
+
 class _TestNPULoadBalanceMethodPrefillAutoDecodeTotalRequests(TestNPULoadBalanceMethodDPDisaggregation):
     prefill_load_balance_method = "auto"
     decode_load_balance_method = "total_requests"
 
-class _TestNPULoadBalanceMethodPrefillAutoDecodeTotalTotalTokens(TestNPULoadBalanceMethodDPDisaggregation):
+
+class _TestNPULoadBalanceMethodPrefillAutoDecodeTotalTokens(TestNPULoadBalanceMethodDPDisaggregation):
     prefill_load_balance_method = "auto"
     decode_load_balance_method = "total_tokens"
+
 
 class _TestNPULoadBalanceMethodPrefillAutoDecodeFollowBootstrapRoom(TestNPULoadBalanceMethodDPDisaggregation):
     prefill_load_balance_method = "auto"
     decode_load_balance_method = "follow_bootstrap_room"
+
+
+class _TestNPULoadBalanceMethodPrefillRoundRobinDecodeAuto(TestNPULoadBalanceMethodDPDisaggregation):
+    prefill_load_balance_method = "round_robin"
+    decode_load_balance_method = "auto"
+
+
+class _TestNPULoadBalanceMethodPrefillTotalRequestsDecodeAuto(TestNPULoadBalanceMethodDPDisaggregation):
+    prefill_load_balance_method = "total_requests"
+    decode_load_balance_method = "auto"
+
+
+class _TestNPULoadBalanceMethodPrefillTotalTokensDecodeAuto(TestNPULoadBalanceMethodDPDisaggregation):
+    prefill_load_balance_method = "total_tokens"
+    decode_load_balance_method = "auto"
+
+
+class _TestNPULoadBalanceMethodPrefillFollowBootstrapRoomDecodeAuto(TestNPULoadBalanceMethodDPDisaggregation):
+    prefill_load_balance_method = "follow_bootstrap_room"
+    decode_load_balance_method = "auto"
 
 
 if __name__ == "__main__":
@@ -166,14 +189,14 @@ if __name__ == "__main__":
         TestNPULoadBalanceMethodDPDisaggregation,
         _TestNPULoadBalanceMethodPrefillAutoDecodeRoundRobin,
         _TestNPULoadBalanceMethodPrefillAutoDecodeTotalRequests,
-        _TestNPULoadBalanceMethodPrefillAutoDecodeTotalTotalTokens,
+        _TestNPULoadBalanceMethodPrefillAutoDecodeTotalTokens,
         # _TestNPULoadBalanceMethodPrefillAutoDecodeFollowBootstrapRoom,
     ]
     # suite.addTests(loader.loadTestsFromTestCase(random.choice(RUN_FLAG)))
-    suite.addTests(loader.loadTestsFromTestCase(TestNPULoadBalanceMethodDPDisaggregation))
-    suite.addTests(loader.loadTestsFromTestCase(_TestNPULoadBalanceMethodPrefillAutoDecodeRoundRobin))
-    suite.addTests(loader.loadTestsFromTestCase(_TestNPULoadBalanceMethodPrefillAutoDecodeTotalRequests))
-    suite.addTests(loader.loadTestsFromTestCase(_TestNPULoadBalanceMethodPrefillAutoDecodeTotalTotalTokens))
-    # suite.addTests(loader.loadTestsFromTestCase(_TestNPULoadBalanceMethodPrefillAutoDecodeFollowBootstrapRoom))
+    # suite.addTests(loader.loadTestsFromTestCase(TestNPULoadBalanceMethodDPDisaggregation))
+    # suite.addTests(loader.loadTestsFromTestCase(_TestNPULoadBalanceMethodPrefillAutoDecodeRoundRobin))
+    # suite.addTests(loader.loadTestsFromTestCase(_TestNPULoadBalanceMethodPrefillAutoDecodeTotalRequests))
+    # suite.addTests(loader.loadTestsFromTestCase(_TestNPULoadBalanceMethodPrefillAutoDecodeTotalTokens))
+    suite.addTests(loader.loadTestsFromTestCase(_TestNPULoadBalanceMethodPrefillAutoDecodeFollowBootstrapRoom))
     runner = unittest.TextTestRunner()
     runner.run(suite)
