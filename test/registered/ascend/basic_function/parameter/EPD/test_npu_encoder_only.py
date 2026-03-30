@@ -76,6 +76,7 @@ class TestEncoderOnly(CustomTestCase):
                 # Use the default transfer backend explicitly for completeness
                 "--encoder-transfer-backend",
                 "zmq_to_scheduler",
+                #"moooncake"
                 "--attention-backend",
                 "ascend",
                 "--disable-cuda-graph",
