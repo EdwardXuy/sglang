@@ -29,6 +29,7 @@ QWEN3_32B_ENVS = {
 }
 
 QWEN3_32B_OTHER_ARGS = [
+    "--trust-remote-code",
     "--nnodes",
     "1",
     "--node-rank",
@@ -59,7 +60,7 @@ QWEN3_32B_OTHER_ARGS = [
     "--speculative-num-draft-tokens",
     4,
     "--tp-size",
-    2,
+    4,
     "--mem-fraction-static",
     0.915,
     "--cuda-graph-bs",
