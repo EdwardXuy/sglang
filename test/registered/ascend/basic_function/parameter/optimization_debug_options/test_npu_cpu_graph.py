@@ -9,9 +9,9 @@ import unittest
 from types import SimpleNamespace
 
 from sglang.srt.utils import get_cpu_ids_by_node, kill_process_tree
+from sglang.test.ascend.test_ascend_utils import DEEPSEEK_CODER_V2_LITE_WEIGHTS_PATH
 from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
-    DEFAULT_MLA_MODEL_NAME_FOR_TEST,
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
     CustomTestCase,
@@ -32,14 +32,16 @@ class TestCPUGraph(CustomTestCase):
             "--enable-torch-compile",
             "--torch-compile-max-bs",
             "1",
+            "--attention-backend",
+            "ascend",
         ],
         min_throughput=10,
     )
     def test_latency_torch_compile_cpu(self):
-        return DEFAULT_MLA_MODEL_NAME_FOR_TEST
+        return DEEPSEEK_CODER_V2_LITE_WEIGHTS_PATH
 
     def test_mmlu_torch_compile_cpu(self):
-        model = DEFAULT_MLA_MODEL_NAME_FOR_TEST
+        model = DEEPSEEK_CODER_V2_LITE_WEIGHTS_PATH
         base_url = DEFAULT_URL_FOR_TEST
         cpu_ids_by_node = get_cpu_ids_by_node()
         n_numa_node = len(cpu_ids_by_node)
@@ -52,6 +54,8 @@ class TestCPUGraph(CustomTestCase):
             other_args=[
                 "--attention-backend",
                 "intel_amx",
+                # "--attention-backend",
+                # "ascend",
                 "--mem-fraction-static",
                 "0.05",
                 "--disable-radix",
