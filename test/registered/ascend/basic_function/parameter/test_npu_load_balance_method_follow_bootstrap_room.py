@@ -144,7 +144,7 @@ class TestNPULoadBalanceMethodFollowBootstrapRoom(TestDisaggregationBase):
         )
 
     def test_server_info(self):
-        response = requests.get(f"{self.base_url}/get_server_info")
+        response = requests.get(f"{self.lb_url}/get_server_info")
         self.assertEqual(response.status_code, 200)
         self.assertIn(self.mode, response.text)
 
