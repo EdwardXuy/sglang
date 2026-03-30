@@ -21,7 +21,7 @@ from sglang.test.test_utils import (
 register_npu_ci(est_time=200, suite="nightly-4-npu-a3", nightly=True)
 
 # load_balance_method_options = ["auto", "round_robin", "total_requests", "total_tokens", "follow_bootstrap_room"]
-load_balance_method_options = ["auto", "round_robin",]
+load_balance_method_options = ["auto", "round_robin", "total_requests"]
 all_params = list(itertools.product(load_balance_method_options, repeat=2))
 
 class BaseTestNPULoadBalanceMethodDPDisaggregation(TestDisaggregationBase):
