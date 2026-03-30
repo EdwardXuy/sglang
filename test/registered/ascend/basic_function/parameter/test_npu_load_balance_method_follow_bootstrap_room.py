@@ -1,5 +1,7 @@
 import os
 import unittest
+from types import SimpleNamespace
+from urllib.parse import urlparse
 
 import requests
 
@@ -8,6 +10,7 @@ from sglang.test.ascend.test_ascend_utils import (
     QWEN3_30B_A3B_INSTRUCT_2507_WEIGHTS_PATH,
 )
 from sglang.test.ci.ci_register import register_npu_ci
+from sglang.test.few_shot_gsm8k import run_eval as run_eval_few_shot_gsm8k
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     popen_launch_pd_server,
@@ -40,6 +43,7 @@ class TestNPULoadBalanceMethodFollowBootstrapRoom(TestDisaggregationBase):
         cls.wait_server_ready(cls.decode_url + "/health")
 
         cls.launch_lb()
+        cls.url = urlparse(cls.lb_url)
 
     @classmethod
     def start_prefill(cls):
@@ -105,22 +109,44 @@ class TestNPULoadBalanceMethodFollowBootstrapRoom(TestDisaggregationBase):
             other_args=decode_args,
         )
 
-    def test_inference(self, max_new_tokens=32):
-        """Send a basic inference request to test inference function."""
-        response = requests.post(
-            f"{self.lb_url}/generate",
-            json={
-                "text": "What is the capital of France?",
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": max_new_tokens,
-                },
-            },
-            timeout=60,
+    # def test_inference(self, max_new_tokens=32):
+    #     """Send a basic inference request to test inference function."""
+    #     response = requests.post(
+    #         f"{self.lb_url}/generate",
+    #         json={
+    #             "text": "What is the capital of France?",
+    #             "sampling_params": {
+    #                 "temperature": 0,
+    #                 "max_new_tokens": max_new_tokens,
+    #             },
+    #         },
+    #         timeout=60,
+    #     )
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertIn("Paris", response.text)
+    #     return response.text
+
+    def test_gsm8k(self):
+        args = SimpleNamespace(
+            num_shots=5,
+            data_path=None,
+            num_questions=200,
+            max_new_tokens=512,
+            parallel=128,
+            host=f"http://{self.url.hostname}",
+            port=int(self.url.port),
         )
+
+        metrics = run_eval_few_shot_gsm8k(args)
+        self.assertGreaterEqual(
+            metrics["accuracy"],
+            0.95,
+        )
+
+    def test_server_info(self):
+        response = requests.get(f"{self.base_url}/get_server_info")
         self.assertEqual(response.status_code, 200)
-        self.assertIn("Paris", response.text)
-        return response.text
+        self.assertIn(self.mode, response.text)
 
     @classmethod
     def tearDownClass(cls):

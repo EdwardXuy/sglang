@@ -80,7 +80,7 @@ class TestDPAttentionRoundBinLoadBalance(CustomTestCase):
     #     metrics = run_eval(args)
     #     self.assertGreater(metrics["score"], 0.95)
 
-    def test_a_gsm8k(self):
+    def test_gsm8k(self):
         args = SimpleNamespace(
             num_shots=5,
             data_path=None,
