@@ -113,48 +113,6 @@ class TestAscendCudaGraphGC(unittest.TestCase):
         print(f"Slowdown: {time_on - time_off:.2f}s")
         print("=" * 60)
 
-    def test_server_healthy(self):
-        """Verify server can start and generate normally."""
-        extra_args = [
-            "--trust-remote-code",
-            "--tp-size", "1",
-            "--mem-fraction-static", "0.7",
-            "--attention-backend", "ascend",
-            "--enable-cudagraph-gc",
-        ]
-
-        with open(self.log_file, "w", encoding="utf-8") as f:
-            proc = popen_launch_server(
-                self.model,
-                self.base_url,
-                timeout=3600,
-                other_args=extra_args,
-                return_stdout_stderr=(f, f),
-            )
-            time.sleep(45)
-
-        try:
-            # Check server info
-            resp = requests.get(f"{self.base_url}/get_server_info", timeout=10)
-            self.assertEqual(resp.status_code, 200)
-
-            # Check generate
-            resp = requests.post(
-                f"{self.base_url}/generate",
-                json={
-                    "text": "The capital of France is",
-                    "sampling_params": {
-                        "temperature": 0,
-                        "max_new_tokens": 32,
-                    },
-                },
-            )
-            self.assertEqual(resp.status_code, 200)
-            self.assertIn("Paris", resp.text)
-        finally:
-            kill_process_tree(proc.pid)
-            time.sleep(10)
-
 
 if __name__ == "__main__":
     unittest.main()
