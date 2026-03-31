@@ -14,6 +14,7 @@ Please remember to sort by variable name within each section.
 import asyncio
 import copy
 import os
+import requests as _requests
 import subprocess
 from types import SimpleNamespace
 from typing import Awaitable, Callable, NamedTuple, Optional
