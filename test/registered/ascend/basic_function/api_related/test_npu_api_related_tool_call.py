@@ -1,10 +1,14 @@
 import os
 import unittest
+
 import openai
 import requests
 
 from sglang.srt.utils import kill_process_tree
-from sglang.test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH, QWEN3_5_27B_MODEL_WEIGHTS_PATH
+from sglang.test.ascend.test_ascend_utils import (
+    LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH,
+    QWEN3_5_27B_MODEL_WEIGHTS_PATH,
+)
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -52,7 +56,7 @@ class TestApiRelatedToolCallParserLlama(CustomTestCase):
             "--chat-template",
             "llama-4",
             "--tool-call-parser",
-             "llama3",
+            "llama3",
         ]
 
         # Start the local OpenAI Server. If necessary, you can add other parameters such as --enable-tools.
@@ -116,7 +120,7 @@ class TestApiRelatedToolCallParserLlama(CustomTestCase):
 
         tool_calls = response.choices[0].message.tool_calls
         assert (
-                isinstance(tool_calls, list) and len(tool_calls) > 0
+            isinstance(tool_calls, list) and len(tool_calls) > 0
         ), "tool_calls should be a non-empty list"
 
         function_name = tool_calls[0].function.name
@@ -125,6 +129,7 @@ class TestApiRelatedToolCallParserLlama(CustomTestCase):
 
 class TestApiRelatedToolCallParserPythonic(CustomTestCase):
     """Test configuration of tool-call-parser as pythonic, sending requests"""
+
     PYTHONIC_TOOLS = [
         {
             "type": "function",
@@ -226,6 +231,7 @@ class TestApiRelatedToolCallParserPythonic(CustomTestCase):
             f"Function name '{names}' should container either 'get_weather' or 'get_tourist_attractions'",
         )
 
+
 class TestApiRelatedAdminApiKey(CustomTestCase):
     """Test --admin-api-key and --chat-template, and send requests using the key.
 
@@ -299,7 +305,9 @@ class TestApiRelatedAdminApiKey(CustomTestCase):
         self.err_log_file.seek(0)
         content = self.err_log_file.read()
         # The chat template used is consistent with the configuration.
-        self.assertIn(f"Loading chat template from argument: {self.chat_template_path}", content)
+        self.assertIn(
+            f"Loading chat template from argument: {self.chat_template_path}", content
+        )
         self.out_log_file.close()
         self.err_log_file.close()
 
