@@ -278,7 +278,7 @@ class TestMambaCache(CustomTestCase):
                         "8",
                         "--disable-radix-cache",
                         "--speculative-num-draft-tokens",
-                        "129"
+                        "129",
                     ],
                     return_stdout_stderr=(out_log_file, err_log_file),
                 )
