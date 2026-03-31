@@ -29,9 +29,9 @@ QWEN3_30B_ENVS = {
 QWEN3_30B_OTHER_ARGS = [
     "--trust-remote-code",
     "--nnodes",
-    "1",
+    1,
     "--node-rank",
-    "0",
+    0,
     "--attention-backend",
     "ascend",
     "--device",
