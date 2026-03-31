@@ -42,12 +42,12 @@ class TestMambaCache(CustomTestCase):
             kill_process_tree(cls.process.pid)
 
     def _launch_server_with_mamba_params(
-            self,
-            max_mamba_cache_size=None,
-            mamba_ssm_dtype=None,
-            mamba_full_memory_ratio=0.9,
-            mamba_scheduler_strategy="auto",
-            mamba_track_interval=256,
+        self,
+        max_mamba_cache_size=None,
+        mamba_ssm_dtype=None,
+        mamba_full_memory_ratio=0.9,
+        mamba_scheduler_strategy="auto",
+        mamba_track_interval=256,
     ):
         other_args = [
             "--trust-remote-code",
@@ -213,11 +213,11 @@ class TestMambaCache(CustomTestCase):
         finally:
             kill_process_tree(self.process.pid)
 
-    def test_mamba_track_interval_error(self):
-        # mamba_track_interval not divisible by page_size(128)
+    def test_mamba_track_interval_not_divisible(self):
+        # mamba_track_interval not divisible by page_size(128), service start failed
         error_message = "No module named 'cuda'"
         with tempfile.NamedTemporaryFile(
-                mode="w+", delete=True, suffix="out.log"
+            mode="w+", delete=True, suffix="out.log"
         ) as out_log_file, tempfile.NamedTemporaryFile(
             mode="w+", delete=True, suffix="out.log"
         ) as err_log_file:
@@ -238,6 +238,47 @@ class TestMambaCache(CustomTestCase):
                         "--tp-size",
                         "8",
                         "--disable-radix-cache",
+                    ],
+                    return_stdout_stderr=(out_log_file, err_log_file),
+                )
+            except Exception as e:
+                self.assertIn(
+                    "Server process exited with code -9.",
+                    str(e),
+                )
+            finally:
+                err_log_file.seek(0)
+                content = err_log_file.read()
+                # error_message information is recorded in the error log
+                self.assertIn(error_message, content)
+
+    def test_mamba_track_interval_less_speculative_num_draft_tokens(self):
+        # mamba_track_interval less than speculative_num_draft_tokens, service start failed
+        error_message = "out of memory"
+        with tempfile.NamedTemporaryFile(
+            mode="w+", delete=True, suffix="out.log"
+        ) as out_log_file, tempfile.NamedTemporaryFile(
+            mode="w+", delete=True, suffix="out.log"
+        ) as err_log_file:
+            try:
+                popen_launch_server(
+                    self.model,
+                    DEFAULT_URL_FOR_TEST,
+                    timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+                    other_args=[
+                        "--trust-remote-code",
+                        "--mem-fraction-static",
+                        "0.5",
+                        "--attention-backend",
+                        "ascend",
+                        "--disable-cuda-graph",
+                        "--mamba-track-interval",
+                        "128",
+                        "--tp-size",
+                        "8",
+                        "--disable-radix-cache",
+                        "--speculative-num-draft-tokens",
+                        "129"
                     ],
                     return_stdout_stderr=(out_log_file, err_log_file),
                 )
