@@ -94,23 +94,27 @@ class TestAscendWarmups(CustomTestCase):
         print(f"\n✅ 获取到 TP 进程：{tp_pids}")
         return tp_pids
 
-    def _get_taskset_affinity(self, pid):
+    def _get_taskset_cpu_range(self, pid):
         """
         步骤2：taskset -cp <pid>
-        获取进程的 CPU 亲和性字符串
+        仅提取 CPU 区间 如 24-31
         """
         result = subprocess.run(
             ["taskset", "-cp", pid],
             stdout=subprocess.PIPE,
             text=True
         )
-        affinity = result.stdout.strip()
-        print(f"📌 taskset -cp {pid} -> {affinity}")
-        return affinity
+        output = result.stdout.strip()
+
+        # 提取最后一段 24-31 这种格式
+        cpu_range = output.split(":")[-1].strip()
+
+        print(f"📌 taskset -cp {pid} -> {cpu_range}")
+        return cpu_range
 
     def test_numa_binding_by_taskset(self):
         """
-        步骤3：比较两个 TP 进程的 CPU 亲和性
+        步骤3：比较两个 TP 进程的 CPU 区间
         如果 --numa-node 1 1 → 应该相同
         """
         # 步骤1
@@ -118,23 +122,23 @@ class TestAscendWarmups(CustomTestCase):
         self.assertEqual(len(tp_pids), self.TP_SIZE, "TP进程数量不匹配")
 
         # 步骤2
-        affinity_tp0 = self._get_taskset_affinity(tp_pids["TP0"])
-        affinity_tp1 = self._get_taskset_affinity(tp_pids["TP1"])
+        cpu_tp0 = self._get_taskset_cpu_range(tp_pids["TP0"])
+        cpu_tp1 = self._get_taskset_cpu_range(tp_pids["TP1"])
 
         # 步骤3
-        print("\n🔍 对比 CPU 亲和性：")
-        print(f"   TP0: {affinity_tp0}")
-        print(f"   TP1: {affinity_tp1}")
+        print("\n🔍 对比 CPU 亲和性区间：")
+        print(f"   TP0: {cpu_tp0}")
+        print(f"   TP1: {cpu_tp1}")
 
-        # 配置为同一个 NUMA 节点 → 亲和性必须相同
+        # 配置为同一个 NUMA 节点 → CPU 区间必须相同
         if self.CONFIG_NUMA_LIST[0] == self.CONFIG_NUMA_LIST[1]:
-            self.assertEqual(affinity_tp0, affinity_tp1,
-                "❌ 两个NPU进程应绑定同一个NUMA节点，但CPU亲和性不一致！")
-            print("\n✅ 两个NPU绑定同一个NUMA节点 → CPU亲和性一致，校验通过！")
+            self.assertEqual(cpu_tp0, cpu_tp1,
+                             f"❌ 两个NPU应绑定同一个NUMA节点！CPU区间不一致：{cpu_tp0} vs {cpu_tp1}")
+            print("\n✅ 两个NPU绑定同一个NUMA节点 → CPU区间一致，校验通过！")
         else:
-            self.assertNotEqual(affinity_tp0, affinity_tp1,
-                "❌ 两个NPU应绑定不同NUMA，但CPU亲和性相同！")
-            print("\n✅ 两个NPU绑定不同NUMA节点 → CPU亲和性不同，校验通过！")
+            self.assertNotEqual(cpu_tp0, cpu_tp1,
+                                f"❌ 两个NPU应绑定不同NUMA节点！CPU区间相同：{cpu_tp0}")
+            print("\n✅ 两个NPU绑定不同NUMA节点 → CPU区间不同，校验通过！")
 
 
 if __name__ == "__main__":
