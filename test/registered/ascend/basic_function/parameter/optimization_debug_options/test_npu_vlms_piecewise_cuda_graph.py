@@ -137,9 +137,11 @@ class TestVLMPiecewiseCudaGraph(CustomTestCase):
                 other_args=[
                     "--trust-remote-code",
                     "--torch-compile-max-bs",
-                    "2",
+                    "64",
+                    "--cuda-graph-bs",
+                    "8",
                     "--piecewise-cuda-graph-max-tokens",
-                    "8192",
+                    "128",
                     "--enforce-piecewise-cuda-graph",
                     "--tp=8",
                     "--piecewise-cuda-graph-compiler=eager",
