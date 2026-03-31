@@ -150,7 +150,7 @@ class BaseTestNPULoadBalanceMethodDPDisaggregation(TestDisaggregationBase):
         # print(data.get("prefill")[0].get("load_balance_method"))
         # print(data.get("decode")[0].get("load_balance_method"))
         self.assertEqual(
-            "follow_bootstrap_room" if self.prefill_load_balance_method == "auto" else self.decode_load_balance_method,
+            "follow_bootstrap_room" if self.prefill_load_balance_method == "auto" else self.prefill_load_balance_method,
             data.get("prefill")[0].get("load_balance_method")
         )
         self.assertEqual(
