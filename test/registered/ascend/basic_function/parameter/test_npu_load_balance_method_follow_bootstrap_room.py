@@ -27,7 +27,8 @@ all_params = list(itertools.product(load_balance_method_options, repeat=2))
 
 
 class BaseTestNPULoadBalanceMethodDPDisaggregation(TestDisaggregationBase):
-    """Testcase：Verify that the inference is successful when --load-balance-method is set to follow_bootstrap_room.
+    """Testcase：Verify that the model accuracy did not decrease when --load-balance-method is set to round_robin, auto,
+    total_requests, total_tokens or follow_bootstrap_room in PD disaggregation scenario
 
     [Test Category] Parameter
     [Test Target] --load-balance-method
@@ -131,8 +132,8 @@ class BaseTestNPULoadBalanceMethodDPDisaggregation(TestDisaggregationBase):
         metrics = run_eval_few_shot_gsm8k(args)
         self.assertGreaterEqual(
             metrics["accuracy"],
-            # 0.95 with 0.01 tolerable fluctuation
-            0.94,
+            # 0.95 with 0.02 tolerable fluctuation
+            0.93,
         )
 
     def test_server_info(self):

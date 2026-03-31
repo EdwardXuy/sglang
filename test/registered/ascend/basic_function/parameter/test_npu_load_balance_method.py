@@ -22,8 +22,8 @@ register_npu_ci(est_time=700, suite="nightly-16-npu-a3", nightly=True)
 
 
 class TestDPAttentionRoundBinLoadBalance(CustomTestCase):
-    """Testcase：Verify that the inference is successful when --load-balance-method is set to round_robin, auto,
-    total_requests, total_tokens
+    """Testcase：Verify that the model accuracy did not decrease when --load-balance-method is set to round_robin, auto,
+    total_requests or total_tokens in PD mixed scenario
 
     [Test Category] Parameter
     [Test Target] --load-balance-method
