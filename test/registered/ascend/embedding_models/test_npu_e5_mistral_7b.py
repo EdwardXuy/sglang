@@ -5,17 +5,10 @@ import torch
 from transformers import AutoConfig, AutoTokenizer
 
 from sglang.test.ascend.test_ascend_utils import E5_MISTRAL_7B_INSTRUCT_WEIGHTS_PATH
-from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.runners import DEFAULT_PROMPTS, HFRunner, SRTRunner
 from sglang.test.test_utils import (
     CustomTestCase,
     get_similarities,
-)
-
-register_npu_ci(
-    est_time=400,
-    suite="nightly-1-npu-a3",
-    nightly=True,
 )
 
 MODELS = [
@@ -55,29 +48,29 @@ class TestE5Mistral7b(CustomTestCase):
         return truncated_prompts
 
     def assert_close_prefill_logits(
-        self,
-        prompts,
-        model_path,
-        tp_size,
-        torch_dtype,
-        prefill_tolerance,
+            self,
+            prompts,
+            model_path,
+            tp_size,
+            torch_dtype,
+            prefill_tolerance,
     ) -> None:
         truncated_prompts = self._truncate_prompts(prompts, model_path)
 
         with HFRunner(
-            model_path,
-            torch_dtype=torch_dtype,
-            model_type="embedding",
+                model_path,
+                torch_dtype=torch_dtype,
+                model_type="embedding",
         ) as hf_runner:
             hf_outputs = hf_runner.forward(truncated_prompts)
 
         attention_backend = "ascend"
         with SRTRunner(
-            model_path,
-            tp_size=tp_size,
-            torch_dtype=torch_dtype,
-            model_type="embedding",
-            attention_backend=attention_backend,
+                model_path,
+                tp_size=tp_size,
+                torch_dtype=torch_dtype,
+                model_type="embedding",
+                attention_backend=attention_backend,
         ) as srt_runner:
             srt_outputs = srt_runner.forward(truncated_prompts)
 
