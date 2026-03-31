@@ -95,12 +95,12 @@ class TestQwen3527B(TestAscendPerformanceTestCaseBase):
     other_args = OTHER_ARGS
     envs = ENVS
     dataset_name = "random"
-    max_concurrency = 10
+    max_concurrency = 128
     num_prompts = int(max_concurrency) * 4
     input_len = 3500
     output_len = 1500
     random_range_ratio = 1
-    tpot = 20
+    tpot = 50
 
     def test_qwen3_5_27b(self):
         self.run_throughput()
