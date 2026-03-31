@@ -261,7 +261,7 @@ SKYWORK_REWARD_LLAMA_3_1_8B_V0_2_WEIGHTS_PATH = os.path.join(
 
 # Other
 DEEPSEEK_CODER_JSON_PATH = "/__w/sglang/sglang/test/registered/ascend/basic_function/parameter/deepseek_coder.json"
-CONFIG_YAML_PATH = "/__w/sglang/test/registered/ascend/basic_function/ConfigurationFileSupport/config.yaml"
+CONFIG_YAML_PATH = "../../../test/registered/ascend/basic_function/ConfigurationFileSupport/config.yaml"
 
 
 class ModelTestConfig(NamedTuple):
@@ -562,7 +562,6 @@ def popen_launch_server_with_config_yaml(config_file, base_url, timeout):
     parsed_url = urlparse(base_url)
     host = parsed_url.hostname
     port = parsed_url.port
-    host = host[2:]
     command = [
         "python3",
         "-m",
