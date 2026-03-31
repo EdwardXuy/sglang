@@ -142,6 +142,8 @@ class TestVLMPiecewiseCudaGraph(CustomTestCase):
                     # "16",
                     "--cuda-graph-max-bs",
                     "32",
+                    "--mem-fraction-static",
+                    0.8,
                     "--piecewise-cuda-graph-max-tokens",
                     "128",
                     "--enforce-piecewise-cuda-graph",
