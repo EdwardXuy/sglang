@@ -50,22 +50,21 @@ register_npu_ci(est_time=400, suite="nightly-8-npu-a3", nightly=True)
 
 _ASCEND_BACKEND = "ascend"
 
-# DeepSeek-V3.2 推荐参数（根据 SGLang 官方建议）
 _SERVER_ARGS = [
     "--trust-remote-code",
     "--attention-backend", _ASCEND_BACKEND,
     "--disable-radix-cache",
     # Use NEXTN algorithm (MTP) – no draft model needed
-    "--speculative-algorithm", "EAGLE",# or NEXTN
+    "--speculative-algorithm", "EAGLE",
     # Number of auto-regressive steps per iteration (tune based on GPU memory)
-    "--speculative-num-steps", "3",  ## 2 for NEXTN: Lower for memory, increase for speed
+    "--speculative-num-steps", "3",  # Lower for memory, increase for speed
     # Branching factor (1 = greedy, >1 for speculative sampling, SPEC-V2 now only support 1)
     "--speculative-eagle-topk", "1",         # Branching factor
     # Maximum draft tokens to verify per step
-    "--speculative-num-draft-tokens", "5", # 3 for NEXTN
+    "--speculative-num-draft-tokens", "5", # Lower for memory, increase for speed
     "--speculative-attention-mode", "decode",
     "--tp-size", "16",   # Tensor parallelism – adjust according to available NPUs）
-    "--mem-fraction-static", "0.5",  #0.9 for NEXTN
+    "--mem-fraction-static", "0.85",  # adjust according to available HBM
     "--disable-cuda-graph",
     "--dtype", "bfloat16",
 ]
