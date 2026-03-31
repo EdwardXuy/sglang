@@ -229,6 +229,7 @@ class TestPrefillDelayerThroughputOnlineServing(CustomTestCase):
                 "lpm",
                 "--attention-backend",
                 "ascend",
+                "--disable-cuda-graph",
             ],
             other_benchmark_args=dict(
                 num_prompts=500,
@@ -250,7 +251,7 @@ class TestPrefillDelayerThroughputOfflineGen(CustomTestCase):
         _run_throughput_comparison(
             self,
             test_name="offline_gen",
-            other_launch_args=["--max-total-tokens", "200000", "--attention-backend", "ascend",],
+            other_launch_args=["--max-total-tokens", "200000", "--attention-backend", "ascend", "--disable-cuda-graph",],
             other_benchmark_args=dict(
                 num_prompts=800,
                 random_input_len=30000,
@@ -372,8 +373,8 @@ class TestPrefillDelayerTokenUsageLowWatermark(CustomTestCase):
             model=model,
             base_url=base_url,
             prefill_delayer=True,
-            other_args=["--max-total-tokens", "50000", "--attention-backend", "ascend",],
-            max_delay_passes=1000,
+            other_args=["--max-total-tokens", "50000", "--attention-backend", "ascend", "--disable-cuda-graph",],
+            max_delay_passes=100,
             token_usage_low_watermark=token_usage_low_watermark,
             timeout=6000,
         )
@@ -463,6 +464,7 @@ class TestPrefillDelayerAccuracy(CustomTestCase):
                 "4096",
                 "--attention-backend",
                 "ascend",
+                "--disable-cuda-graph",
             ],
         )
         try:
@@ -510,6 +512,7 @@ def _launch_server(
             "0.6",
             "--attention-backend",
             "ascend",
+            "--disable-cuda-graph",
             "--enable-metrics",
             *(["--enable-prefill-delayer"] if prefill_delayer else []),
             "--prefill-delayer-max-delay-passes",
