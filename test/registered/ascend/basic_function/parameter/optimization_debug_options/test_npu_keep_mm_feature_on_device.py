@@ -22,7 +22,6 @@ class TestPhi4MultimodalLatencyCompare(TestVLMModels):
         "--attention-backend",
         "ascend",
         "--disable-cuda-graph",
-        "--disable-radix-cache",
     ]
 
     def _run_and_measure_time(self, extra_args):
