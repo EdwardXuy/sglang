@@ -33,8 +33,8 @@ class BaseTestNPULoadBalanceMethodDPDisaggregation(TestDisaggregationBase):
     [Test Target] --load-balance-method
     """
 
-    # params = None
-    params = ("round_robin", "total_requests")
+    params = None
+    # params = ("round_robin", "total_requests")
 
     # load_balance_method = "follow_bootstrap_room"
     # load_balance_method = "round_robin"
@@ -124,22 +124,22 @@ class BaseTestNPULoadBalanceMethodDPDisaggregation(TestDisaggregationBase):
         )
 
 
-    # def test_gsm8k(self):
-    #     args = SimpleNamespace(
-    #         num_shots=5,
-    #         data_path=None,
-    #         num_questions=200,
-    #         max_new_tokens=512,
-    #         parallel=128,
-    #         host=f"http://{self.url.hostname}",
-    #         port=int(self.url.port),
-    #     )
-    #
-    #     metrics = run_eval_few_shot_gsm8k(args)
-    #     self.assertGreaterEqual(
-    #         metrics["accuracy"],
-    #         0.95,
-    #     )
+    def test_gsm8k(self):
+        args = SimpleNamespace(
+            num_shots=5,
+            data_path=None,
+            num_questions=200,
+            max_new_tokens=512,
+            parallel=128,
+            host=f"http://{self.url.hostname}",
+            port=int(self.url.port),
+        )
+
+        metrics = run_eval_few_shot_gsm8k(args)
+        self.assertGreaterEqual(
+            metrics["accuracy"],
+            0.95,
+        )
 
     def test_server_info(self):
         response = requests.get(f"{self.lb_url}/get_server_info")
@@ -161,16 +161,16 @@ class BaseTestNPULoadBalanceMethodDPDisaggregation(TestDisaggregationBase):
         sleep(30)
 
 
-#
-# for index, param_tuple in enumerate(all_params):
-#     prefill_load_balance_method, decode_load_balance_method = param_tuple
-#     class_name = f"Test_{index:02d}_prefill_{prefill_load_balance_method}_decode_{decode_load_balance_method}"
-#     new_class = type(
-#         class_name,
-#         (BaseTestNPULoadBalanceMethodDPDisaggregation, ),
-#         {"params": param_tuple}
-#     )
-#     globals()[class_name] = new_class
+
+for index, param_tuple in enumerate(all_params):
+    prefill_load_balance_method, decode_load_balance_method = param_tuple
+    class_name = f"Test_{index:02d}_prefill_{prefill_load_balance_method}_decode_{decode_load_balance_method}"
+    new_class = type(
+        class_name,
+        (BaseTestNPULoadBalanceMethodDPDisaggregation, ),
+        {"params": param_tuple}
+    )
+    globals()[class_name] = new_class
 
 
 
