@@ -1,4 +1,5 @@
 import itertools
+import json
 import os
 import unittest
 from time import sleep
@@ -143,8 +144,9 @@ class BaseTestNPULoadBalanceMethodDPDisaggregation(TestDisaggregationBase):
     def test_server_info(self):
         response = requests.get(f"{self.lb_url}/get_server_info")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(self.prefill_load_balance_method, response.json()["prefill"]["load_balance_method"])
-        self.assertEqual(self.decode_load_balance_method, response.json()["decode"]["load_balance_method"])
+        data = json.loads(response.text)
+        self.assertEqual(self.prefill_load_balance_method, data["prefill"]["load_balance_method"])
+        self.assertEqual(self.decode_load_balance_method, data["decode"]["load_balance_method"])
         # with open("test.log", "w", encoding="utf-8") as f:
         #     f.write(response.text)
         # # self.assertIn(self.prefill_load_balance_method, response.text)
