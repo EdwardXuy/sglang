@@ -21,7 +21,7 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
-register_npu_ci(est_time=600, suite="nightly-2-npu-a3", nightly=True)
+register_npu_ci(est_time=400, suite="nightly-2-npu-a3", nightly=True)
 
 
 class TestMetricsExporter(CustomTestCase):
@@ -267,6 +267,43 @@ class TestMetricsExporter(CustomTestCase):
         logging.warning(f"Batch processing requests successful.")
         for record in metrics_records:
             self.assertIn("request_parameters", record)
+
+        metrics_path = Path(self.metrics_dir)
+        if metrics_path.exists():
+            for log_file in metrics_path.glob("sglang-request-metrics-*.log"):
+                Path(log_file).write_text("")
+        time.sleep(10)
+
+    def test_long_request(self):
+        """Test long request exports"""
+        logging.warning("****test6: Test long request exports")
+        long_prompt = "Explain the concept of machine learning in detail. " * 100
+        response = requests.post(
+            f"{self.base_url}/generate",
+            json={
+                "text": long_prompt,
+                "sampling_params": {
+                    "temperature": 0,
+                    "max_new_tokens": 128,
+                },
+            },
+            timeout=180,
+        )
+        self.assertEqual(response.status_code, 200)
+        metrics_files = self._get_metrics_files()
+        self.assertGreater(len(metrics_files), 0, "Generate specified file")
+
+        metrics_records = self._read_metrics_records(metrics_files)
+        self.assertGreater(len(metrics_records), 0, "It contains at least one record")
+
+        record = metrics_records[0]
+        self.assertIn("request_parameters", record)
+        self.assertIn("prompt_tokens", record)
+        self.assertIn("completion_tokens", record)
+
+        request_parameters = json.loads(record["request_parameters"])
+        self.assertIn("text", request_parameters)
+        self.assertIn("sampling_params", request_parameters)
 
         metrics_path = Path(self.metrics_dir)
         if metrics_path.exists():

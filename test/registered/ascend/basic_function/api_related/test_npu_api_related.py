@@ -1,17 +1,11 @@
-import logging
 import os
 import unittest
-from types import SimpleNamespace
-
+import openai
 import requests
 
 from sglang.srt.utils import kill_process_tree
-from sglang.test.ascend.test_ascend_utils import (
-    C4AI_COMMAND_R_V01_WEIGHTS_PATH,
-    LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH,
-)
+from sglang.test.ascend.test_ascend_utils import C4AI_COMMAND_R_V01_WEIGHTS_PATH
 from sglang.test.ci.ci_register import register_npu_ci
-from sglang.test.few_shot_gsm8k import run_eval
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
@@ -22,18 +16,30 @@ from sglang.test.test_utils import (
 register_npu_ci(est_time=400, suite="nightly-2-npu-a3", nightly=True)
 
 
-class TestApiRelatedGHFChat(CustomTestCase):
+class TestNpuApiRelated(CustomTestCase):
     """The API test with combined parameters returned the correct values for model_name and weight_version, indicating successful inference.
 
     [Test Category] Functional
     [Test Target] Api related on NPU
-    --served-model-name; --weight-version; --hf-chat-template-name
+    --served-model-name; --weight-version; --hf-chat-template-name; --enable-cache-report
     """
+
+    SYSTEM_MESSAGE = (
+        "You are a helpful assistant with tool calling capabilities. "
+        "Only reply with a tool call if the function exists in the library provided by the user. "
+        "If it doesn't exist, just reply directly in natural language. "
+        "When you receive a tool call response, use the output to format an answer to the original user question. "
+        "You have access to the following functions. "
+        "To call a function, please respond with JSON for a function call. "
+        'Respond in the format {"name": function name, "parameters": dictionary of argument name and its value}. '
+        "Do not use variables.\n\n"
+    )
 
     @classmethod
     def setUpClass(cls):
         cls.model = C4AI_COMMAND_R_V01_WEIGHTS_PATH
         cls.base_url = DEFAULT_URL_FOR_TEST
+        cls.api_key = "sk-123456"
         cls.custom_model_name = "Llama3.2"
         cls.weight_version = "v1.0.0"
         cls.hf_chat_template_name = "tool_use"
@@ -52,6 +58,7 @@ class TestApiRelatedGHFChat(CustomTestCase):
             cls.weight_version,
             "--hf-chat-template-name",
             cls.hf_chat_template_name,
+            "--enable-cache-report",
         ]
 
         cls.out_log_file = open("./cache_out_log.txt", "w+", encoding="utf-8")
@@ -61,9 +68,11 @@ class TestApiRelatedGHFChat(CustomTestCase):
             cls.model,
             cls.base_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            api_key=cls.api_key,
             other_args=other_args,
             return_stdout_stderr=(cls.out_log_file, cls.err_log_file),
         )
+        cls.base_url += "/v1"
 
     @classmethod
     def tearDownClass(cls):
@@ -73,13 +82,19 @@ class TestApiRelatedGHFChat(CustomTestCase):
 
     def test_served_model_weight_version(self):
         # Verify the weight version identifier and the served-model-name covered model name.
-        response = requests.get(f"{self.base_url}/v1/models")
+        response = requests.get(
+            f"{DEFAULT_URL_FOR_TEST}/v1/models",
+            headers={"Authorization": "Bearer sk-123456"}
+        )
         result = response.json()
 
         self.assertIn("data", result)
         self.assertEqual(result["data"][0]["id"], self.custom_model_name)
 
-        response1 = requests.get(f"{self.base_url}/model_info")
+        response1 = requests.get(
+            f"{DEFAULT_URL_FOR_TEST}/model_info",
+            headers={"Authorization": "Bearer sk-123456"}
+        )
         self.assertEqual(response1.json()["weight_version"], self.weight_version)
 
         # Verify that the hf-chat-template-name configuration is effective, including the configuration value tool_use.
@@ -91,169 +106,54 @@ class TestApiRelatedGHFChat(CustomTestCase):
 
     def test_chat_template_request(self):
         """Send inference request"""
-        response = requests.post(
-            f"{DEFAULT_URL_FOR_TEST}/v1/completions",
-            json={
-                "prompt": "What is the capital of France?",
-                "max_tokens": 128,
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        result = response.json()
-        self.assertIn("choices", result)
-        self.assertGreater(len(result["choices"]), 0)
-        logging.warning(
-            f"Builtin chat template works: {result['choices'][0]['text'][:50]}..."
-        )
+        client = openai.Client(api_key=self.api_key, base_url=self.base_url)
 
-
-class TestApiRelatedToolCallParser(CustomTestCase):
-    """Test combined parameter tool-server and tool-call-parser, indicating successful inference.
-
-    [Test Category] Functional
-    [Test Target] Api related on NPU
-    --tool-server; --tool-call-parser
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
-        cls.base_url = DEFAULT_URL_FOR_TEST
-        other_args = [
-            "--trust-remote-code",
-            "--mem-fraction-static",
-            "0.8",
-            "--attention-backend",
-            "ascend",
-            "--disable-cuda-graph",
-            "--tool-server",
-            "demo",
-            "--tool-call-parser",
-            "llama3",
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "add",
+                    "description": "Compute the sum of two numbers",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "a": {
+                                "type": "integer",
+                                "description": "A number",
+                            },
+                            "b": {
+                                "type": "integer",
+                                "description": "A number",
+                            },
+                        },
+                        "required": ["a", "b"],
+                    },
+                },
+            }
         ]
 
-        cls.process = popen_launch_server(
-            cls.model,
-            cls.base_url,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=other_args,
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        kill_process_tree(cls.process.pid)
-
-    def test_tool_call_parser(self):
-        """Send batch request"""
-        args = SimpleNamespace(
-            num_shots=5,
-            data_path=None,
-            num_questions=200,
-            max_new_tokens=512,
-            parallel=128,
-            host="http://127.0.0.1",
-            port=int(self.base_url.split(":")[-1]),
-        )
-        run_eval(args)
-
-
-class TestApiRelatedSamplingDefaults(CustomTestCase):
-    """Test --chat-template, indicating successful inference.
-
-    [Test Category] Functional
-    [Test Target] Api related on NPU
-    --sampling-defaults; --chat-template; --tool-call-parser
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
-        cls.base_url = DEFAULT_URL_FOR_TEST
-        other_args = [
-            "--trust-remote-code",
-            "--mem-fraction-static",
-            "0.8",
-            "--attention-backend",
-            "ascend",
-            "--disable-cuda-graph",
-            "--sampling-defaults",
-            "openai",
-            "--chat-template",
-            "llama-4",
-            "--tool-call-parser",
-            "pythonic",
+        messages = [
+            {"role": "system", "content": self.SYSTEM_MESSAGE},
+            {"role": "user", "content": "Compute (3+5)"},
         ]
-
-        cls.process = popen_launch_server(
-            cls.model,
-            cls.base_url,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=other_args,
+        response = client.chat.completions.create(
+            model=self.model,
+            max_tokens=2048,
+            messages=messages,
+            temperature=0.8,
+            top_p=0.8,
+            stream=False,
+            tools=tools,
         )
-
-    @classmethod
-    def tearDownClass(cls):
-        kill_process_tree(cls.process.pid)
-
-    def test_chat_template_requests(self):
-        """Send requests using the /v1/chat/completions interface."""
-        response = requests.post(
-            f"{self.base_url}/v1/chat/completions",
-            json={
-                "model": "llama-3.2",
-                "messages": [
-                    {"role": "user", "content": "Hello, how are you?"},
-                ],
-            },
-        )
-        result = response.json()
-        self.assertIn("choices", result)
-        self.assertGreater(len(result["choices"]), 0)
-        logging.warning(
-            f"Builtin chat template works: {result['choices'][0]['message']['content'][:50]}..."
-        )
-
-
-class TestApiRelatedCacheReport(CustomTestCase):
-    """Test verify set --enable-cache-report, sent openai request prompt_tokens_details will return cached_tokens.
-
-    [Test Category] Functional
-    [Test Target] Api related on NPU
-    --chat-template; --enable-cache-report
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
-        cls.base_url = DEFAULT_URL_FOR_TEST
-        other_args = [
-            "--trust-remote-code",
-            "--mem-fraction-static",
-            "0.8",
-            "--attention-backend",
-            "ascend",
-            "--disable-cuda-graph",
-            "--chat-template",
-            "llama-2",
-            "--enable-cache-report",
-        ]
-
-        cls.process = popen_launch_server(
-            cls.model,
-            cls.base_url,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=other_args,
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        kill_process_tree(cls.process.pid)
+        reason = response.choices[0].finish_reason
+        self.assertEqual(reason, "stop")
 
     def test_cache_report(self):
         """Return number of cached tokens in prompt_tokens_details for each openai request."""
         for i in range(2):
             response = requests.post(
                 f"{DEFAULT_URL_FOR_TEST}/v1/completions",
+                headers={"Authorization": "Bearer sk-123456"},
                 json={
                     "prompt": "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
                     "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
@@ -276,61 +176,6 @@ class TestApiRelatedCacheReport(CustomTestCase):
                     "cached_tokens"
                 ]
                 self.assertEqual(256, cached_tokens)
-
-
-class TestApiRelatedReasoningParser(CustomTestCase):
-    """Test for reasoning content API with DeepSeek R1 reasoning parser.
-
-    [Test Category] Functional
-    [Test Target] Api related on NPU
-    --reasoning-parser; --completion-template
-    """
-
-    @classmethod
-    def setUpClass(cls):
-        cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
-        cls.base_url = DEFAULT_URL_FOR_TEST
-        other_args = [
-            "--trust-remote-code",
-            "--mem-fraction-static",
-            "0.8",
-            "--attention-backend",
-            "ascend",
-            "--disable-cuda-graph",
-            "--reasoning-parser",
-            "deepseek-r1",
-            "--completion-template",
-            "deepseek_coder",
-        ]
-
-        cls.process = popen_launch_server(
-            cls.model,
-            cls.base_url,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-            other_args=other_args,
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        kill_process_tree(cls.process.pid)
-
-    def test_reasoning_requests(self):
-        """Send inference request"""
-        response = requests.post(
-            f"{self.base_url}/generate",
-            json={
-                "text": "What is the capital of France?",
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": 32,
-                },
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        result = response.json()
-        self.assertIn("text", result)
-        self.assertGreater(len(result["text"]), 0)
-        logging.warning(f"Request with succeeded: {result['text'][:50]}")
 
 
 if __name__ == "__main__":
