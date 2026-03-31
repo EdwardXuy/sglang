@@ -65,7 +65,9 @@ EXAONE_3_5_7_8B_INSTRUCT_WEIGHTS_PATH = os.path.join(
 )
 GEMMA_3_4B_IT_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "google/gemma-3-4b-it")
 GLM_4_9B_CHAT_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "ZhipuAI/glm-4-9b-chat")
-GPT_OSS_120B_BF16_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "eigen-ai-labs/gpt-oss-120b-bf16")
+GPT_OSS_120B_BF16_WEIGHTS_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "eigen-ai-labs/gpt-oss-120b-bf16"
+)
 GRANITE_3_0_3B_A800M_INSTRUCT_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "ibm-granite/granite-3.0-3b-a800m-instruct"
 )
