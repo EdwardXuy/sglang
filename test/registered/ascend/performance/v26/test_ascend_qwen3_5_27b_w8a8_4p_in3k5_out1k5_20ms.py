@@ -2,7 +2,7 @@ import unittest
 
 from sglang.test.ascend.e2e.test_npu_performance_utils import (
     QWEN3_A3B_EAGLE_MODEL_PATH,
-    TestAscendPerformanceTestCaseBase, QWEN3_5_27B_MODEL_PATH,
+    TestAscendPerformanceTestCaseBase, QWEN3_5_27B_MODEL_PATH, QWEN3_5_27B_W8A8_MODEL_PATH,
 )
 from sglang.test.ci.ci_register import register_npu_ci
 
@@ -92,7 +92,7 @@ OTHER_ARGS = [
 
 
 class TestQwen3527B(TestAscendPerformanceTestCaseBase):
-    model = QWEN3_5_27B_MODEL_PATH
+    model = QWEN3_5_27B_W8A8_MODEL_PATH
     other_args = OTHER_ARGS
     envs = ENVS
     dataset_name = "random"
