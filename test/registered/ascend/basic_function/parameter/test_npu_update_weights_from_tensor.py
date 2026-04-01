@@ -1,11 +1,10 @@
-from sglang.test.ci.ci_register import register_npu_ci
-
 import gc
 import unittest
 
 import torch
 
 import sglang as sgl
+from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_SMALL_MODEL_NAME_FOR_TEST,
     CustomTestCase,
