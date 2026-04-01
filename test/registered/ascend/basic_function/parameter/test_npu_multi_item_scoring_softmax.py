@@ -1,13 +1,12 @@
 import logging
-import os
 import unittest
-
-
-
 
 from sglang.srt.utils import kill_process_tree
 from sglang.srt.utils.hf_transformers_utils import get_tokenizer
-from sglang.test.ascend.test_ascend_utils import QWEN3_32B_WEIGHTS_PATH, send_score_request
+from sglang.test.ascend.test_ascend_utils import (
+    QWEN3_32B_WEIGHTS_PATH,
+    send_score_request,
+)
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -69,7 +68,6 @@ class TestMultiItemScoringSoftmax(CustomTestCase):
     @classmethod
     def setUpClass(cls):
         cls.base_url = DEFAULT_URL_FOR_TEST
-
 
         cls.tokenizer = get_tokenizer(QWEN3_32B_WEIGHTS_PATH)
         logger.info("Tokenizer loaded from %s.", QWEN3_32B_WEIGHTS_PATH)
@@ -163,7 +161,6 @@ class TestMultiItemScoringSoftmax(CustomTestCase):
             [len(t) for t in items_tokens],
         )
 
-
         response_false = send_score_request(
             base_url=self.base_url,
             query=query_tokens,
@@ -177,7 +174,6 @@ class TestMultiItemScoringSoftmax(CustomTestCase):
             f"apply_softmax=False: Expected HTTP 200, got {response_false.status_code}.",
         )
         scores_false = response_false.json()["scores"]
-
 
         for idx, score_list in enumerate(scores_false):
             for j, score in enumerate(score_list):
@@ -196,7 +192,6 @@ class TestMultiItemScoringSoftmax(CustomTestCase):
                 )
 
         logger.info("scores (apply_softmax=False): %s", scores_false)
-
 
         response_true = send_score_request(
             base_url=self.base_url,

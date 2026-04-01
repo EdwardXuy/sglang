@@ -14,7 +14,7 @@ Please remember to sort by variable name within each section.
 import asyncio
 import copy
 import os
-import requests as _requests
+import requests
 import subprocess
 from types import SimpleNamespace
 from typing import Awaitable, Callable, NamedTuple, Optional
@@ -551,6 +551,7 @@ def run_bench_serving(
     assert res["completed"] == num_prompts
     return res
     
+
 def send_score_request(
     base_url,
     query,
@@ -598,7 +599,7 @@ def send_score_request(
         "apply_softmax": apply_softmax,
         "item_first": item_first,
     }
-    return _requests.post(
+    return requests.post(
         url=f"{base_url}/v1/score",
         json=payload,
         headers={"Content-Type": "application/json"},

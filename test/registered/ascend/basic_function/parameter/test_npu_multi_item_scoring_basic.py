@@ -1,11 +1,11 @@
 import logging
-import os
 import unittest
 
-
-
 from sglang.srt.utils import kill_process_tree
-from sglang.test.ascend.test_ascend_utils import QWEN3_32B_WEIGHTS_PATH, send_score_request
+from sglang.test.ascend.test_ascend_utils import (
+    QWEN3_32B_WEIGHTS_PATH,
+    send_score_request,
+)
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -112,9 +112,7 @@ class TestMultiItemScoringBasic(CustomTestCase):
             query=_QUERY,
             items=_ITEMS,
             label_token_ids=_LABEL_TOKEN_IDS,
-            apply_softmax=True,
         )
-
 
         self.assertEqual(
             response.status_code,
@@ -124,7 +122,6 @@ class TestMultiItemScoringBasic(CustomTestCase):
 
         result = response.json()
 
-
         self.assertIn("scores", result, "Response must contain 'scores' field.")
         scores = result["scores"]
         self.assertEqual(
@@ -132,7 +129,6 @@ class TestMultiItemScoringBasic(CustomTestCase):
             len(_ITEMS),
             f"scores count ({len(scores)}) must equal number of items ({len(_ITEMS)}).",
         )
-
 
         for idx, score_list in enumerate(scores):
             self.assertEqual(
@@ -145,19 +141,8 @@ class TestMultiItemScoringBasic(CustomTestCase):
                 all(isinstance(v, float) for v in score_list),
                 f"scores[{idx}] contains non-float values: {score_list}",
             )
-            # apply_softmax=True: softmax over label_token_ids sums exactly to 1.0
-            self.assertAlmostEqual(
-                sum(score_list),
-                1.0,
-                places=5,
-                msg=(
-                    f"scores[{idx}] should sum to 1.0 with apply_softmax=True "
-                    f"(got {sum(score_list):.8f})."
-                ),
-            )
 
         logger.info("Scores returned: %s", scores)
-
 
         self.assertGreater(
             scores[0][0],
@@ -179,7 +164,9 @@ class TestMultiItemScoringBasic(CustomTestCase):
             "Wrong item 'It is 5': Yes-token probability (scores[2][0]) "
             "should be less than No-token probability (scores[2][1]).",
         )
-        logger.info("Semantic correctness verified: correct item ranked highest for Yes token.")
+        logger.info(
+            "Semantic correctness verified: correct item ranked highest for Yes token."
+        )
 
 
 if __name__ == "__main__":
