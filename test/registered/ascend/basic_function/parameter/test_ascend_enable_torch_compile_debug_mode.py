@@ -36,7 +36,7 @@ class TestEnableTorchCompileDebugMode(CustomTestCase):
         "--enable-torch-compile-debug-mode",
         "--enable-piecewise-cuda-graph",
         "--piecewise-cuda-graph-tokens",
-        "512",
+        "64",
     ]
     # model = QWEN3_14B_WEIGHTS_PATH
     # other_args = [
