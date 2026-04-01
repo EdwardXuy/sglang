@@ -172,6 +172,7 @@ class BaseTestNPULoadBalanceMethodDPDisaggregation(TestDisaggregationBase):
         # wait for server release source
         sleep(10)
 
+
 TestClassType = Type[BaseTestNPULoadBalanceMethodDPDisaggregation]
 all_test_classes: List[TestClassType] = [BaseTestNPULoadBalanceMethodDPDisaggregation]
 for index, param_tuple in enumerate(all_params):
