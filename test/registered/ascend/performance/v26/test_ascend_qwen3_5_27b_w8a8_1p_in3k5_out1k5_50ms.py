@@ -54,8 +54,6 @@ OTHER_ARGS = [
     100000,
     "--speculative-algorithm",
     "NEXTN",
-    "--speculative-draft-model-path",
-    QWEN3_A3B_EAGLE_MODEL_PATH,
     "--speculative-num-steps",
     3,
     "--speculative-eagle-topk",
