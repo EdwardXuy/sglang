@@ -25,9 +25,10 @@ class TestNPULogExcludePrefixes(TestNPULoggingBase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.other_args.extend(
-            ["--uvicorn-access-log-exclude-prefixes", "/health", "/get_server_info"]
-        )
+        if cls.if_exclude_prefixes:
+            cls.other_args.extend(
+                ["--uvicorn-access-log-exclude-prefixes", "/health", "/get_server_info"]
+            )
         cls.launch_server()
 
     def test_log_exclude_prefixes(self):
@@ -51,15 +52,6 @@ class TestNPULogExcludePrefixes(TestNPULoggingBase):
 
 class TestNPULogNotExcludePrefixes(TestNPULogExcludePrefixes, TestNPULoggingBase):
     if_exclude_prefixes = False
-
-    @classmethod
-    def setUpClass(cls):
-        TestNPULoggingBase.setUpClass()
-        cls.launch_server()
-
-    @classmethod
-    def tearDownClass(cls):
-        TestNPULoggingBase.tearDownClass()
 
 
 if __name__ == "__main__":
