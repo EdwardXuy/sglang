@@ -47,13 +47,17 @@ class TestNPULogExcludePrefixes(TestNPULoggingBase):
             self.assertIn(server_info_log, content)
 
 
-class TestNPULogNotExcludePrefixes(TestNPULoggingBase):
+class TestNPULogNotExcludePrefixes(TestNPULogExcludePrefixes, TestNPULoggingBase):
     if_exclude_prefixes = False
 
     @classmethod
     def setUpClass(cls):
-        super().setUpClass()
+        TestNPULoggingBase.setUpClass()
         cls.launch_server()
+
+    @classmethod
+    def tearDownClass(cls):
+        TestNPULoggingBase.tearDownClass()
 
 
 if __name__ == "__main__":
