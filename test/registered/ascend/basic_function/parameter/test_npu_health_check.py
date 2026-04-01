@@ -1,4 +1,5 @@
 import unittest
+
 import requests
 
 from sglang.srt.utils import kill_process_tree
@@ -45,7 +46,7 @@ class TestHealthCheckEndpoint(CustomTestCase):
     def test_health_endpoint(self):
         """Verify /health endpoint is reachable and reports healthy status."""
         # Step 1: Send GET request to the /health liveness probe
-        response = requests.get(f"{self.base_url}/health")
+        response = requests.get(f"{self.base_url}/health", timeout=10)
         # Checkpoint: a running server must return HTTP 200 on /health
         self.assertEqual(response.status_code, 200)
 
@@ -54,7 +55,7 @@ class TestHealthCheckEndpoint(CustomTestCase):
         # Step 1: Send GET request to /health_generate
         # This endpoint performs a lightweight internal generate call to confirm
         # the model is loaded and the inference pipeline is functional.
-        response = requests.get(f"{self.base_url}/health_generate")
+        response = requests.get(f"{self.base_url}/health_generate", timeout=10)
         # Checkpoint: HTTP 200 confirms the model is loaded and inference is ready
         self.assertEqual(response.status_code, 200)
 

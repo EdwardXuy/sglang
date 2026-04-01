@@ -70,7 +70,7 @@ class TestNpuEagle3Basic(CustomTestCase):
     def setUpClass(cls) -> None:
         cls.base_url = DEFAULT_URL_FOR_TEST
         env = os.environ.copy()
-        os.environ.update(
+        env.update(
             {
                 "SGLANG_ENABLE_OVERLAP_PLAN_STREAM": "1",
                 "SGLANG_ENABLE_SPEC_V2": "1",

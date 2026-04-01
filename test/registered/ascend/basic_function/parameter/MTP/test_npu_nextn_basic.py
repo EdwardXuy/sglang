@@ -35,11 +35,11 @@ _SERVER_ARGS = [
     "1",  # Branching factor
     # Maximum draft tokens to verify per step
     "--speculative-num-draft-tokens",
-    "5", # Lower for memory, increase for speed
+    "5",  # Lower for memory, increase for speed
     "--speculative-attention-mode",
     "decode",
     "--tp-size",
-    "16",   # Tensor parallelism – adjust according to available NPUs）
+    "16",   # Tensor parallelism – adjust according to available NPUs
     "--mem-fraction-static",
     "0.85",  # adjust according to available HBM
     "--disable-cuda-graph",
@@ -60,7 +60,7 @@ class TestNpuNextnDeepSeek(CustomTestCase):
     def setUpClass(cls) -> None:
         cls.base_url = DEFAULT_URL_FOR_TEST
         env = os.environ.copy()
-        os.environ.update(
+        env.update(
             {
                 "SGLANG_ENABLE_OVERLAP_PLAN_STREAM": "1",
                 "SGLANG_ENABLE_SPEC_V2": "1",

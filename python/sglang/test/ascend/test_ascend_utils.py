@@ -554,7 +554,7 @@ def run_bench_serving(
 
 
 def send_inference_request(
-        base_url: str, model: str, prompt: str, max_tokens: int =512
+    base_url: str, model: str, prompt: str, max_tokens: int = 512
 ) -> dict:
     """
     POST a single-turn chat completion request to a running SGLang server.
@@ -610,7 +610,7 @@ def get_avg_spec_accept_length(base_url: str) -> float:
 
 
 def assert_spec_decoding_active(
-        test_case, base_url: str, threshold: float = 1.0
+    test_case, base_url: str, threshold: float = 1.0
 ) -> None:
     """
     Assert that avg_spec_accept_length > threshold.
@@ -657,4 +657,5 @@ def check_server_health(base_url: str, endpoint: str = "/health") -> bool:
     try:
         response = requests.get(f"{base_url}{endpoint}", timeout=10)
         return response.status_code == 200
-    except requests.exceptions.RequestException:return False
+    except requests.exceptions.RequestException:
+        return False
