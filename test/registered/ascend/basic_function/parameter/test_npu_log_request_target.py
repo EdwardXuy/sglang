@@ -49,6 +49,10 @@ class TestNPULogRequestTarget(TestNPULoggingBase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Paris", response.text)
 
+        #
+        content = self.output_capturer.get_all()
+        self.assertIn("Receive:", content)
+        self.assertIn("Finish:", content)
 
 
         log_files = list(Path(self.temp_dir).glob("*.log"))
@@ -66,6 +70,7 @@ class TestNPULogRequestTarget(TestNPULoggingBase):
     @classmethod
     def tearDownClass(cls):
         super().tearDownClass()
+        cls.output_capturer.stop()
         cls._temp_dir_obj.cleanup()
 
 
