@@ -49,8 +49,6 @@ class TestAscendCudaGraphGC(unittest.TestCase):
             "--tp-size", "1",
             "--mem-fraction-static", "0.7",
             "--attention-backend", "ascend",
-            "--cuda-graph-max-bs",
-            "16",
         ]
         if enable_cudagraph_gc:
             extra_args.append("--enable-cudagraph-gc")
