@@ -1,7 +1,6 @@
 """Test loading weights from remote instance
 Backend: transfer_engine
 """
-from sglang.test.ci.ci_register import register_npu_ci
 
 import gc
 import os
@@ -12,6 +11,7 @@ import requests
 import torch
 import torch.multiprocessing as mp
 
+from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_PORT_FOR_SRT_TEST_RUNNER,
     DEFAULT_SMALL_MODEL_NAME_FOR_TEST,
