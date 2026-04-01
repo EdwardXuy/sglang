@@ -38,35 +38,18 @@ class TestNPUMetricsDefaultBucketBoundary(TestNPULoggingBase):
     """
 
     @staticmethod
-    def _inference_once(testcase, url):
-        response = requests.post(
-            f"{url}/generate",
-            json={
-                "text": "The capital of France is",
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": 32,
-                },
-            },
-        )
-        testcase.assertEqual(response.status_code, 200)
-        testcase.assertIn("Paris", response.text)
-
-    @staticmethod
     def _verify_metrics_and_bucket_boundary(
-        testcase,
-        model,
-        url,
-        expected_time_to_first_token_bucket=None,
-        expected_inter_token_latency_bucket=None,
-        expected_e2e_request_latency_bucket=None,
-        expected_prompt_tokens_bucket=None,
-        expected_generation_tokens_bucket=None,
+            testcase,
+            model,
+            url,
+            expected_time_to_first_token_bucket=None,
+            expected_inter_token_latency_bucket=None,
+            expected_e2e_request_latency_bucket=None,
+            expected_prompt_tokens_bucket=None,
+            expected_generation_tokens_bucket=None,
     ):
         """Validate that metrics buckets align with expected boundaries when --enable-metrics and bucket configuration parameters are set."""
-        # inference twice to monitor inter_token_latency_seconds_bucket
-        # TestNPUMetricsDefaultBucketBoundary._inference_once(testcase, url)
-        # TestNPUMetricsDefaultBucketBoundary._inference_once(testcase, url)
+        # Generate a sufficient number of tokens to monitor inter_token_latency_seconds_bucket
         response = requests.post(
             f"{url}/generate",
             json={
@@ -321,9 +304,4 @@ class TestNPUMetricsTSEBucketBoundary(TestNPULoggingBase):
 
 
 if __name__ == "__main__":
-    # unittest.main()
-    loader = unittest.TestLoader()
-    suite = unittest.TestSuite()
-    suite.addTests(loader.loadTestsFromTestCase(TestNPUMetricsDefaultBucketBoundary))
-    runner = unittest.TextTestRunner(verbosity=2)
-    runner.run(suite)
+    unittest.main()
