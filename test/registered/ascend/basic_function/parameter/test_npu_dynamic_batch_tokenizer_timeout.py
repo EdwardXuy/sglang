@@ -106,6 +106,7 @@ class TestDynamicBatchTokenizerTimeout01(TestDynamicBatchTokenizerTimeout0):
 
     batch_timeout = 0.01
 
+
 class TestDynamicBatchTokenizerTimeout1(TestDynamicBatchTokenizerTimeout0):
     """Testcase: Verify dynamic batch tokenizer with batch_wait_timeout=0.1 s.
     50x the default (0.002 s).  Long accumulation window maximizes batch_size
@@ -116,6 +117,7 @@ class TestDynamicBatchTokenizerTimeout1(TestDynamicBatchTokenizerTimeout0):
     """
 
     batch_timeout = 0.1
+
 
 if __name__ == "__main__":
     unittest.main()

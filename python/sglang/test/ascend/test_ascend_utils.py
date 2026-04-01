@@ -14,8 +14,8 @@ Please remember to sort by variable name within each section.
 import asyncio
 import copy
 import os
-import threading
 import subprocess
+import threading
 from types import SimpleNamespace
 from typing import Awaitable, Callable, NamedTuple, Optional
 
@@ -653,4 +653,5 @@ def verify_process_terminated(process, test_name: str = "") -> None:
     _time.sleep(2)
     assert process.poll() is not None, (
         f"{test_name}: Server process (pid={process.pid}) "
-        "is still running after tearDownClass.")
+        "is still running after tearDownClass."
+    )
