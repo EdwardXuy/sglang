@@ -1,8 +1,9 @@
-from sglang.test.ci.ci_register import register_cuda_ci
+from sglang.test.ci.ci_register import register_npu_ci
 
 import gc
-import torch
 import unittest
+
+import torch
 
 import sglang as sgl
 from sglang.test.test_utils import (
