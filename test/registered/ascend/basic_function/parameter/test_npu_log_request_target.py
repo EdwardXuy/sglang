@@ -49,18 +49,19 @@ class TestNPULogRequestTarget(TestNPULoggingBase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Paris", response.text)
 
-        #
+        # Standard output should include log information.
         content = self.output_capturer.get_all()
         self.assertIn("Receive:", content)
         self.assertIn("Finish:", content)
 
-
+        # The target log file in a single-level directory should contain log information.
         log_files = list(Path(self.temp_dir).glob("*.log"))
         self.assertGreater(len(log_files), 0)
         file_content = log_files[0].read_text()
         self.assertIn("Receive:", file_content)
         self.assertIn("Finish:", file_content)
 
+        # The target log file in a multi-level directory should contain log information.
         log_files = list(Path(self.temp_multi_level_dir).glob("*.log"))
         self.assertGreater(len(log_files), 0)
         file_content = log_files[0].read_text()
