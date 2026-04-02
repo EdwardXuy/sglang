@@ -1,0 +1,8 @@
+2|test/registered/ascend/performance/v26/req/test_ascend_qwen3_8b_w8a8_1p_in1k_out300_bs16.py
+2|test/registered/ascend/performance/v26/req/test_ascend_qwen3_8b_w8a8_1p_in6k_out1k5_bs16.py
+2|test/registered/ascend/performance/v26/req/test_ascend_qwen3_14b_w8a8_1p_in1k_out300_bs16.py
+2|test/registered/ascend/performance/v26/req/test_ascend_qwen3_14b_w8a8_1p_in6k_out1k5_bs16.py
+8|test/registered/ascend/performance/v26/req/test_ascend_qwen3_30b_w8a8_4p_in1k_out300_bs16.py
+2|test/registered/ascend/performance/v26/req/test_ascend_qwen3_30b_w8a8_1p_in6k_out1k5_bs16.py
+4|test/registered/ascend/performance/v26/req/test_ascend_qwen3_32b_w8a8_2p_in1k_out300_bs16.py
+4|test/registered/ascend/performance/v26/req/test_ascend_qwen3_32b_w8a8_2p_in6k_out1k5_bs16.py
