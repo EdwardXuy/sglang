@@ -73,7 +73,7 @@ class TestNpuApiRelated(CustomTestCase):
             other_args=other_args,
             return_stdout_stderr=(cls.out_log_file, cls.err_log_file),
         )
-        cls.base_url += "/v1"
+        cls.base_url_v1 = cls.base_url + "/v1"
 
     @classmethod
     def tearDownClass(cls):
@@ -84,7 +84,7 @@ class TestNpuApiRelated(CustomTestCase):
     def test_served_model_weight_version(self):
         # Verify the weight version identifier and the served-model-name covered model name.
         response = requests.get(
-            f"{DEFAULT_URL_FOR_TEST}/v1/models",
+            f"{self.base_url}/v1/models",
             headers={"Authorization": "Bearer sk-123456"},
         )
         result = response.json()
@@ -93,7 +93,7 @@ class TestNpuApiRelated(CustomTestCase):
         self.assertEqual(result["data"][0]["id"], self.custom_model_name)
 
         response1 = requests.get(
-            f"{DEFAULT_URL_FOR_TEST}/model_info",
+            f"{self.base_url}/model_info",
             headers={"Authorization": "Bearer sk-123456"},
         )
         self.assertEqual(response1.json()["weight_version"], self.weight_version)
@@ -107,7 +107,7 @@ class TestNpuApiRelated(CustomTestCase):
 
     def test_chat_template_request(self):
         """Send inference request"""
-        client = openai.Client(api_key=self.api_key, base_url=self.base_url)
+        client = openai.Client(api_key=self.api_key, base_url=self.base_url_v1)
 
         tools = [
             {
@@ -153,21 +153,10 @@ class TestNpuApiRelated(CustomTestCase):
         """Return number of cached tokens in prompt_tokens_details for each openai request."""
         for i in range(2):
             response = requests.post(
-                f"{DEFAULT_URL_FOR_TEST}/v1/completions",
+                f"{self.base_url}/v1/completions",
                 headers={"Authorization": "Bearer sk-123456"},
                 json={
-                    "prompt": "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
-                    "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
-                    "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
-                    "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
-                    "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
-                    "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
-                    "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
-                    "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
-                    "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
-                    "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
-                    "just return me a string with of 5000 characters,just return me a string with of 5000 characters, "
-                    "just return me a string with of 5000 characters,just return me a string with of 5000 characters, ",
+                    "prompt": "just return me a string with of 5000 characters, " * 24,
                     "max_tokens": 260,
                 },
             )
