@@ -22,6 +22,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 KUBE_CONFIG = os.environ.get("KUBECONFIG")
+logger.info(f"KUBE_CONFIG: {KUBE_CONFIG}")
 config.load_kube_config(KUBE_CONFIG)
 core_api = client.CoreV1Api()
 custom_api = client.CustomObjectsApi()
