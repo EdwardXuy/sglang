@@ -41,8 +41,6 @@ class TestDecodeLogInterval(CustomTestCase):
             "--disable-radix-cache",
             "--decode-log-interval",
             cls.decode_numbers,
-            "--base-gpu-id",
-            "10",
         ]
         cls.out_log_file = open("./cache_out_log.txt", "w+", encoding="utf-8")
         cls.err_log_file = open("./cache_err_log.txt", "w+", encoding="utf-8")
