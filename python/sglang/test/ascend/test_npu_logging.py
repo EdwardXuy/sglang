@@ -65,7 +65,7 @@ class TestNPULoggingBase(CustomTestCase):
     @classmethod
     def setUpClass(cls):
         # cls.model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
-        cls.model = "/home/weights/Llama-3.2-1B-Instruct",
+        cls.model = "/home/weights/Llama-3.2-1B-Instruct"
         cls.base_url = DEFAULT_URL_FOR_TEST
         cls.other_args = [
             "--trust-remote-code",
