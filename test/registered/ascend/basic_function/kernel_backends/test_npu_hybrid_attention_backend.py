@@ -38,9 +38,6 @@ DEFAULT_SERVER_ARGS = [
 ]
 
 
-@unittest.skipIf(
-    False, "Test requires CUDA SM 90 or higher"
-)
 class TestHybridAttnBackendBase(CustomTestCase):
     """Testcase：Verify set --prefill-attention-backend, --decode-attention-backend, the inference request is successfully processed.
 
