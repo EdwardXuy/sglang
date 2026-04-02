@@ -102,6 +102,7 @@ class TestAdaptiveDispatchToEncoder(CustomTestCase):
                 "--enable-adaptive-dispatch-to-encoder",
                 # Intentionally omit --encoder-urls: single-image requests
                 # must be handled locally without any encoder server.
+                "--encoder-urls", "http://127.0.0.1:9999",
                 "--tp-size",
                 "2",
                 "--base-gpu-id",
