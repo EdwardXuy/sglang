@@ -41,8 +41,7 @@ class TestNPUEnableRequestTimeStatsLogging(TestNPULoggingBase):
         super().setUpClass()
         cls.output_capturer = OutputCapturer()
         cls.output_capturer.start()
-        cls.other_args.extend(["--decode-log-interval",
-                "2",])
+        cls.other_args.extend(["--decode-log-interval", "2",])
         cls.process = popen_launch_server(
             cls.model,
             cls.base_url,
