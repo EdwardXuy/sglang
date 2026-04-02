@@ -13,8 +13,10 @@ Please remember to sort by variable name within each section.
 
 import asyncio
 import copy
+import logging
 import os
 import subprocess
+import time
 from types import SimpleNamespace
 from typing import Awaitable, Callable, NamedTuple, Optional
 
@@ -256,6 +258,10 @@ SKYWORK_REWARD_LLAMA_3_1_8B_V0_2_WEIGHTS_PATH = os.path.join(
 
 # Other
 DEEPSEEK_CODER_JSON_PATH = "/__w/sglang/sglang/test/registered/ascend/basic_function/parameter/deepseek_coder.json"
+CONFIG_YAML_PATH = os.path.join(
+    os.path.dirname(__file__),
+    "../../../test/registered/ascend/basic_function/ConfigurationFileSupport/config.yaml",
+)
 
 
 class ModelTestConfig(NamedTuple):
@@ -321,33 +327,33 @@ def run_command(cmd, shell=True):
 
 
 def get_benchmark_args(
-    base_url="",
-    backend="sglang",
-    dataset_name="",
-    dataset_path="",
-    tokenizer="",
-    num_prompts=500,
-    sharegpt_output_len=None,
-    random_input_len=4096,
-    random_output_len=2048,
-    sharegpt_context_len=None,
-    request_rate=float("inf"),
-    disable_stream=False,
-    disable_ignore_eos=False,
-    seed: int = 0,
-    device="auto",
-    pd_separated: bool = False,
-    lora_name=None,
-    lora_request_distribution="uniform",
-    lora_zipf_alpha=1.5,
-    gsp_num_groups=4,
-    gsp_prompts_per_group=4,
-    gsp_system_prompt_len=128,
-    gsp_question_len=32,
-    gsp_output_len=32,
-    gsp_num_turns=1,
-    header=None,
-    max_concurrency=None,
+        base_url="",
+        backend="sglang",
+        dataset_name="",
+        dataset_path="",
+        tokenizer="",
+        num_prompts=500,
+        sharegpt_output_len=None,
+        random_input_len=4096,
+        random_output_len=2048,
+        sharegpt_context_len=None,
+        request_rate=float("inf"),
+        disable_stream=False,
+        disable_ignore_eos=False,
+        seed: int = 0,
+        device="auto",
+        pd_separated: bool = False,
+        lora_name=None,
+        lora_request_distribution="uniform",
+        lora_zipf_alpha=1.5,
+        gsp_num_groups=4,
+        gsp_prompts_per_group=4,
+        gsp_system_prompt_len=128,
+        gsp_question_len=32,
+        gsp_output_len=32,
+        gsp_num_turns=1,
+        header=None,
+        max_concurrency=None,
 ):
     """Constructing the parameter objects needed for inference tests
 
@@ -428,29 +434,29 @@ def get_benchmark_args(
 
 
 def run_bench_serving(
-    model,
-    num_prompts,
-    request_rate,
-    other_server_args,
-    dataset_name="random",
-    dataset_path="",
-    tokenizer=None,
-    random_input_len=4096,
-    random_output_len=2048,
-    sharegpt_context_len=None,
-    disable_stream=False,
-    disable_ignore_eos=False,
-    need_warmup=False,
-    seed: int = 0,
-    device="auto",
-    gsp_num_groups=None,
-    gsp_prompts_per_group=None,
-    gsp_system_prompt_len=None,
-    gsp_question_len=None,
-    gsp_output_len=None,
-    max_concurrency=None,
-    background_task: Optional[Callable[[str, asyncio.Event], Awaitable[None]]] = None,
-    lora_name: Optional[str] = None,
+        model,
+        num_prompts,
+        request_rate,
+        other_server_args,
+        dataset_name="random",
+        dataset_path="",
+        tokenizer=None,
+        random_input_len=4096,
+        random_output_len=2048,
+        sharegpt_context_len=None,
+        disable_stream=False,
+        disable_ignore_eos=False,
+        need_warmup=False,
+        seed: int = 0,
+        device="auto",
+        gsp_num_groups=None,
+        gsp_prompts_per_group=None,
+        gsp_system_prompt_len=None,
+        gsp_question_len=None,
+        gsp_output_len=None,
+        max_concurrency=None,
+        background_task: Optional[Callable[[str, asyncio.Event], Awaitable[None]]] = None,
+        lora_name: Optional[str] = None,
 ):
     """Start the service and obtain the inference results.
 
@@ -549,3 +555,34 @@ def run_bench_serving(
 
     assert res["completed"] == num_prompts
     return res
+
+
+# hook factory
+def create_attention_monitor_hook_factory(config):
+    layer_index = config.get("layer_index", 0)
+    if not logging.root.handlers:
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+
+    def attention_monitor_hook(module, inputs, output):
+        # The actual hook function is called during the forward propagation of the self-attention layer.
+        timestamp = time.time()
+
+        hidden_states = inputs[1] if inputs and len(inputs) > 1 else None
+
+        monitor_record = {
+            "timestamp": timestamp,
+            "layer_index": layer_index,
+            "module_type": type(module).__name__,
+            "inputs": hidden_states.sum(-1)[:5] if hidden_states is not None else None,
+            "outputs": output.sum(-1)[:5],
+        }
+
+        logging.info(f"hook effect: {monitor_record}")
+
+        return output
+
+    return attention_monitor_hook
