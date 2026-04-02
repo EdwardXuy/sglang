@@ -1,12 +1,21 @@
 #!/bin/bash
 
 CONCURRENCY=2
-
-sglang_source_path=/home/d00662834/dev-0210/sglang
-install_sglang_from_source=false
 kube_job_type=multi-pd-mix
 
-image=swr.cn-southwest-2.myhuaweicloud.com/base_image/dockerhub/lmsysorg/sglang:cann8.5.0-a3-B092
+sglang_source_path=$1
+install_sglang_from_source=$2
+image=$3
+
+if [ -z "$sglang_source_path" ];then
+  sglang_source_path=/home/d00662834/dev-0210/sglang
+fi
+if [ -z "$install_sglang_from_source" ];then
+  install_sglang_from_source=false
+fi
+if [ -z "$image" ];then
+  image=swr.cn-southwest-2.myhuaweicloud.com/base_image/dockerhub/lmsysorg/sglang:cann8.5.0-a3-B092
+fi
 
 test_set=$(cat testcase_v25_baseline_multi_pd_mix.txt)
 
