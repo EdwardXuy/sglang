@@ -1,0 +1,29 @@
+# sglang 26.0 lowlatency requirements
+2|test/registered/ascend/performance/v26/req/test_ascend_qwen3_8b_w8a8_1p_in1k_out300_bs16.py
+2|test/registered/ascend/performance/v26/req/test_ascend_qwen3_8b_w8a8_1p_in6k_out1k5_bs16.py
+2|test/registered/ascend/performance/v26/req/test_ascend_qwen3_14b_w8a8_1p_in1k_out300_bs16.py
+2|test/registered/ascend/performance/v26/req/test_ascend_qwen3_14b_w8a8_1p_in6k_out1k5_bs16.py
+8|test/registered/ascend/performance/v26/req/test_ascend_qwen3_30b_w8a8_4p_in1k_out300_bs16.py
+2|test/registered/ascend/performance/v26/req/test_ascend_qwen3_30b_w8a8_1p_in6k_out1k5_bs16.py
+4|test/registered/ascend/performance/v26/req/test_ascend_qwen3_32b_w8a8_2p_in1k_out300_bs16.py
+4|test/registered/ascend/performance/v26/req/test_ascend_qwen3_32b_w8a8_2p_in6k_out1k5_bs16.py
+
+# sglang 26.0 new baseline
+
+test/registered/ascend/performance/v26/test_ascend_qwen3_235b_bf16_16p_in11k_out1.5k_8ms.py
+
+2|test/registered/ascend/performance/v26/test_ascend_qwen3_30b_a3b_w8a8_1p_in3k5_out1k5_50ms.py
+2|test/registered/ascend/performance/v26/test_ascend_qwen3_30b_w8a8_1p_in3k5_out1k5_10ms.py
+2|test/registered/ascend/performance/v26/test_ascend_qwen3_30b_bf16_1p_in1k_out100.py
+
+2|test/registered/ascend/performance/v26/test_ascend_qwen3_14b_w8a8_1p_in3k5_out1k5_50ms.py
+2|test/registered/ascend/performance/v26/test_ascend_qwen3_14b_w8a8_1p_in3k5_out1k5_10ms.py
+2|test/registered/ascend/performance/v26/test_ascend_qwen3_14b_bf16_1p_in1k_out100_e2e_10s.py
+2|test/registered/ascend/performance/v26/test_ascend_qwen3_14b_bf16_1p_in1k_out100_e2e_10s_lora.py
+
+1|test/registered/ascend/performance/v26/test_ascend_qwen3_8b_w8a8_1d_in3k5_out1k5_50ms.py
+2|test/registered/ascend/performance/v26/test_ascend_qwen3_8b_w8a8_1p_in3k5_out1k5_5ms.py
+
+16|test/registered/ascend/performance/v26/test_ascend_qwen3_vl_235b_bf16_8p_in1024x1024_out1024_100ms.py
+1|test/registered/ascend/performance/v26/test_ascend_qwen3_vl_8b_bf16_1d_in1024x1024_out1024_50ms.py
+4|test/registered/ascend/performance/v26/test_ascend_qwen2_5_vl_72b_w8a8_2p_in1920x1080_256_out512_200ms.py
