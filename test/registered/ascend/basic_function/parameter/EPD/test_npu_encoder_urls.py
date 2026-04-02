@@ -35,6 +35,7 @@ _ENCODER_URL_SECONDARY = "http://127.0.0.1:8101"
 
 
 class TestEncoderUrlsBase(CustomTestCase):
+    __test__ = False
     """Testcase: Verify --encoder-urls parameter is accepted at server startup on Ascend NPU.
 
     --encoder-urls specifies a list of encoder server addresses used in VLM encoder
@@ -119,12 +120,12 @@ class TestEncoderUrlsOnly(TestEncoderUrlsBase):
     transfer_backend = "zmq_to_scheduler"
 
 
-#class TestEncoderUrlsWithZmqToTokenizer(TestEncoderUrlsBase):
+class TestEncoderUrlsWithZmqToTokenizer(TestEncoderUrlsBase):
     """Testcase 4.2: Verify --encoder-urls combined with --encoder-transfer-backend=zmq_to_tokenizer.
     zmq_to_tokenizer is the supported transfer backend for NPU deployments.
     This case verifies the combination is accepted correctly.
     """
- #   transfer_backend = "zmq_to_tokenizer"
+    transfer_backend = "zmq_to_tokenizer"
 
 
 if __name__ == "__main__":

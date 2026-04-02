@@ -28,6 +28,8 @@ register_npu_ci(est_time=300, suite="nightly-1-npu-a3", nightly=True)
 
 
 class TestEncoderTransferBackendBase(CustomTestCase):
+    __test__ = False
+
     """Testcase: Verify --encoder-transfer-backend parameter accepts all supported values on Ascend NPU.
 
     --encoder-transfer-backend specifies how the encoder node transfers visual embeddings
@@ -47,6 +49,8 @@ class TestEncoderTransferBackendBase(CustomTestCase):
 
     @classmethod
     def setUpClass(cls):
+        if cls.transfer_backend is None:
+            raise unittest.SkipTest("Skipping base abstract test class")
         env = os.environ.copy()
         env["SGLANG_MM_SKIP_COMPUTE_HASH"] = "True"
         cls.model = QWEN3_VL_30B_A3B_INSTRUCT_WEIGHTS_PATH
