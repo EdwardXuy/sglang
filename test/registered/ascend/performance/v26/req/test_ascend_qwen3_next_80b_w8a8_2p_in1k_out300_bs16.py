@@ -45,6 +45,8 @@ QWEN3_NEXT_80B_A3B_OTHER_ARGS = [
     "ascend",
     "--device",
     "npu",
+    "--quantization",
+    "modelslim",
     "--page-size",
     128,
     "--tp-size",
