@@ -56,6 +56,21 @@ class TestNPUEnableRequestTimeStatsLogging(TestNPULoggingBase):
         super().tearDownClass()
         cls.output_capturer.stop()
 
+    def inference(self):
+        response = requests.post(
+            f"{self.base_url}/generate",
+            json={
+                "text": "Please repeat the world 'hello' for 10000 times.",
+                "sampling_params": {
+                    "temperature": 0,
+                    "max_new_tokens": 10000,
+                },
+            },
+        )
+
+        self.assertEqual(response.status_code, 200, "Failed to call generate API")
+        return response
+
     def test_enable_request_time_stats_logging(self):
 
 
@@ -66,22 +81,10 @@ class TestNPUEnableRequestTimeStatsLogging(TestNPULoggingBase):
         with ThreadPoolExecutor(num_requests) as executor:
             # Send multiple requests
             for i in range(num_requests):
-                futures.append(executor.submit(self.inference_once()))
+                futures.append(executor.submit(self.inference()))
 
-            # Ensure that they are running concurrently
-            pt = 0
-            while pt >= 0:
-                time.sleep(5)
-                lines = open(STDERR_FILENAME).readlines()
-                for line in lines[pt:]:
-                    print(line, end="", flush=True)
-                    if f"#running-req: {num_requests}" in line:
-                        all_requests_running = True
-                        pt = -1
-                        break
-                    pt += 1
 
-        assert all_requests_running
+        self.assertIn(f"#running-req: {num_requests}", self.output_capturer.get_all())
 
 
 
