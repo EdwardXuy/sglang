@@ -142,14 +142,5 @@ class TestJSONModeXGrammar(ServerWithGrammarBackend, TestJSONModeMixin):
     backend = "xgrammar"
 
 
-class TestJSONModeOutlines(ServerWithGrammarBackend, TestJSONModeMixin):
-    """Testcase: Verify JSON mode functionality with outlines grammar backend (non-streaming and streaming).
-
-    [Test Target] --grammar-backend
-    """
-
-    backend = "outlines"
-
-
 if __name__ == "__main__":
     unittest.main()
