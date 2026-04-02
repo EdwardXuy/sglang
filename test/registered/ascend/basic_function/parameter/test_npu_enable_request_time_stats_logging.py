@@ -51,10 +51,13 @@ class TestNPUEnableRequestTimeStatsLogging(CustomTestCase):
             "ascend",
             "--disable-cuda-graph",
             "--enable-request-time-stats-logging",
+            "--base-gpu-id",
+            4,
         ]
 
         cls.process = popen_launch_server(
-            LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH,
+            # LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH,
+            "/home/weights/Llama-3.2-1B-Instruct",
             DEFAULT_URL_FOR_TEST,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=other_args,
