@@ -37,7 +37,7 @@ class TestNPUCrashDump(CustomTestCase):
         cls.crash_dump_folder = tempfile.mkdtemp(prefix="crash_dump_test_")
 
         with envs.SGLANG_TEST_CRASH_AFTER_STREAM_OUTPUTS.override(
-                cls.NUM_REQUESTS_BEFORE_CRASH * cls.MAX_NEW_TOKENS + 10
+            cls.NUM_REQUESTS_BEFORE_CRASH * cls.MAX_NEW_TOKENS + 10
         ):
             cls.process = popen_launch_server(
                 QWEN3_0_6B_WEIGHTS_PATH,

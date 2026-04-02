@@ -67,12 +67,8 @@ class TestNPULogRequestsFormatJson(TestNPULogRequestsFormatText):
                 self.assertIn("out", data)
                 finished_found = True
 
-        self.assertTrue(
-            received_found, f"request.received event not found"
-        )
-        self.assertTrue(
-            finished_found, f"request.finished event not found"
-        )
+        self.assertTrue(received_found, f"request.received event not found")
+        self.assertTrue(finished_found, f"request.finished event not found")
 
 
 if __name__ == "__main__":
