@@ -208,7 +208,7 @@ class TestDisaggregatedVLM(TestDisaggregationBase):
         model forward pass silently fails or produces garbage output.
         """
         response = requests.post(
-            f"{self.base_url}/generate",
+            f"{self.decode_url}/generate",
             json={
                 "text": "The capital of France is",
                 "sampling_params": {"temperature": 0, "max_new_tokens": 16},
@@ -310,7 +310,7 @@ class TestDisaggregatedVLM(TestDisaggregationBase):
         }
         try:
             response = requests.post(
-                f"{self.base_url}/v1/chat/completions",
+                f"{self.decode_url}/v1/chat/completions",
                 json=payload,
                 timeout=20,
             )
