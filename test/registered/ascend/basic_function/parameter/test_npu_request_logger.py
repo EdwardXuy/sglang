@@ -1,35 +1,16 @@
-import io
 import json
-import os
-import tempfile
-import time
 import unittest
-from pathlib import Path
 
 import requests
 
-# from sglang.srt.constants import HEALTH_CHECK_RID_PREFIX
-from sglang.srt.utils import kill_process_tree
 from sglang.test.ascend.output_capturer import OutputCapturer
 from sglang.test.ascend.test_npu_logging import TestNPULoggingBase
-from sglang.test.ci.ci_register import register_amd_ci, register_cuda_ci
-from sglang.test.test_utils import (
-    DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-    DEFAULT_URL_FOR_TEST,
-    CustomTestCase,
-    popen_launch_server,
-)
+from sglang.test.ci.ci_register import register_npu_ci
 
-register_cuda_ci(est_time=120, suite="nightly-1-npu-a3", nightly=True)
-
-TEST_ROUTING_KEY = "test-routing-key-12345"
-TEST_CUSTOM_HEADER_NAME = "X-Test-Header"
-TEST_CUSTOM_HEADER_VALUE = "test-header-value-67890"
-# TEST_MODEL_NAME = "Qwen/Qwen3-0.6B"
-TEST_MODEL_NAME = "/home/weights/Qwen/Qwen3-0.6B"
+register_npu_ci(est_time=100, suite="nightly-1-npu-a3", nightly=True)
 
 
-class TestNPUEnableRequestTimeStatsLogging(TestNPULoggingBase):
+class TestNPULogRequestsFormatText(TestNPULoggingBase):
     """Testcase: Verify the functionality of --enable-request-time-stats-logging to generate Req Time Stats logs on Ascend backend with Llama-3.2-1B-Instruct model.
 
     [Test Category] Parameter
@@ -55,20 +36,17 @@ class TestNPUEnableRequestTimeStatsLogging(TestNPULoggingBase):
         self.inference_once()
 
         content = self.output_capturer.get_all()
-        source_name = "stdout"
+        self.assertIn("Receive:", content, f"'Receive:' not found")
+        self.assertIn("Finish:", content, f"'Finish:' not found")
 
-        self.assertIn("Receive:", content, f"'Receive:' not found in {source_name}")
-        self.assertIn("Finish:", content, f"'Finish:' not found in {source_name}")
 
-class TestRequestLoggerJson(TestNPUEnableRequestTimeStatsLogging):
+class TestNPULogRequestsFormatJson(TestNPULogRequestsFormatText):
     log_requests_format = "json"
 
     def test_enable_request_time_stats_logging(self):
         self.inference_once()
 
         content = self.output_capturer.get_all()
-        source_name = "stdout"
-
         received_found = False
         finished_found = False
         for line in content.splitlines():
@@ -78,10 +56,6 @@ class TestRequestLoggerJson(TestNPUEnableRequestTimeStatsLogging):
                 data = json.loads(line)
             except json.JSONDecodeError:
                 continue
-
-            # rid = data.get("rid", "")
-            # if rid.startswith(HEALTH_CHECK_RID_PREFIX):
-            #     continue
 
             if data.get("event") == "request.received":
                 self.assertIn("rid", data)
@@ -94,13 +68,11 @@ class TestRequestLoggerJson(TestNPUEnableRequestTimeStatsLogging):
                 finished_found = True
 
         self.assertTrue(
-            received_found, f"request.received event not found in {source_name}"
+            received_found, f"request.received event not found"
         )
         self.assertTrue(
-            finished_found, f"request.finished event not found in {source_name}"
+            finished_found, f"request.finished event not found"
         )
-
-
 
 
 if __name__ == "__main__":

@@ -10,7 +10,7 @@ import requests
 from sglang.srt.environ import envs
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ascend.test_ascend_utils import QWEN3_0_6B_WEIGHTS_PATH
-from sglang.test.ci.ci_register import register_cuda_ci
+from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
@@ -18,7 +18,7 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
-register_cuda_ci(est_time=40, suite="nightly-1-npu", nightly=True)
+register_npu_ci(est_time=40, suite="nightly-1-npu", nightly=True)
 
 
 class TestNPUCrashDump(CustomTestCase):
