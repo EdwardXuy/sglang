@@ -37,19 +37,7 @@ class TestNPULogRequestTarget(TestNPULoggingBase):
 
     def test_log_requests_target(self):
         """Validate that request logs are correctly output to the target files configured via --log-requests-target."""
-        response = requests.post(
-            f"{self.base_url}/generate",
-            json={
-                "text": "What is the capital of France?",
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": 32,
-                },
-            },
-            timeout=60,
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("Paris", response.text)
+        self.inference_once()
 
         # Standard output should include log information.
         content = self.output_capturer.get_all()
