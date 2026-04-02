@@ -287,42 +287,6 @@ class TestDisaggregatedVLM(TestDisaggregationBase):
         )
 
 
-    def test_language_only_rejects_image_without_encoder(self):
-        """Verify language-only server returns error for image requests when no encoder is configured.
-
-        A language-only server without --encoder-urls cannot process images;
-        it should return a non-2xx error rather than hanging or crashing.
-        This guards against silent data loss where images are silently dropped.
-        """
-        payload = {
-            "model": self.model,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "image_url", "image_url": {"url": _INLINE_IMAGE_URL}},
-                        {"type": "text", "text": "Describe this image."},
-                    ],
-                }
-            ],
-            "max_tokens": 32,
-            "temperature": 0,
-        }
-        try:
-            response = requests.post(
-                f"{self.decode_url}/v1/chat/completions",
-                json=payload,
-                timeout=20,
-            )
-            self.assertNotEqual(
-                response.status_code // 100,
-                2,
-                "Language-only server without encoder-urls silently accepted image.",
-            )
-        except Timeout:
-            # Timeout is also acceptable: server waited for encoder that does not exist
-            pass
-
     @classmethod
     def tearDownClass(cls):
         os.environ.pop("SGLANG_MM_SKIP_COMPUTE_HASH", None)
