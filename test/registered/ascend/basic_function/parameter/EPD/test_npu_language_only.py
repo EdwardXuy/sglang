@@ -75,6 +75,8 @@ class TestLanguageOnly(CustomTestCase):
                 "--language-only",
                 "--tp-size",
                 "2",
+                "--base-gpu-id",
+                "14",
                 "--attention-backend",
                 "ascend",
                 "--disable-cuda-graph",

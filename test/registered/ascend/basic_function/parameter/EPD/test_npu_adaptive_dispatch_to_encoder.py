@@ -104,6 +104,8 @@ class TestAdaptiveDispatchToEncoder(CustomTestCase):
                 # must be handled locally without any encoder server.
                 "--tp-size",
                 "2",
+                "--base-gpu-id",
+                "14",
                 "--attention-backend",
                 "ascend",
                 "--disable-cuda-graph",

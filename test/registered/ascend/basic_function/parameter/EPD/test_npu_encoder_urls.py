@@ -70,6 +70,8 @@ class TestEncoderUrlsBase(CustomTestCase):
             cls.transfer_backend,
             "--attention-backend",
             "ascend",
+            "--base-gpu-id",
+            "14",
             "--disable-cuda-graph",
             "--trust-remote-code",
             "--mem-fraction-static",
@@ -115,14 +117,12 @@ class TestEncoderUrlsOnly(TestEncoderUrlsBase):
     transfer_backend = "zmq_to_scheduler"
 
 
-class TestEncoderUrlsWithMooncake(TestEncoderUrlsBase):
-    """Testcase 4.2: Verify --encoder-urls combined with --encoder-transfer-backend=mooncake.
-
-    mooncake is the RDMA-based transfer backend commonly used in production deployments.
+class TestEncoderUrlsWithZmqToTokenizer(TestEncoderUrlsBase):
+    """Testcase 4.2: Verify --encoder-urls combined with --encoder-transfer-backend=zmq_to_tokenizer.
+    zmq_to_tokenizer is the supported transfer backend for NPU deployments.
     This case verifies the combination is accepted correctly.
     """
-
-    transfer_backend = "mooncake"
+    transfer_backend = "zmq_to_tokenizer"
 
 
 if __name__ == "__main__":

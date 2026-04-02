@@ -58,6 +58,8 @@ class TestEncoderTransferBackendBase(CustomTestCase):
             cls.transfer_backend,
             "--attention-backend",
             "ascend",
+            "--base-gpu-id",
+            "14",
             "--disable-cuda-graph",
             "--trust-remote-code",
             "--mem-fraction-static",
@@ -93,13 +95,15 @@ class TestEncoderTransferBackendBase(CustomTestCase):
         )
 
 
-class TestEncoderTransferBackendMooncake(TestEncoderTransferBackendBase):
-    """Testcase 3.1: Verify --encoder-transfer-backend=mooncake is accepted.
+class TestEncoderTransferBackendZmqToTokenizer(TestEncoderTransferBackendBase):
+    """Testcase 3.2b: Verify --encoder-transfer-backend=zmq_to_tokenizer is accepted.
 
-    mooncake uses the Mooncake high-performance RDMA transfer engine.
+    zmq_to_tokenizer routes embeddings via ZMQ to the tokenizer process instead
+    of the scheduler. This is an alternative to zmq_to_scheduler for deployments
+    where the tokenizer handles embedding injection.
     """
 
-    transfer_backend = "mooncake"
+    transfer_backend = "zmq_to_tokenizer"
 
 
 class TestEncoderTransferBackendZmqToScheduler(TestEncoderTransferBackendBase):
