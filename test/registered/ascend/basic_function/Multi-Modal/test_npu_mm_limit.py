@@ -182,12 +182,11 @@ class TestLimitMMDatePerRequest(CustomTestCase):
         self._run_parallel_two_requests()
 
 
-
 class TestQwen3VL8B(TestVLMModels):
     model = QWEN3_VL_8B_INSTRUCT_WEIGHTS_PATH
     mmmu_accuracy = 0.2
     limit_mm = '{"image":1, "video":1}'
-    other_args = [   
+    other_args = [
         "--mem-fraction-static",
         "0.5",
         "--enable-multimodal",
