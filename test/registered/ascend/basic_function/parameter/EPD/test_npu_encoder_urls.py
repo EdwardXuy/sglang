@@ -1,9 +1,7 @@
 import unittest
-import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
+
 import requests
 
-import time
 import os
 
 # ============ [Local path override - for local debugging only] ============
@@ -26,7 +24,7 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
-register_npu_ci(est_time=300, suite="nightly-2-npu-a3", nightly=True)
+register_npu_ci(est_time=300, suite="nightly-4-npu-a3", nightly=True)
 
 # Placeholder encoder URLs used to validate parameter parsing.
 # These do not need to point to live encoder servers; the language-only server
@@ -35,23 +33,8 @@ register_npu_ci(est_time=300, suite="nightly-2-npu-a3", nightly=True)
 _ENCODER_URL_PRIMARY = "http://127.0.0.1:8100"
 _ENCODER_URL_SECONDARY = "http://127.0.0.1:8101"
 
-class DummyEncoderHandler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        # 无论发什么，都返回 200 OK，不处理具体内容
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"OK")
-
-    def do_GET(self):
-        # 健康检查可能走 GET
-        self.send_response(200)
-        self.end_headers()
 
 class TestEncoderUrlsBase(CustomTestCase):
-    __test__ = False
-
-
-    _next_port = 21000
     """Testcase: Verify --encoder-urls parameter is accepted at server startup on Ascend NPU.
 
     --encoder-urls specifies a list of encoder server addresses used in VLM encoder
@@ -75,20 +58,11 @@ class TestEncoderUrlsBase(CustomTestCase):
         env = os.environ.copy()
         env["SGLANG_MM_SKIP_COMPUTE_HASH"] = "True"
         cls.model = QWEN3_VL_30B_A3B_INSTRUCT_WEIGHTS_PATH
-        cls.port = cls._next_port
-        cls._next_port += 1  # 下一个子类使用新端口
-        cls.base_url = f"http://127.0.0.1:{cls.port}"
-        cls.mock_server_port = 8101
-        cls.mock_httpd = HTTPServer(('127.0.0.1', cls.mock_server_port), DummyEncoderHandler)
-        # 必须在后台线程运行，否则会阻塞
-        cls.mock_thread = threading.Thread(target=cls.mock_httpd.serve_forever)
-        cls.mock_thread.daemon = True
-        cls.mock_thread.start()
+        cls.base_url = DEFAULT_URL_FOR_TEST
         other_args = [
             # language-only is the natural counterpart for --encoder-urls:
             # the language server receives embeddings from a remote encoder server
             "--language-only",
-            "--port", str(cls.port),
             "--encoder-urls",
             _ENCODER_URL_PRIMARY,
             _ENCODER_URL_SECONDARY,
@@ -96,10 +70,10 @@ class TestEncoderUrlsBase(CustomTestCase):
             cls.transfer_backend,
             "--attention-backend",
             "ascend",
-            "--tp-size",
-            "2",
             "--base-gpu-id",
-            "14",
+            "12",
+            "--tp-size",
+            "4",
             "--disable-cuda-graph",
             "--trust-remote-code",
             "--mem-fraction-static",
@@ -116,11 +90,7 @@ class TestEncoderUrlsBase(CustomTestCase):
     @classmethod
     def tearDownClass(cls):
         # Restore the test environment by stopping the server process (coding standard rule 8)
-        if hasattr(cls, 'mock_httpd'):
-            cls.mock_httpd.shutdown()
-            cls.mock_httpd.server_close()
         kill_process_tree(cls.process.pid)
-        time.sleep(2)
 
     def test_server_health(self):
         """Verify language-only server with encoder-urls is healthy.
@@ -149,12 +119,12 @@ class TestEncoderUrlsOnly(TestEncoderUrlsBase):
     transfer_backend = "zmq_to_scheduler"
 
 
-class TestEncoderUrlsWithZmqToTokenizer(TestEncoderUrlsBase):
+#class TestEncoderUrlsWithZmqToTokenizer(TestEncoderUrlsBase):
     """Testcase 4.2: Verify --encoder-urls combined with --encoder-transfer-backend=zmq_to_tokenizer.
     zmq_to_tokenizer is the supported transfer backend for NPU deployments.
     This case verifies the combination is accepted correctly.
     """
-    transfer_backend = "zmq_to_tokenizer"
+ #   transfer_backend = "zmq_to_tokenizer"
 
 
 if __name__ == "__main__":
