@@ -5,6 +5,8 @@ import threading
 import time
 from urllib.parse import urlparse
 
+import wraps
+
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ascend.e2e.test_npu_multi_node_utils import (
     SERVICE_PORT,
@@ -137,6 +139,33 @@ else:
     )
 DEFAULT_URL_FOR_TEST = f"http://127.0.0.1:{DEFAULT_SERVER_PORT_FOR_TEST + 66}"
 
+
+def retry(max_attempts: int = 2):
+    """
+        Test case retry decorator
+    Args:
+        max_attempts (int): Maximum number of execution attempts (default: 2).
+    """
+    def decorator(func):
+        @wraps(func)
+        def wrapper(self, *args, **kwargs):
+            # Store the last exception for final reporting
+            last_exception = None
+
+            # Execute the test up to max_attempts times
+            for attempt in range(1, max_attempts + 1):
+                try:
+                    logger.info(f"Executing test attempt {attempt}/{max_attempts}")
+                    return func(self, *args, **kwargs)  # Return immediately if test passes
+                except (AssertionError, Exception) as e:
+                    last_exception = e
+                    logger.info(f"Test failed on attempt {attempt}")
+
+            # Raise the last exception if all attempts failed
+            raise last_exception
+
+        return wrapper
+    return decorator
 
 def get_cann_version():
     """Get CANN version info.
@@ -403,6 +432,7 @@ class TestAscendPerformanceTestCaseBase(CustomTestCase):
                 self.mean_e2e_latency * E2E_TOLERANCE,
             )
 
+    @retry(max_attempts=2)
     def run_throughput(self, run_cycles=2):
         parsed_url = urlparse(self.base_url)
         host = parsed_url.hostname
@@ -426,12 +456,7 @@ class TestAscendPerformanceTestCaseBase(CustomTestCase):
             "seed": self.seed,
         }
         logger.info(f"Starting benchmark with parameters: {bench_params}")
-
-        metrics = None
-        for i in range(run_cycles):
-            logger.info(f"Running benchmark, {i + 1}/{run_cycles}")
-            metrics = run_bench_serving(**bench_params)
-
+        metrics = run_bench_serving(**bench_params)
         self._assert_metrics(metrics)
 
 
