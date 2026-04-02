@@ -69,7 +69,7 @@ class TestNPUEnableRequestTimeStatsLogging(TestNPULoggingBase):
         self.assertIn(
             target_keyword,
             content,
-            f"Keyword not found in server logs: {target_keyword}\nLog file path: {os.path.abspath(LOG_DUMP_FILE)}\nLog content preview (last 2000 characters):\n{server_logs[-2000:] if len(server_logs) > 2000 else server_logs}",
+            f"Keyword not found in server logs.",
         )
 
 
