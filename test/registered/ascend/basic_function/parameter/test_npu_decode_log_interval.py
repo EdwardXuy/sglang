@@ -46,9 +46,12 @@ class TestDecodeLogInterval(TestNPULoggingBase):
         # self.assertEqual(response.status_code, 200)
         # self.assertIn("Paris", response.text)
         self.inference_once(max_tokens=512)
-        result = run_command("cat ./cache_err_log.txt | grep 'Decode batch' | wc -l")
-        decod_batch_result = math.floor((max_tokens + 9) / self.decode_numbers)
-        self.assertEqual(decod_batch_result, int(result.strip()))
+        self.out_log_file.seek(0)
+        self.err_log_file.seek(0)
+        content = self.out_log_file.read() + self.err_log_file.read()
+        decod_batch_count = content.count("Decode batch")
+        expected_decod_batch_count = math.floor((max_tokens + 9) / self.decode_numbers)
+        self.assertEqual(decod_batch_count, expected_decod_batch_count)
 
 
 class TestDecodeLogIntervalOther(TestDecodeLogInterval):
