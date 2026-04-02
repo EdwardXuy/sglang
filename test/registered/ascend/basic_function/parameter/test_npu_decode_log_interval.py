@@ -31,7 +31,8 @@ class TestDecodeLogInterval(CustomTestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.model = LLAMA_3_2_1B_WEIGHTS_PATH
+        # cls.model = LLAMA_3_2_1B_WEIGHTS_PATH
+        cls.model = "/home/weights/Llama-3.2-1B-Instruct"
         cls.base_url = DEFAULT_URL_FOR_TEST
         other_args = [
             "--attention-backend",
@@ -40,6 +41,8 @@ class TestDecodeLogInterval(CustomTestCase):
             "--disable-radix-cache",
             "--decode-log-interval",
             cls.decode_numbers,
+            "--base-gpu-id",
+            "10",
         ]
         cls.out_log_file = open("./cache_out_log.txt", "w+", encoding="utf-8")
         cls.err_log_file = open("./cache_err_log.txt", "w+", encoding="utf-8")
