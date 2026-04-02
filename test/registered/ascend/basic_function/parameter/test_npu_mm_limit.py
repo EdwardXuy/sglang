@@ -34,23 +34,26 @@ def popen_launch_server_wrapper(base_url, model, other_args):
 
 def _send_parallel_request_task1(base_url, image_url):
     import requests
+
     requests.packages.urllib3.disable_warnings()
     import ssl
+
     ssl._create_default_https_context = ssl._create_unverified_context
     messages = [
         {
             "role": "user",
-            "content": [ 
+            "content": [
                 {"type": "image_url", "image_url": {"url": image_url}},
                 {"type": "text", "text": "Describe this video."},
-            ]
+            ],
         }
-    ] 
+    ]
     resp = requests.post(
         f"{base_url}/chat/completions",
-        json={"messages": messages, "temperature": 0, "max_completion_tokens": 512}
+        json={"messages": messages, "temperature": 0, "max_completion_tokens": 512},
     )
     assert resp.status_code == 200
+
 
 class TestLimitMMDatePerRequest(CustomTestCase):
     """Testcase: Configuring Multi-Modal to send different multimodal inference requests,
@@ -121,7 +124,6 @@ class TestLimitMMDatePerRequest(CustomTestCase):
             },
         )
         assert response.status_code == 200
-
 
     def _run_multi_turn_request1(self):
         # Enter two images
