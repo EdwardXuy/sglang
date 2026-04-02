@@ -1,37 +1,44 @@
-import time
 import unittest
 from types import SimpleNamespace
+from urllib.parse import urlparse
 
 from sglang.srt.utils import kill_process_tree
+from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.few_shot_gsm8k import run_eval as run_eval_few_shot_gsm8k
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-    popen_launch_server,
+    popen_launch_server, DEFAULT_URL_FOR_TEST,
 )
+register_npu_ci(est_time=800, suite="nightly-1-npu-a3", nightly=True)
 from sglang.test.ascend.test_ascend_utils import QWEN3_0_6B_WEIGHTS_PATH
 
 
-class TestQwenPPTieWeightsAccuracy(unittest.TestCase):
-    """Test Case: Verify the accuracy consistency of Qwen3-0.6B model (with tie_word_embeddings) between PP=1 and PP=2
-
-    [Test Category] Parameter
-    [Test Target] --pp-size
+class TestSchedulerRecvIntervalConsistency(unittest.TestCase):
     """
+    Test Case: Verify that when --scheduler-recv-interval > 1, inference latency increases but model accuracy is not affected.
+
+    [Test Category] Parameter Validation
+    [Test Target] --scheduler-recv-interval
+    """
+
     @classmethod
     def setUpClass(cls):
-        cls.base_url = "http://127.0.0.1:23335"  # different ports to avoid conflicts
-        cls.model_name = QWEN3_0_6B_WEIGHTS_PATH  # qwen3 < 8B all have tie_word_embeddings = True
+        cls.base_url = DEFAULT_URL_FOR_TEST
+        cls.url = urlparse(DEFAULT_URL_FOR_TEST)
+        cls.server_process = None
 
-    def run_gsm8k_test(self, interval):
-        process = popen_launch_server(
-            self.model_name,
+    @classmethod
+    def tearDownClass(cls):
+        kill_process_tree(cls.server_process.pid)
+
+    def _run_gsm8k_evaluation(self, scheduler_recv_interval: int):
+        self.server_process = popen_launch_server(
+            QWEN3_0_6B_WEIGHTS_PATH,
             self.base_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=[
-                "--scheduler-recv-interval",
-                interval,
-                "--attention-backend",
-                "ascend",
+                "--scheduler-recv-interval", str(scheduler_recv_interval),
+                "--attention-backend", "ascend",
                 "--disable-radix-cache",
             ],
         )
@@ -43,38 +50,33 @@ class TestQwenPPTieWeightsAccuracy(unittest.TestCase):
                 num_questions=200,
                 max_new_tokens=512,
                 parallel=128,
-                host="http://127.0.0.1",
-                port=int(self.base_url.split(":")[-1]),
+                host=f"http://{self.url.hostname}",
+                port=int(self.url.port),
             )
             metrics = run_eval_few_shot_gsm8k(args)
-            time.sleep(5)
             return metrics
         finally:
-            kill_process_tree(process.pid)
+            kill_process_tree(self.server_process.pid)
 
-    def test_pp_consistency(self):
-        baseline = self.run_gsm8k_test(interval=1)
-        print("============================baseline=====================================")
-        print(baseline)
-        pp_metrics = self.run_gsm8k_test(interval=50000)
-        print("============================100===========================================")
-        print(pp_metrics)
+    def test_scheduler_recv_interval_consistency(self):
+        baseline_metrics = self._run_gsm8k_evaluation(scheduler_recv_interval=1)
+        test_metrics = self._run_gsm8k_evaluation(scheduler_recv_interval=50000)
 
-        print(f"[Qwen PP Comparison] Baseline: {baseline} | PP: {pp_metrics}")
+        self.assertGreaterEqual(baseline_metrics["accuracy"], 0.38,
+                                msg="Baseline accuracy is too low.")
 
-
-
-
-        self.assertGreaterEqual(baseline["accuracy"], 0.38)
         self.assertGreaterEqual(
-            pp_metrics["accuracy"],
-            baseline["accuracy"] - 0.02,
-            msg=(
-                f"PP accuracy dropped more than 2% compared to baseline. "
-                f"Baseline: {baseline['accuracy']:.2%}, PP: {pp_metrics['accuracy']:.2%}"
-            ),
+            test_metrics["accuracy"],
+            baseline_metrics["accuracy"] - 0.02,
+            msg=f"Accuracy dropped by more than 2%! Baseline: {baseline_metrics['accuracy']:.2%}, Test: {test_metrics['accuracy']:.2%}"
         )
-        self.assertGreaterEqual(pp_metrics["latency"], baseline["latency"])
+
+        # When --scheduler-recv-interval is set to 50000, the inference latency increases compared to 1
+        self.assertGreaterEqual(
+            test_metrics["latency"], baseline_metrics["latency"],
+            msg="Test latency should be >= baseline latency."
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
