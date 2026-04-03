@@ -15,7 +15,9 @@ from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
     CustomTestCase,
-    popen_launch_server, _create_clean_subprocess_env, _wait_for_server_health,
+    _create_clean_subprocess_env,
+    _wait_for_server_health,
+    popen_launch_server,
 )
 
 register_npu_ci(
@@ -34,34 +36,26 @@ class TestConfig(CustomTestCase):
 
     config = CONFIG_YAML_PATH
 
-    # launch server with "--config" parameter
     @classmethod
-    def popen_launch_server_with_config_yaml(cls, config_file, base_url, timeout):
-        parsed_url = urlparse(base_url)
+    def setUpClass(cls):
+        # launch server with "--config" parameter
+        parsed_url = urlparse(DEFAULT_URL_FOR_TEST)
         host = parsed_url.hostname
-        port = parsed_url.port
+        port = str(parsed_url.port)
         command = [
             "python3",
             "-m",
             "sglang.launch_server",
             "--config",
-            config_file,
+            cls.config,
             "--host",
             host,
             "--port",
-            str(port),
+            port,
         ]
-
         env = _create_clean_subprocess_env(os.environ.copy())
-        process = subprocess.Popen(command, stdout=None, stderr=None, env=env)
-        _wait_for_server_health(process, base_url, None, timeout)
-        return process
-
-    @classmethod
-    def setUpClass(cls):
-        cls.process = cls.popen_launch_server_with_config_yaml(
-            cls.config, DEFAULT_URL_FOR_TEST, DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH
-        )
+        cls.process = subprocess.Popen(command, stdout=None, stderr=None, env=env)
+        _wait_for_server_health(cls.process, DEFAULT_URL_FOR_TEST, None, DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH)
 
     @classmethod
     def tearDownClass(cls):
@@ -99,7 +93,7 @@ class TestConfigPriority(CustomTestCase):
         # will use false model path (/nonexistent/Qwen/Qwen3-32B) service start fail
         error_message = "Repo id must be in the form 'repo_name' or 'namespace/repo_name': '/nonexistent/Qwen/Qwen3-32B'."
         with tempfile.NamedTemporaryFile(
-                mode="w+", delete=True, suffix="out.log"
+            mode="w+", delete=True, suffix="out.log"
         ) as out_log_file, tempfile.NamedTemporaryFile(
             mode="w+", delete=True, suffix="out.log"
         ) as err_log_file:

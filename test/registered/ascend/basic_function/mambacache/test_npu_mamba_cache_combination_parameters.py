@@ -41,12 +41,12 @@ class TestMambaCache(CustomTestCase):
             kill_process_tree(cls.process.pid)
 
     def _launch_server_with_mamba_params(
-            self,
-            max_mamba_cache_size=None,
-            mamba_ssm_dtype=None,
-            mamba_full_memory_ratio=0.9,
-            mamba_scheduler_strategy="auto",
-            mamba_track_interval=256,
+        self,
+        max_mamba_cache_size=None,
+        mamba_ssm_dtype=None,
+        mamba_full_memory_ratio=0.9,
+        mamba_scheduler_strategy="auto",
+        mamba_track_interval=256,
     ):
         other_args = [
             "--trust-remote-code",
@@ -97,7 +97,9 @@ class TestMambaCache(CustomTestCase):
     def test_mamba_long_sequence(self):
         self.process = self._launch_server_with_mamba_params(max_mamba_cache_size=1024)
         try:
-            long_prompt = "just return me a string with of 10000 characters:" + "A" * 10000
+            long_prompt = (
+                "just return me a string with of 10000 characters:" + "A" * 10000
+            )
             response = requests.post(
                 f"{DEFAULT_URL_FOR_TEST}/generate",
                 json={
@@ -118,13 +120,16 @@ class TestMambaCache(CustomTestCase):
         self.process = self._launch_server_with_mamba_params(
             max_mamba_cache_size=2048,
             mamba_ssm_dtype="float16",
-            mamba_track_interval=128, )
+            mamba_track_interval=128,
+        )
         try:
             self._test_basic_inference()
         finally:
             kill_process_tree(self.process.pid)
 
-    def test_mamba_batch_scheduler_strategy_no_buffer_full_memory_ratio_0_5_ssm_dtype_bfloat16(self):
+    def test_mamba_batch_scheduler_strategy_no_buffer_full_memory_ratio_0_5_ssm_dtype_bfloat16(
+            self,
+    ):
         self.process = self._launch_server_with_mamba_params(
             max_mamba_cache_size=512,
             mamba_ssm_dtype="bfloat16",
