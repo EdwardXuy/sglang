@@ -1,10 +1,13 @@
 import logging
 import os
 import subprocess
+import sys
 import threading
 import time
 from functools import wraps
 from urllib.parse import urlparse
+
+import importlib
 
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ascend.e2e.test_npu_multi_node_utils import (
@@ -233,6 +236,16 @@ def write_pkg_info_to_file(result_file):
         logger.error(f"Error getting packages: {e}")
 
 
+def install_transformers(version):
+    """Install transformers for benchserving"""
+    subprocess.check_call(
+        [sys.executable, "-m", "pip", "install", "--no-index", f"--find-links=/tmp/transformers/{version}/",
+         f"transformers=={version}"]
+    )
+    import transformers
+    importlib.reload(transformers)
+
+
 def run_bench_serving(
     host,
     port,
@@ -252,6 +265,10 @@ def run_bench_serving(
     seed=None,
     output_file=None,
 ):
+    install_transformers("4.57.6")
+    import transformers
+    logger.info(f"transformers version: {transformers.__version__}")
+    assert transformers.__version__ == "4.57.6"
     metrics_file = os.getenv("METRICS_DATA_FILE")
     result_file = "./bench_log.txt" if not metrics_file else metrics_file
     logger.info(f"The metrics result file: {result_file}")
