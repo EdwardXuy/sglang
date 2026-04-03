@@ -1,7 +1,7 @@
 import os
 import unittest
+
 import requests
-from requests.exceptions import Timeout
 
 
 from sglang.srt.utils import kill_process_tree
@@ -10,7 +10,6 @@ from sglang.test.ascend.test_ascend_utils import QWEN3_VL_30B_A3B_INSTRUCT_WEIGH
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
-    DEFAULT_URL_FOR_TEST,
     popen_launch_server,
 )
 
@@ -26,9 +25,6 @@ _INLINE_IMAGE_URL = (
 )
 
 
-
-
-
 class TestDisaggregatedVLM(TestDisaggregationBase):
     __test__ = False
     encoder_transfer_backend: str = None
@@ -36,18 +32,13 @@ class TestDisaggregatedVLM(TestDisaggregationBase):
     Verify encoder-only + language-only configuration.
 
     Architecture under test
-    -----------------------
     Two servers run on the same machine using different NPU cards and ports:
         encoder server  (--encoder-only,   NPU 0-1, port=prefill_port)
         language server (--language-only,  NPU 2-3, port=decode_port)
 
     The language server is configured with --encoder-urls pointing to the
     encoder server. This setup validates the complete VLM disaggregation.
-
-   
-
-
-
+    
     [Test Category] Parameter
     [Test Target] --encoder-only; --language-only; --encoder-transfer-backend;
                   --encoder-urls;
@@ -259,7 +250,6 @@ class TestDisaggregatedVLM(TestDisaggregationBase):
             "encoder embedding may not have been received correctly.",
         )
 
-
     @classmethod
     def tearDownClass(cls):
         os.environ.pop("SGLANG_MM_SKIP_COMPUTE_HASH", None)
@@ -267,11 +257,14 @@ class TestDisaggregatedVLM(TestDisaggregationBase):
         # and process_decode (language) automatically
         super().tearDownClass()
 
+
 class TestDisaggregatedVLM_ZMQ_Scheduler(TestDisaggregatedVLM):
     encoder_transfer_backend = "zmq_to_scheduler"
 
+
 class TestDisaggregatedVLM_ZMQ_Tokenizer(TestDisaggregatedVLM):
     encoder_transfer_backend = "zmq_to_tokenizer"
+
 
 if __name__ == "__main__":
     unittest.main()

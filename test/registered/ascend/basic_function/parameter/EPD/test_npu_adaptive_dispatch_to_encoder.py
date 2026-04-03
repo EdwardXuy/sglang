@@ -3,9 +3,6 @@ import unittest
 
 import requests
 
-
-
-
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ascend.test_ascend_utils import QWEN3_VL_30B_A3B_INSTRUCT_WEIGHTS_PATH
 from sglang.test.ci.ci_register import register_npu_ci
@@ -81,7 +78,8 @@ class TestAdaptiveDispatchToEncoder(CustomTestCase):
                 "--enable-adaptive-dispatch-to-encoder",
                 # Intentionally omit --encoder-urls: single-image requests
                 # must be handled locally without any encoder server.
-                "--encoder-urls", "http://127.0.0.1:9999",
+                "--encoder-urls",
+                "http://127.0.0.1:9999",
                 "--tp-size",
                 "2",
                 "--attention-backend",
