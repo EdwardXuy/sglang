@@ -94,7 +94,7 @@ class TestDeepEpLowLatencyQwen3235B(CustomTestCase):
         self.assertGreaterEqual(
             achieved_accuracy,
             expect_accuracy,
-            f'Accuracy of {self.model} is {str(achieved_accuracy)}, is lower than {expect_accuracy}'
+            f"Accuracy of {self.model} is {str(achieved_accuracy)}, is lower than {expect_accuracy}",
         )
         print(f"Model {self.model} achieved accuracy: {str(achieved_accuracy)}")
 
