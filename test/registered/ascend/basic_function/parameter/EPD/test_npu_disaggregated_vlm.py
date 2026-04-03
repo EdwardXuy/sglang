@@ -41,6 +41,7 @@ _INLINE_IMAGE_URL = (
 
 
 class TestDisaggregatedVLM(TestDisaggregationBase):
+    transfer_backend = "zmq_to_scheduler"
     """
     Testcase 5.1 & 5.2 Unified: Verify encoder-only + language-only configuration.
 
@@ -108,7 +109,7 @@ class TestDisaggregatedVLM(TestDisaggregationBase):
         encoder_args = [
             "--encoder-only",
             "--encoder-transfer-backend",
-            "zmq_to_scheduler",
+            cls.transfer_backend,
             "--tp-size",
             "2",
             "--base-gpu-id",
@@ -145,7 +146,7 @@ class TestDisaggregatedVLM(TestDisaggregationBase):
             "--encoder-urls",
             cls.prefill_url,
             "--encoder-transfer-backend",
-            "zmq_to_scheduler",
+            cls.transfer_backend,
             "--tp-size",
             "2",
             "--base-gpu-id",
@@ -294,6 +295,8 @@ class TestDisaggregatedVLM(TestDisaggregationBase):
         # and process_decode (language) automatically
         super().tearDownClass()
 
+class TestDisaggregatedVLM_ZMQ_Tokenizer(TestDisaggregatedVLM):
+    transfer_backend = "zmq_to_tokenizer"
 
 if __name__ == "__main__":
     unittest.main()
