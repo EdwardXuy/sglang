@@ -343,6 +343,41 @@ def run_bench_serving(
 
     return metrics
 
+def assert_metrics(self, metrics):
+    """Assert benchmark metrics against expected values.
+
+    Args:
+        metrics (dict): Benchmark metrics dictionary.
+    """
+    if not metrics:
+        raise Exception("No metrics obtained from benchmark")
+
+    if self.tpot:
+        if self.tpot < TPOT_THRESHOLD:
+            self.assertLessEqual(
+                float(metrics["mean_tpot"]),
+                self.tpot + TPOT_TOLERANCE_LOW,
+            )
+        else:
+            self.assertLessEqual(
+                float(metrics["mean_tpot"]),
+                self.tpot * TPOT_TOLERANCE_HIGH,
+            )
+    if self.output_token_throughput:
+        self.assertGreaterEqual(
+            float(metrics["total_tps"]),
+            self.output_token_throughput * OUTPUT_TOKEN_THROUGHPUT_TOLERANCE,
+        )
+    if self.ttft:
+        self.assertLessEqual(
+            float(metrics["mean_ttft"]),
+            self.ttft * TTFT_TOLERANCE,
+        )
+    if self.mean_e2e_latency:
+        self.assertLessEqual(
+            float(metrics["mean_e2e_latency"]),
+            self.mean_e2e_latency * E2E_TOLERANCE,
+        )
 
 class TestAscendPerformanceTestCaseBase(CustomTestCase):
     model = None
@@ -397,41 +432,41 @@ class TestAscendPerformanceTestCaseBase(CustomTestCase):
             except Exception as e:
                 logger.error(f"Error during tearDown: {e}")
 
-    def _assert_metrics(self, metrics):
-        """Assert benchmark metrics against expected values.
-
-        Args:
-            metrics (dict): Benchmark metrics dictionary.
-        """
-        if not metrics:
-            self.fail("No metrics obtained from benchmark")
-
-        if self.tpot:
-            if self.tpot < TPOT_THRESHOLD:
-                self.assertLessEqual(
-                    float(metrics["mean_tpot"]),
-                    self.tpot + TPOT_TOLERANCE_LOW,
-                )
-            else:
-                self.assertLessEqual(
-                    float(metrics["mean_tpot"]),
-                    self.tpot * TPOT_TOLERANCE_HIGH,
-                )
-        if self.output_token_throughput:
-            self.assertGreaterEqual(
-                float(metrics["total_tps"]),
-                self.output_token_throughput * OUTPUT_TOKEN_THROUGHPUT_TOLERANCE,
-            )
-        if self.ttft:
-            self.assertLessEqual(
-                float(metrics["mean_ttft"]),
-                self.ttft * TTFT_TOLERANCE,
-            )
-        if self.mean_e2e_latency:
-            self.assertLessEqual(
-                float(metrics["mean_e2e_latency"]),
-                self.mean_e2e_latency * E2E_TOLERANCE,
-            )
+    # def _assert_metrics(self, metrics):
+    #     """Assert benchmark metrics against expected values.
+    #
+    #     Args:
+    #         metrics (dict): Benchmark metrics dictionary.
+    #     """
+    #     if not metrics:
+    #         self.fail("No metrics obtained from benchmark")
+    #
+    #     if self.tpot:
+    #         if self.tpot < TPOT_THRESHOLD:
+    #             self.assertLessEqual(
+    #                 float(metrics["mean_tpot"]),
+    #                 self.tpot + TPOT_TOLERANCE_LOW,
+    #             )
+    #         else:
+    #             self.assertLessEqual(
+    #                 float(metrics["mean_tpot"]),
+    #                 self.tpot * TPOT_TOLERANCE_HIGH,
+    #             )
+    #     if self.output_token_throughput:
+    #         self.assertGreaterEqual(
+    #             float(metrics["total_tps"]),
+    #             self.output_token_throughput * OUTPUT_TOKEN_THROUGHPUT_TOLERANCE,
+    #         )
+    #     if self.ttft:
+    #         self.assertLessEqual(
+    #             float(metrics["mean_ttft"]),
+    #             self.ttft * TTFT_TOLERANCE,
+    #         )
+    #     if self.mean_e2e_latency:
+    #         self.assertLessEqual(
+    #             float(metrics["mean_e2e_latency"]),
+    #             self.mean_e2e_latency * E2E_TOLERANCE,
+    #         )
 
     @retry()
     def run_throughput(self):
@@ -458,7 +493,7 @@ class TestAscendPerformanceTestCaseBase(CustomTestCase):
         }
         logger.info(f"Starting benchmark with parameters: {bench_params}")
         metrics = run_bench_serving(**bench_params)
-        self._assert_metrics(metrics)
+        assert_metrics(self, metrics)
 
 
 class TestAscendPerfMultiNodePdMixTestCaseBase(CustomTestCase):
@@ -499,41 +534,41 @@ class TestAscendPerfMultiNodePdMixTestCaseBase(CustomTestCase):
     def tearDownClass(cls):
         pass
 
-    def _assert_metrics(self, metrics):
-        """Assert benchmark metrics against expected values.
-
-        Args:
-            metrics (dict): Benchmark metrics dictionary.
-        """
-        if not metrics:
-            self.fail("No metrics obtained from benchmark")
-
-        if self.tpot:
-            if self.tpot < TPOT_THRESHOLD:
-                self.assertLessEqual(
-                    float(metrics["mean_tpot"]),
-                    self.tpot + TPOT_TOLERANCE_LOW,
-                )
-            else:
-                self.assertLessEqual(
-                    float(metrics["mean_tpot"]),
-                    self.tpot * TPOT_TOLERANCE_HIGH,
-                )
-        if self.output_token_throughput:
-            self.assertGreaterEqual(
-                float(metrics["total_tps"]),
-                self.output_token_throughput * OUTPUT_TOKEN_THROUGHPUT_TOLERANCE,
-            )
-        if self.ttft:
-            self.assertLessEqual(
-                float(metrics["mean_ttft"]),
-                self.ttft * TTFT_TOLERANCE,
-            )
-        if self.mean_e2e_latency:
-            self.assertLessEqual(
-                float(metrics["mean_e2e_latency"]),
-                self.mean_e2e_latency * E2E_TOLERANCE,
-            )
+    # def _assert_metrics(self, metrics):
+    #     """Assert benchmark metrics against expected values.
+    #
+    #     Args:
+    #         metrics (dict): Benchmark metrics dictionary.
+    #     """
+    #     if not metrics:
+    #         self.fail("No metrics obtained from benchmark")
+    #
+    #     if self.tpot:
+    #         if self.tpot < TPOT_THRESHOLD:
+    #             self.assertLessEqual(
+    #                 float(metrics["mean_tpot"]),
+    #                 self.tpot + TPOT_TOLERANCE_LOW,
+    #             )
+    #         else:
+    #             self.assertLessEqual(
+    #                 float(metrics["mean_tpot"]),
+    #                 self.tpot * TPOT_TOLERANCE_HIGH,
+    #             )
+    #     if self.output_token_throughput:
+    #         self.assertGreaterEqual(
+    #             float(metrics["total_tps"]),
+    #             self.output_token_throughput * OUTPUT_TOKEN_THROUGHPUT_TOLERANCE,
+    #         )
+    #     if self.ttft:
+    #         self.assertLessEqual(
+    #             float(metrics["mean_ttft"]),
+    #             self.ttft * TTFT_TOLERANCE,
+    #         )
+    #     if self.mean_e2e_latency:
+    #         self.assertLessEqual(
+    #             float(metrics["mean_e2e_latency"]),
+    #             self.mean_e2e_latency * E2E_TOLERANCE,
+    #         )
 
     @classmethod
     @check_role(allowed_roles=["master"])
@@ -586,7 +621,7 @@ class TestAscendPerfMultiNodePdMixTestCaseBase(CustomTestCase):
         }
         logger.info(f"Starting benchmark with parameters: {bench_params}")
         metrics = run_bench_serving(**bench_params)
-        self._assert_metrics(metrics)
+        assert_metrics(self, metrics)
 
 
 class TestAscendPerfMultiNodePdSepTestCaseBase(CustomTestCase):
@@ -636,41 +671,41 @@ class TestAscendPerfMultiNodePdSepTestCaseBase(CustomTestCase):
             except Exception as e:
                 logger.error(f"Error during tearDown: {e}")
 
-    def _assert_metrics(self, metrics):
-        """Assert benchmark metrics against expected values.
-
-        Args:
-            metrics (dict): Benchmark metrics dictionary.
-        """
-        if not metrics:
-            self.fail("No metrics obtained from benchmark")
-
-        if self.tpot:
-            if self.tpot < TPOT_THRESHOLD:
-                self.assertLessEqual(
-                    float(metrics["mean_tpot"]),
-                    self.tpot + TPOT_TOLERANCE_LOW,
-                )
-            else:
-                self.assertLessEqual(
-                    float(metrics["mean_tpot"]),
-                    self.tpot * TPOT_TOLERANCE_HIGH,
-                )
-        if self.output_token_throughput:
-            self.assertGreaterEqual(
-                float(metrics["total_tps"]),
-                self.output_token_throughput * OUTPUT_TOKEN_THROUGHPUT_TOLERANCE,
-            )
-        if self.ttft:
-            self.assertLessEqual(
-                float(metrics["mean_ttft"]),
-                self.ttft * TTFT_TOLERANCE,
-            )
-        if self.mean_e2e_latency:
-            self.assertLessEqual(
-                float(metrics["mean_e2e_latency"]),
-                self.mean_e2e_latency * E2E_TOLERANCE,
-            )
+    # def _assert_metrics(self, metrics):
+    #     """Assert benchmark metrics against expected values.
+    #
+    #     Args:
+    #         metrics (dict): Benchmark metrics dictionary.
+    #     """
+    #     if not metrics:
+    #         self.fail("No metrics obtained from benchmark")
+    #
+    #     if self.tpot:
+    #         if self.tpot < TPOT_THRESHOLD:
+    #             self.assertLessEqual(
+    #                 float(metrics["mean_tpot"]),
+    #                 self.tpot + TPOT_TOLERANCE_LOW,
+    #             )
+    #         else:
+    #             self.assertLessEqual(
+    #                 float(metrics["mean_tpot"]),
+    #                 self.tpot * TPOT_TOLERANCE_HIGH,
+    #             )
+    #     if self.output_token_throughput:
+    #         self.assertGreaterEqual(
+    #             float(metrics["total_tps"]),
+    #             self.output_token_throughput * OUTPUT_TOKEN_THROUGHPUT_TOLERANCE,
+    #         )
+    #     if self.ttft:
+    #         self.assertLessEqual(
+    #             float(metrics["mean_ttft"]),
+    #             self.ttft * TTFT_TOLERANCE,
+    #         )
+    #     if self.mean_e2e_latency:
+    #         self.assertLessEqual(
+    #             float(metrics["mean_e2e_latency"]),
+    #             self.mean_e2e_latency * E2E_TOLERANCE,
+    #         )
 
     @classmethod
     @check_role(allowed_roles=["router"])
@@ -731,4 +766,4 @@ class TestAscendPerfMultiNodePdSepTestCaseBase(CustomTestCase):
         }
         logger.info(f"Starting benchmark with parameters: {bench_params}")
         metrics = run_bench_serving(**bench_params)
-        self._assert_metrics(metrics)
+        assert_metrics(self, metrics)
