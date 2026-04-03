@@ -2,11 +2,11 @@ import os
 import unittest
 from types import SimpleNamespace
 
-from sglang.test.ascend.test_ascend_utils import QWEN3_30B_A3B_W8A8_WEIGHTS_PATH 
 from sglang.srt.utils import kill_process_tree
+from sglang.test.ascend.test_ascend_utils import QWEN3_30B_A3B_W8A8_WEIGHTS_PATH
 from sglang.test.ci.ci_register import register_npu_ci
-from sglang.test.run_eval import run_eval
 from sglang.test.few_shot_gsm8k import run_eval as run_eval_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
@@ -23,9 +23,10 @@ class TestDeepepLowlatencyQwen3(CustomTestCase):
     [Test Category] Parameter
     [Test Target] --moe-a2a-backend;--deepep-mode
     """
+
     @classmethod
     def setUpClass(cls):
-        cls.model = QWEN3_30B_A3B_W8A8_WEIGHTS_PATH 
+        cls.model = QWEN3_30B_A3B_W8A8_WEIGHTS_PATH
         cls.base_url = DEFAULT_URL_FOR_TEST
         cls.process = popen_launch_server(
             cls.model,
@@ -52,7 +53,7 @@ class TestDeepepLowlatencyQwen3(CustomTestCase):
                 **os.environ,
             },
         )
-        cls.accuracy=0.86
+        cls.accuracy = 0.86
 
     @classmethod
     def tearDownClass(cls):
@@ -70,8 +71,7 @@ class TestDeepepLowlatencyQwen3(CustomTestCase):
 
         metrics = run_eval(args)
         self.assertGreaterEqual(metrics["score"], 0.5)
-    
-    
+
     def test_gsm8k(self):
         # Test Scenario: Verify the model's mathematical reasoning accuracy on the GSM8K dataset
         args = SimpleNamespace(
@@ -89,8 +89,7 @@ class TestDeepepLowlatencyQwen3(CustomTestCase):
             self.accuracy,
             f'Accyracy of {self.model} is {str(metrics["accuracy"])}, is lower than {self.accuracy}',
         )
-    
+
 
 if __name__ == "__main__":
     unittest.main()
-
