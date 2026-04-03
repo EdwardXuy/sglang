@@ -140,11 +140,11 @@ else:
 DEFAULT_URL_FOR_TEST = f"http://127.0.0.1:{DEFAULT_SERVER_PORT_FOR_TEST + 66}"
 
 
-def retry(max_attempts: int = 2):
+def retry(max_attempts: int = None):
     """
         Test case retry decorator
     Args:
-        max_attempts (int): Maximum number of execution attempts (default: 2).
+        max_attempts (int): Maximum number of execution attempts. If None, use self.max_attempts.
     """
     def decorator(func):
         @wraps(func)
@@ -152,10 +152,13 @@ def retry(max_attempts: int = 2):
             # Store the last exception for final reporting
             last_exception = None
 
+            # Get max_attempts from instance if not provided in decorator
+            attempts = max_attempts or getattr(self, 'max_attempts', 2)
+
             # Execute the test up to max_attempts times
-            for attempt in range(1, max_attempts + 1):
+            for attempt in range(1, attempts + 1):
                 try:
-                    logger.info(f"Executing test attempt {attempt}/{max_attempts}")
+                    logger.info(f"Executing test attempt {attempt}/{attempts}")
                     return func(self, *args, **kwargs)  # Return immediately if test passes
                 except (AssertionError, Exception) as e:
                     last_exception = e
@@ -378,8 +381,6 @@ class TestAscendPerformanceTestCaseBase(CustomTestCase):
                 env[key] = value
 
         other_args = list(cls.other_args)
-        # if not "--model-type" in other_args:
-        #     other_args.extend(["--model-type", "llm"])
 
         cls.process = popen_launch_server(
             cls.model,
@@ -433,7 +434,7 @@ class TestAscendPerformanceTestCaseBase(CustomTestCase):
                 self.mean_e2e_latency * E2E_TOLERANCE,
             )
 
-    @retry(max_attempts=max_attempts)
+    @retry()
     def run_throughput(self):
         parsed_url = urlparse(self.base_url)
         host = parsed_url.hostname
@@ -563,7 +564,7 @@ class TestAscendPerfMultiNodePdMixTestCaseBase(CustomTestCase):
         )
         time.sleep(MAX_SERVER_KEEP_ALIVE_TIME)
 
-    @retry(max_attempts=max_attempts)
+    @retry()
     @check_role(allowed_roles=["master", "worker"])
     def run_throughput(self):
         bench_params = {
@@ -708,7 +709,7 @@ class TestAscendPerfMultiNodePdSepTestCaseBase(CustomTestCase):
                     f"Sglang process exited on node {cls.host} {cls.hostname} with exit code: {exit_code}"
                 )
 
-    @retry(max_attempts=max_attempts)
+    @retry()
     @check_role(allowed_roles=["router"])
     def run_throughput(self):
         bench_params = {
