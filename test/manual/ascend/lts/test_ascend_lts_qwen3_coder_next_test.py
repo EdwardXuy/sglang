@@ -129,17 +129,6 @@ class TestLTSQwen3CoderNext(TestAscendLtsTestCaseBase):
         env = os.environ.copy()
         env.update(cls.envs)
 
-        cls.process = popen_launch_server(
-            cls.model,
-            cls.base_url,
-            timeout=cls.timeout,
-            other_args=cls.other_args,
-            env=env,
-        )
-
-    @classmethod
-    def tearDownClass(cls):
-        kill_process_tree(cls.process.pid)
 
     def testLtsQwen3CoderNext(self):
         i = 0
