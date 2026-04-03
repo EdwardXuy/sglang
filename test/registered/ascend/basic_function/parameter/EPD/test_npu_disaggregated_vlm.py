@@ -151,7 +151,7 @@ class TestDisaggregatedVLM(TestDisaggregationBase):
             "--tp-size",
             "2",
             "--base-gpu-id",
-            "14",
+            "12",
             "--attention-backend",
             "ascend",
             "--disable-cuda-graph",
