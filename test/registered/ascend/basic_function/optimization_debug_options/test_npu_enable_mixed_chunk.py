@@ -75,7 +75,7 @@ class TestEnableMixedChunk(CustomTestCase):
         # Launch 50 short text requests
         for _ in range(50):
             t = threading.Thread(
-                target = self._send_single_request, args = (self.SHORT_PROMPT, 32)
+                target=self._send_single_request, args=(self.SHORT_PROMPT, 32)
             )
             threads.append(t)
 
