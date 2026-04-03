@@ -64,6 +64,7 @@ class TestEncoderUrlsBase(CustomTestCase):
             # language-only is the natural counterpart for --encoder-urls:
             # the language server receives embeddings from a remote encoder server
             "--language-only",
+            "--skip-server-warmup",
             "--encoder-urls",
             _ENCODER_URL_PRIMARY,
             _ENCODER_URL_SECONDARY,
