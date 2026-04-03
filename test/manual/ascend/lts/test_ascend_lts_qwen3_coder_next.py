@@ -60,11 +60,11 @@ OTHER_ARGS = [
     "--disable-radix-cache",
     # 如开启radix cache , 需增加
     "--max-prefill-tokens",
-    30720,
+    16384,
     # "--context-length",
     # 26384,
     "--max-total-tokens",
-    870000,
+    1700000,
     "--dp-size",
     2,
     "--enable-dp-attention",
