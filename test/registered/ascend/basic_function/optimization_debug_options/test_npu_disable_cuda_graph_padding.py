@@ -15,10 +15,10 @@ register_npu_ci(est_time=400, suite="nightly-1-npu-a3", nightly=True)
 
 
 class TestDisableCudaGraphPadding(CustomTestCase):
-    """测试用例: 验证启用--disable-cuda-graph-padding参数，定长和变长请求推理结果均正确
+    """Testcase: Verify that both fixed-length and variable-length requests generate correct results with --disable-cuda-graph-padding enabled.
 
-    [测试类型] 参数验证
-    [测试目标] --disable-cuda-graph-padding
+    [Test Category] Parameter Validation
+    [Test Target] --disable-cuda-graph-padding
     """
 
     model = LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH
@@ -31,10 +31,12 @@ class TestDisableCudaGraphPadding(CustomTestCase):
             cls.base_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=[
-                "--attention-backend", "ascend",
+                "--attention-backend",
+                "ascend",
                 "--disable-cuda-graph-padding",
                 "--trust-remote-code",
-                "--mem-fraction-static", "0.8",
+                "--mem-fraction-static",
+                "0.8",
             ],
         )
 
@@ -43,19 +45,22 @@ class TestDisableCudaGraphPadding(CustomTestCase):
         kill_process_tree(cls.process.pid)
 
     def test_generate_without_padding(self):
-        """测试无填充（padding）的文本生成（CUDA Graph 应正常工作）"""
-        resp = requests.post(self.base_url + "/generate", json={
-            "text": "The capital of France is",
-            "sampling_params": {
-                "temperature": 0.0,
-                "max_new_tokens": 16,
-            }
-        })
+        """Test text generation without padding (CUDA Graph should work normally)"""
+        resp = requests.post(
+            self.base_url + "/generate",
+            json={
+                "text": "The capital of France is",
+                "sampling_params": {
+                    "temperature": 0.0,
+                    "max_new_tokens": 16,
+                },
+            },
+        )
         self.assertEqual(resp.status_code, 200)
         self.assertIn("Paris", resp.text)
 
     def test_generate_with_padding(self):
-        """测试变长输入文本生成（需要填充 padding）"""
+        """Test text generation with variable-length inputs (padding required)"""
         prompts = [
             "A",
             "Hello world",
@@ -63,13 +68,16 @@ class TestDisableCudaGraphPadding(CustomTestCase):
             "This is a longer test prompt to ensure padding is needed in batch",
         ]
 
-        resp = requests.post(self.base_url + "/generate", json={
-            "text": prompts,
-            "sampling_params": {
-                "temperature": 0.0,
-                "max_new_tokens": 8,
-            }
-        })
+        resp = requests.post(
+            self.base_url + "/generate",
+            json={
+                "text": prompts,
+                "sampling_params": {
+                    "temperature": 0.0,
+                    "max_new_tokens": 8,
+                },
+            },
+        )
         self.assertEqual(resp.status_code, 200)
         self.assertIn("text", resp.json())
 

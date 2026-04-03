@@ -24,6 +24,7 @@ class TestTorchCompileMoe(CustomTestCase):
     [Test Category] Parameter
     [Test Target] --enable-torch-compile
     """
+
     model = QWEN3_0_6B_WEIGHTS_PATH
     base_url = DEFAULT_URL_FOR_TEST
 

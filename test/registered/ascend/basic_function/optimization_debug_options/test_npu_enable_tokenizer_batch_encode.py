@@ -24,6 +24,7 @@ class TestTokenizerBatchEncode(CustomTestCase):
     [Test Category] Parameter
     [Test Target] --enable-tokenizer-batch-encode
     """
+
     model = QWEN3_0_6B_WEIGHTS_PATH
     base_url = DEFAULT_URL_FOR_TEST
 

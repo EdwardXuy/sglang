@@ -1,6 +1,7 @@
 import json
 import time
 import unittest
+
 import requests
 
 from sglang.srt.utils import kill_process_tree
@@ -22,6 +23,7 @@ class TestStreamInterval(CustomTestCase):
     [Test Category] Parameter
     [Test Target] --stream-interval, --stream-output
     """
+
     model = QWEN3_0_6B_WEIGHTS_PATH
     base_url = DEFAULT_URL_FOR_TEST
     prompt = "The capital of France is"
@@ -49,7 +51,7 @@ class TestStreamInterval(CustomTestCase):
                 "temperature": 0.0,
                 "max_new_tokens": self.total_tokens,
             },
-            "stream": True
+            "stream": True,
         }
 
         chunks = []
@@ -72,7 +74,6 @@ class TestStreamInterval(CustomTestCase):
         chunks1 = self._run_stream_request()
         kill_process_tree(proc1.pid)
         time.sleep(3)
-
 
         proc4 = self._start_server(interval=4)
         chunks4 = self._run_stream_request()

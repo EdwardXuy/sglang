@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ascend.test_ascend_utils import LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH
+from sglang.test.few_shot_gsm8k import run_eval
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -68,7 +69,6 @@ class TestModeImpl(CustomTestCase):
             host="http://127.0.0.1",
             port=int(self.base_url.split(":")[-1]),
         )
-        from sglang.test.few_shot_gsm8k import run_eval
         metrics = run_eval(args)
         self.assertGreater(metrics["accuracy"], self.gsm8k_lower_bound)
 
@@ -88,7 +88,7 @@ class TestModeImpl(CustomTestCase):
         self.assertLessEqual(
             running_req_num,
             self.PREFILL_MAX_REQUESTS,
-            f"running-req exceeds limit! current={running_req_num}, max allowed={self.PREFILL_MAX_REQUESTS}"
+            f"running-req exceeds limit! current={running_req_num}, max allowed={self.PREFILL_MAX_REQUESTS}",
         )
 
 
