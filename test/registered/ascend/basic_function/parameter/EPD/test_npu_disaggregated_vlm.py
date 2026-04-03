@@ -39,7 +39,7 @@ _INLINE_IMAGE_URL = (
 
 # ---------------------------------------------
 
-
+@unittest.skip("Base class for encoder-transfer-backend tests")
 class TestDisaggregatedVLM(TestDisaggregationBase):
     __test__ = False
     encoder_transfer_backend: str = None
@@ -80,8 +80,6 @@ class TestDisaggregatedVLM(TestDisaggregationBase):
         #   cls.prefill_url  →  encoder server URL
         #   cls.decode_url   →  language server URL
         #   cls.process_lb   →  None (no load balancer needed)
-        if cls.encoder_transfer_backend is None:
-            raise unittest.SkipTest("Skipping base test class")
         super().setUpClass()
         cls.model = QWEN3_VL_30B_A3B_INSTRUCT_WEIGHTS_PATH
 
