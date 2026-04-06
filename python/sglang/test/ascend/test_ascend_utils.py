@@ -18,7 +18,6 @@ import subprocess
 from types import SimpleNamespace
 from typing import Awaitable, Callable, NamedTuple, Optional
 
-import requests
 
 from sglang.bench_serving import run_benchmark
 from sglang.srt.utils import kill_process_tree
