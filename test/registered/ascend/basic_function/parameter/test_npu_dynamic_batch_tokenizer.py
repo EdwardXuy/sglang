@@ -94,11 +94,11 @@ class TestQwen32BTimeoutMin(BaseQwenTest):
 
 
 class TestQwen32BTimeoutMax(BaseQwenTest):
-    """GSM8K accuracy with dynamic batch tokenizer timeout = 0.1s (max recommended)."""
+    """GSM8K accuracy with dynamic batch tokenizer timeout = 0.01s (max recommended)."""
     @classmethod
     def setUpClass(cls):
         cls.base_url = DEFAULT_URL_FOR_TEST
-        cls.process = launch_server_with_timeout(MODEL_NAME, cls.base_url, 0.1, BASE_OTHER_ARGS)
+        cls.process = launch_server_with_timeout(MODEL_NAME, cls.base_url, 0.01, BASE_OTHER_ARGS)
 
     @classmethod
     def tearDownClass(cls):
