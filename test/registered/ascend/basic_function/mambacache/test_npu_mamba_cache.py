@@ -116,13 +116,13 @@ class TestMambaCacheParameters(TestMambaCacheBase):
         return response.text
 
     def test_mamba_long_sequence(self):
-        long_prompt = (
-                "just return me a string with of 10000 characters:" + "A" * 10000
+        long_text = (
+                "Explain the concept of machine learning in detail." * 50000
         )
         response = requests.post(
             f"{DEFAULT_URL_FOR_TEST}/generate",
             json={
-                "text": long_prompt,
+                "text": long_text,
                 "sampling_params": {
                     "temperature": 0,
                     "max_new_tokens": 10000,
