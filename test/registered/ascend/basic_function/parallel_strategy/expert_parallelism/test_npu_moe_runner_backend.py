@@ -19,7 +19,8 @@ class TestMoreRunnerBackendTriton(CustomTestCase):
     """Testcase：Verify set --moe-runner-backend, the inference request is successfully processed.
 
     [Test Category] Parameter
-    [Test Target] --moe-runner-backend
+    [Test Target] --ep, --enable-eplb, --moe-runner-backend, --deepep-mode, --ep-num-redundant-experts, --moe-a2a-backend,
+    --expert-distribution-recorder-buffer-size
     """
 
     model = DEEPSEEK_CODER_V2_LITE_WEIGHTS_PATH
