@@ -20,8 +20,6 @@ from sglang.test.test_utils import (
 
 register_npu_ci(est_time=300, suite="nightly-2-npu-a3", nightly=True)
 
-PYTHON_PATH = "/__w/sglang/sglang/python"
-COMPILE_PROTO_PATH = "/sglang/srt/grpc"
 
 
 class TestAscendGrpcModePDMixed(CustomTestCase):
