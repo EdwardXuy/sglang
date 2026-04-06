@@ -99,6 +99,8 @@ class TestMambaCacheParameters(TestMambaCacheBase):
         "--tp-size",
         "8",
         "--disable-radix-cache",
+        "--max-mamba-cache-size",
+        "1024",
     ]
 
     def test_basic_inference(self):
@@ -114,7 +116,6 @@ class TestMambaCacheParameters(TestMambaCacheBase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn("Paris", response.text)
-        return response.text
 
     def test_mamba_long_sequence(self):
         long_text = "Explain the concept of machine learning in detail." * 80000
