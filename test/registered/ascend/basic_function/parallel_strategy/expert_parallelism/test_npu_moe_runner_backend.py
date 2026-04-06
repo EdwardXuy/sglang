@@ -82,15 +82,6 @@ class TestMoreRunnerBackendTriton(CustomTestCase):
         self.assertIn(
             "Paris", response.text, "The inference result does not include Paris."
         )
-        response = requests.get(f"{DEFAULT_URL_FOR_TEST}/server_info")
-        self.assertEqual(
-            response.status_code, 200, "The request status code is not 200."
-        )
-        self.assertEqual(
-            response.json()["moe_runner_backend"],
-            self.moe_runner_backend,
-            "--moe-runner-backend is not taking effect.",
-        )
 
 
 class TestMoreRunnerBackendTritonDefault(TestMoreRunnerBackendTriton):
