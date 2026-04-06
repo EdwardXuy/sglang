@@ -42,8 +42,64 @@ class TestMambaCacheBase(CustomTestCase):
         if cls.process:
             kill_process_tree(cls.process.pid)
 
+    def test_mamba_cache_kv_cache(self):
+        # test kv cache reuse with radix cache,input text should meet page size requirement( >=128 )
+        input_ids_first = [1] * 200
+        input_ids_second = input_ids_first + [2] * 70
 
-class TestMambaCacheBasic(GSM8KAscendMixin, CustomTestCase):
+        def make_request(input_ids, expected_cached_tokens):
+            response = requests.post(
+                f"{DEFAULT_URL_FOR_TEST}/generate",
+                json={
+                    "input_ids": input_ids,
+                    "sampling_params": {
+                        "temperature": 0,
+                        "max_new_tokens": 32,
+                    },
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(
+                response.json()["meta_info"]["cached_tokens"], expected_cached_tokens
+            )
+
+        # First request: no cache
+        make_request(input_ids_first, 0)
+        # Second request: cache reused, cache token is reused in multiples of 128
+        make_request(input_ids_second, 128)
+
+    def test_basic_inference(self):
+        response = requests.post(
+            f"{DEFAULT_URL_FOR_TEST}/generate",
+            json={
+                "text": "The capital of France is",
+                "sampling_params": {
+                    "temperature": 0,
+                    "max_new_tokens": 32,
+                },
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("Paris", response.text)
+
+    def test_mamba_long_sequence(self):
+        long_text = "Explain the concept of machine learning in detail." * 6000
+        response = requests.post(
+            f"{DEFAULT_URL_FOR_TEST}/generate",
+            json={
+                "text": long_text,
+                "sampling_params": {
+                    "temperature": 0,
+                    "max_new_tokens": 10000,
+                },
+            },
+            timeout=120,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(len(response.text), 0)
+
+
+class TestMambaCacheWithMemoryRatio(GSM8KAscendMixin, CustomTestCase):
     """Testcase: Test MambaCache basic functions using GSM8K dataset.
     The inference accuracy of the Qwen3-Next-80B-A3B-Instruct model
     on the GSM8K dataset is no less than 0.92.
@@ -73,12 +129,13 @@ class TestMambaCacheBasic(GSM8KAscendMixin, CustomTestCase):
     ]
 
 
-class TestMambaCacheParameters(TestMambaCacheBase):
-    """Testcase: Verify MambaCache with different parameters, inference request successful.
+class TestMambaCacheWithMambaCacheSize(TestMambaCacheWithMemoryRatio):
+    """Testcase: Test MambaCache basic functions using GSM8K dataset.
+    The inference accuracy of the Qwen3-Next-80B-A3B-Instruct model
+    on the GSM8K dataset is no less than 0.92.
 
     [Test Category] Parameter
-    [Test Target] --mamba-full-memory-ratio, --mamba-ssm-dtype, --mamba-track-interval,
-    --mamba-scheduler-strategy
+    [Test Target] --mamba-scheduler-strategy, --mamba-ssm-dtype, --max-mamba-cache-size, --mamba-track-interval
     """
 
     other_args = [
@@ -88,12 +145,12 @@ class TestMambaCacheParameters(TestMambaCacheBase):
         "--attention-backend",
         "ascend",
         "--disable-cuda-graph",
-        "--mamba-ssm-dtype",
-        "float16",
         "--mamba-scheduler-strategy",
         "no_buffer",
         "--mamba-track-interval",
-        "128",
+        "512",
+        "--mamba-ssm-dtype",
+        "float32",
         "--tp-size",
         "8",
         "--disable-radix-cache",
@@ -101,42 +158,12 @@ class TestMambaCacheParameters(TestMambaCacheBase):
         "1024",
     ]
 
-    def test_basic_inference(self):
-        response = requests.post(
-            f"{DEFAULT_URL_FOR_TEST}/generate",
-            json={
-                "text": "The capital of France is",
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": 32,
-                },
-            },
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertIn("Paris", response.text)
-
-    def test_mamba_long_sequence(self):
-        long_text = "Explain the concept of machine learning in detail." * 10000
-        response = requests.post(
-            f"{DEFAULT_URL_FOR_TEST}/generate",
-            json={
-                "text": long_text,
-                "sampling_params": {
-                    "temperature": 0,
-                    "max_new_tokens": 10000,
-                },
-            },
-            timeout=120,
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertGreater(len(response.text), 0)
-
 
 class TestMambaCacheRadix(TestMambaCacheBase):
     """Testcase: Verify Radix Cache reuse with mamba cache.
 
     [Test Category] Parameter
-    [Test Target] Radix Cache reuse, --mamba-ssm-dtype
+    [Test Target] Radix Cache reuse, --mamba-ssm-dtype, --mamba-full-memory-ratio
     """
 
     other_args = [
@@ -151,39 +178,11 @@ class TestMambaCacheRadix(TestMambaCacheBase):
         "--mamba-ssm-dtype",
         "bfloat16",
         "--mamba-full-memory-ratio",
-        "0.5",
-        "--mamba-track-interval",
-        "1024",
+        "0.3",
     ]
 
-    def test_mamba_cache_kv_cache(self):
-        # test kv cache reuse with radix cache,input text should meet page size requirement( >=128 )
-        input_ids_first = [1] * 200
-        input_ids_second = input_ids_first + [2] * 70
 
-        def make_request(input_ids, expected_cached_tokens):
-            response = requests.post(
-                f"{DEFAULT_URL_FOR_TEST}/generate",
-                json={
-                    "input_ids": input_ids,
-                    "sampling_params": {
-                        "temperature": 0,
-                        "max_new_tokens": 32,
-                    },
-                },
-            )
-            self.assertEqual(response.status_code, 200)
-            self.assertEqual(
-                response.json()["meta_info"]["cached_tokens"], expected_cached_tokens
-            )
-
-        # First request: no cache
-        make_request(input_ids_first, 0)
-        # Second request: cache reused, cache token is reused in multiples of 128
-        make_request(input_ids_second, 128)
-
-
-class TestMambaCacheHierarchicalCache(TestMambaCacheRadix):
+class TestMambaCacheHierarchicalCache(TestMambaCacheBase):
     """Testcase: Verify hierarchical cache reuse with mamba cache.
 
     [Test Category] Parameter
@@ -202,6 +201,8 @@ class TestMambaCacheHierarchicalCache(TestMambaCacheRadix):
         "--enable-hierarchical-cache",
         "--hicache-ratio",
         1.2,
+        "--max-mamba-cache-size",
+        "512",
     ]
 
 
