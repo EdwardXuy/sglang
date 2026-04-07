@@ -22,7 +22,7 @@ class BaseNumaBindingTest(CustomTestCase):
     """
 
     TP_SIZE = 2
-    CONFIG_NUMA_LIST = []
+    CONFIG_NUMA_LIST = ["0", "1"]
 
     @classmethod
     def _is_numactl_installed(cls):
