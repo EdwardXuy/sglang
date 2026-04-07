@@ -5,7 +5,7 @@ import torch
 
 from sglang.test.ascend.test_ascend_utils import (
     GME_QWEN2_VL_2B_INSTRUCT_WEIGHTS_PATH,
-    IMAGES_023_PATH
+    IMAGES_023_PATH,
 )
 from sglang.test.ci.ci_register import register_npu_ci
 from sglang.test.runners import HFRunner, SRTRunner
