@@ -293,9 +293,8 @@ IMAGES_023_PATH = os.path.join(IMAGES_DIR, "023.jpg")
 
 # Other
 DEEPSEEK_CODER_JSON_PATH = "/__w/sglang/sglang/test/registered/ascend/basic_function/parameter/deepseek_coder.json"
-CONFIG_YAML_PATH = os.path.join(
-    os.path.dirname(__file__),
-    "../../../test/registered/ascend/basic_function/ConfigurationFileSupport/config.yaml",
+CONFIG_YAML_PATH = (
+    "/__w/sglang/sglang/test/registered/ascend/basic_function/config/config.yaml"
 )
 
 
