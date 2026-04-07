@@ -49,7 +49,7 @@ class TestHybridAttnBackendBase(CustomTestCase):
     # model = LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
     model = "/home/weights/Llama-3.2-1B-Instruct"
     base_url = DEFAULT_URL_FOR_TEST
-    accuracy_threshold = 0.35  # derived tests need to override this
+    accuracy_threshold = 0.36  # derived tests need to override this
 
     @classmethod
     def get_server_args(cls):
