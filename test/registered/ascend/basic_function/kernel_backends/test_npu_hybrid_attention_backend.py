@@ -80,7 +80,7 @@ class TestHybridAttnBackendBase(CustomTestCase):
 
         args = SimpleNamespace(
             num_shots=4,
-            num_questions=100,
+            num_examples=100,
             max_new_tokens=512,
             parallel=128,
             host="http://127.0.0.1",
@@ -95,7 +95,7 @@ class TestHybridAttnBackendBase(CustomTestCase):
         metric_key = "accuracy"
         self.assertGreater(metrics[metric_key], self.accuracy_threshold)
 
-        response = requests.get(f"{DEFAULT_URL_FOR_TEST}/get_server_info")
+        response = requests.get(f"{self.base_url}/get_server_info")
         self.assertEqual(
             response.status_code, 200, "The request status code is not 200."
         )
