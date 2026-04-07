@@ -74,7 +74,7 @@ class TestSkipServerWarmup(CustomTestCase):
         timeout = 30
         content = ""
         while time.time() - start_time < timeout:
-            with open(self.out_log_file.name, "r", encoding='utf-8') as f:
+            with open(self.out_log_file.name, "r", encoding="utf-8") as f:
                 content = f.read()
             if content:
                 break
