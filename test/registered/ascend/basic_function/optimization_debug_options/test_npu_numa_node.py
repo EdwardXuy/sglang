@@ -26,6 +26,21 @@ class BaseNumaBindingTest(CustomTestCase):
 
     @classmethod
     def setUpClass(cls):
+        print("Installing numactl...")
+        subprocess.run(
+            ["apt", "update", "-y"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        subprocess.run(
+            ["apt", "install", "-y", "numactl"],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        print("numactl installed successfully.")
+
         cls.model = QWEN3_0_6B_WEIGHTS_PATH
         cls.other_args = [
             "--trust-remote-code",
