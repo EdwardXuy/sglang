@@ -248,7 +248,6 @@ class DiffusionTestCase:
     server_args: DiffusionServerArgs
     sampling_params: DiffusionSamplingParams
     run_perf_check: bool = True
-    run_consistency_check: bool = True
     run_models_api_check: bool = True
     run_t2v_input_reference_check: bool = True
     run_lora_basic_api_check: bool = False
@@ -778,7 +777,6 @@ if not current_platform.is_hip():
                 enable_warmup=False,
             ),
             HUNYUAN3D_SHAPE_sampling_params,
-            run_consistency_check=False,
         ),
     )
 # Skip turbowan on AMD: Triton requires 81920 shared memory, but AMD only has 65536.
@@ -804,7 +802,6 @@ ONE_GPU_CASES_C = [
             modality="image",
         ),
         T2I_sampling_params,
-        run_consistency_check=False,
     )
 ]
 
@@ -854,10 +851,6 @@ TWO_GPU_CASES_A = [
             custom_validator="video",
             num_gpus=2,
             lora_path="Cseti/wan2.2-14B-Arcane_Jinx-lora-v1",
-            extras=[
-                "--lora-weight-name",
-                "985347-wan22_14B-low-Nfj1nx-e65.safetensors",
-            ],
         ),
         DiffusionSamplingParams(
             prompt="Nfj1nx with blue hair, a woman walking in a cyberpunk city at night",
@@ -945,7 +938,6 @@ TWO_GPU_CASES_A = [
             extras=["--pipeline-class-name LTX2TwoStagePipeline"],
         ),
         T2V_sampling_params,
-        run_consistency_check=False,
     ),
 ]
 
