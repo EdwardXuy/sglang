@@ -35,6 +35,8 @@ DEFAULT_SERVER_ARGS = [
     0.9,
     "--tp-size",
     2,
+    "--base-gpu-id",
+    2,
 ]
 
 
