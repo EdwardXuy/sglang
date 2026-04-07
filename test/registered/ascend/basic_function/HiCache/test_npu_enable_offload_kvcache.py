@@ -181,6 +181,7 @@ class TestDisaggregationDecodeDisableOffload(DisaggregationHiCacheBase):
         metrics = run_eval(args)
         run_command(f"echo {metrics['accuracy']} > ./accuracy.txt")
 
+
 class TestDisaggregationDecodeEnableOffload(DisaggregationHiCacheBase):
     """Decode startup parameters, enable offload-kvcache"""
 

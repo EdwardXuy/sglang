@@ -251,7 +251,9 @@ class TestDisaggregationDecodeWithHiCache(DisaggregationHiCacheBase):
             cached_tokens = response["meta_info"]["cached_tokens"]
 
             logging.warning(f"Turn {turn} cached tokens: {cached_tokens}")
-            logging.warning(f"Improvement: {cached_tokens - previous_cached_tokens} tokens")
+            logging.warning(
+                f"Improvement: {cached_tokens - previous_cached_tokens} tokens"
+            )
 
             # Assert cache improvement
             self.assertGreater(
