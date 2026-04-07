@@ -8,7 +8,7 @@ import requests
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ascend.test_ascend_utils import LLAMA_3_2_1B_INSTRUCT_WEIGHTS_PATH
 from sglang.test.ci.ci_register import register_npu_ci
-from sglang.test.few_shot_gsm8k import run_eval as run_eval_few_shot_gsm8k
+from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
@@ -80,23 +80,26 @@ class TestHybridAttnBackendBase(CustomTestCase):
         requests.get(self.base_url + "/flush_cache")
 
         args = SimpleNamespace(
-            num_shots=4,
-            num_questions=100,
-            max_new_tokens=512,
-            parallel=128,
-            # host="http://127.0.0.1",
-            # host="127.0.0.1",
-            host=self.host,
-            # port=int(self.base_url.split(":")[-1]),
-            port=self.port,
-            data_path=GSM_DATASET_PATH,
+            base_url=self.base_url,
+            model=self.model,
+            eval_name="gsm8k",
+            api="completion",
+            max_tokens=512,
+            num_examples=200,
+            num_threads=64,
+            num_shots=8,
         )
-        metrics = run_eval_few_shot_gsm8k(args)
+        metrics = run_eval(args)
+        # print(f"Eval accuracy of GSM8K: {metrics=}")
+        #
+        # self.assertGreater(metrics["score"], 0.93)
+        # # metrics = run_eval_few_shot_gsm8k(args)
+        # metrics = run_eval(args)
 
         # Use the appropriate metric key based on the test class
-        metric_key = "accuracy"
-        self.assertGreater(metrics[metric_key], self.accuracy_threshold)
-        # self.assertGreater(metrics["score"], self.accuracy_threshold)
+        # metric_key = "accuracy"
+        # self.assertGreater(metrics[metric_key], self.accuracy_threshold)
+        self.assertGreater(metrics["score"], self.accuracy_threshold)
         # self.assertGreater(metrics["score"], 0)
 
         response = requests.get(f"{self.base_url}/get_server_info")
