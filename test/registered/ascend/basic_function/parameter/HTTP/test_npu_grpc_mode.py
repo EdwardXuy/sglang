@@ -288,15 +288,4 @@ class TestAscendGrpcModePDDisaggregation(CustomTestCase):
 
 
 if __name__ == "__main__":
-    try:
-        import smg_grpc_servicer
-    except ImportError:
-        subprocess.run(
-            [
-                "pip",
-                "install",
-                "smg-grpc-servicer[sglang]",
-            ],
-            check=True,
-        )
     unittest.main()
