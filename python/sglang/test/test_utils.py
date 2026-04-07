@@ -42,8 +42,10 @@ from sglang.srt.utils import (
     is_xpu,
     kill_process_tree,
     retry,
+    is_npu,
 )
 from sglang.srt.utils.network import is_port_available
+from sglang.test.ascend.test_ascend_utils import LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH
 from sglang.test.run_eval import run_eval
 from sglang.utils import get_exception_traceback, normalize_base_url
 
@@ -1684,7 +1686,10 @@ def run_and_check_memory_leak(
     if disable_overlap:
         other_args += ["--disable-overlap-schedule"]
 
-    model = DEFAULT_MODEL_NAME_FOR_TEST
+    if is_npu():
+        model = LLAMA_3_1_8B_INSTRUCT_WEIGHTS_PATH
+    else:
+        model = DEFAULT_MODEL_NAME_FOR_TEST
     port = random.randint(4000, 5000)
     base_url = f"http://127.0.0.1:{port}"
 
