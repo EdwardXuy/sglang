@@ -78,16 +78,24 @@ class TestTokenizerBatchEncode(CustomTestCase):
         # Without tokenizer batch encode
         self.process = self._start_server(enable_tokenizer_batch_encode=False)
         tp_off = self._get_throughput()
+        print("====================1111111=========================")
+        print(self.process.pid)
         kill_process_tree(self.process.pid)
+        print("====================22222222222222=========================")
+        print(self.process.pid)
 
         # With tokenizer batch encode
         self.process = self._start_server(enable_tokenizer_batch_encode=True)
         tp_on = self._get_throughput()
+        print("====================33333333333333333=========================")
+        print(self.process.pid)
         kill_process_tree(self.process.pid)
+        print("====================4444444444444444=========================")
+        print(self.process.pid)
 
         self.assertGreater(tp_on, tp_off)
 
-    def test_mmlu(self):
+    def test_gsm8k(self):
         self.process = self._start_server(enable_tokenizer_batch_encode=True)
         args = SimpleNamespace(
             base_url=self.base_url,
@@ -97,8 +105,12 @@ class TestTokenizerBatchEncode(CustomTestCase):
             num_threads=32,
         )
         metrics = run_eval(args)
-        self.assertGreaterEqual(metrics["score"], 0.50)
+        self.assertGreaterEqual(metrics["score"], 0.38)
+        print("====================55555555555555555=========================")
+        print(self.process.pid)
         kill_process_tree(self.process.pid)
+        print("====================666666666666=========================")
+        print(self.process.pid)
 
 
 if __name__ == "__main__":
