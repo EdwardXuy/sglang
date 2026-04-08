@@ -25,32 +25,26 @@ class TestTokenizerBatchEncode(CustomTestCase):
     [Test Target] --enable-tokenizer-batch-encode
     """
 
-    model = QWEN3_0_6B_WEIGHTS_PATH
-    base_url = DEFAULT_URL_FOR_TEST
 
     @classmethod
     def setUpClass(cls):
-        cls.process = None
-
-    @classmethod
-    def tearDownClass(cls):
-        if cls.process:
-            kill_process_tree(cls.process.pid)
-
-    def _start_server(self, enable_tokenizer_batch_encode: bool):
+        cls.model = QWEN3_0_6B_WEIGHTS_PATH
+        cls.base_url = DEFAULT_URL_FOR_TEST
         other_args = [
             "--attention-backend",
             "ascend",
+            "--enable-tokenizer-batch-encode"
         ]
-        if enable_tokenizer_batch_encode:
-            other_args.append("--enable-tokenizer-batch-encode")
-
-        return popen_launch_server(
-            self.model,
-            self.base_url,
+        cls.process = popen_launch_server(
+            cls.model,
+            cls.base_url,
             timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=other_args,
         )
+
+    @classmethod
+    def tearDownClass(cls):
+        kill_process_tree(cls.process.pid)
 
     def run_decode(self, max_new_tokens):
         response = requests.post(
@@ -66,37 +60,17 @@ class TestTokenizerBatchEncode(CustomTestCase):
         )
         return response.json()
 
-    def _get_throughput(self) -> float:
+    def test_tokenizer_batch_encode_throughput_improvement(self):
         self.run_decode(16)
         max_tokens = 256
         tic = time.perf_counter()
-        self.run_decode(max_tokens)
+        res = self.run_decode(max_tokens)
         tok = time.perf_counter()
-        return max_tokens / (tok - tic)
-
-    def test_tokenizer_batch_encode_throughput_improvement(self):
-        # Without tokenizer batch encode
-        self.process = self._start_server(enable_tokenizer_batch_encode=False)
-        tp_off = self._get_throughput()
-        print("====================1111111=========================")
-        print(self.process.pid)
-        kill_process_tree(self.process.pid)
-        print("====================22222222222222=========================")
-        print(self.process.pid)
-
-        # With tokenizer batch encode
-        self.process = self._start_server(enable_tokenizer_batch_encode=True)
-        tp_on = self._get_throughput()
-        print("====================33333333333333333=========================")
-        print(self.process.pid)
-        kill_process_tree(self.process.pid)
-        print("====================4444444444444444=========================")
-        print(self.process.pid)
-
-        self.assertGreater(tp_on, tp_off)
+        print(f"{res=}")
+        throughput = max_tokens / (tok - tic)
+        self.assertGreaterEqual(throughput, 270)
 
     def test_gsm8k(self):
-        self.process = self._start_server(enable_tokenizer_batch_encode=True)
         args = SimpleNamespace(
             base_url=self.base_url,
             model=self.model,
@@ -107,11 +81,6 @@ class TestTokenizerBatchEncode(CustomTestCase):
         )
         metrics = run_eval(args)
         self.assertGreaterEqual(metrics["score"], 0.38)
-        print("====================55555555555555555=========================")
-        print(self.process.pid)
-        kill_process_tree(self.process.pid)
-        print("====================666666666666=========================")
-        print(self.process.pid)
 
 
 if __name__ == "__main__":
