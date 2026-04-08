@@ -122,6 +122,7 @@ class TestDeepEpAutoDeepseekR1(CustomTestCase):
         # Test Scenario: Verify the model's accuracy on GSM8K dataset (mathematical reasoning evaluation)
         args = SimpleNamespace(
             base_url=self.base_url,
+            model=self.model,
             num_shots=8,
             data_path=None,
             num_examples=200,
@@ -133,9 +134,9 @@ class TestDeepEpAutoDeepseekR1(CustomTestCase):
         metrics = run_eval(args)
         # Assertion: The GSM8K accuracy is not lower than the preset threshold (0.96)
         self.assertGreaterEqual(
-            metrics["accuracy"],
+            metrics["score"],
             self.accuracy,
-            f'Accuracy of {self.model} is {str(metrics["accuracy"])}, is lower than {self.accuracy}',
+            f'Accuracy of {self.model} is {str(metrics["score"])}, is lower than {self.accuracy}',
         )
 
 
