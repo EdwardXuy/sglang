@@ -42,17 +42,18 @@ BASE_OTHER_ARGS = [
     "debug",
 ]
 
+
 def launch_server_with_params(
-        model_name, base_url, batch_size, batch_timeout, extra_args=None
+    model_name, base_url, batch_size, batch_timeout, extra_args=None
 ):
-    """ set batch_size  batch_timeout"""
+    """set batch_size  batch_timeout"""
     other_args = BASE_OTHER_ARGS.copy()
     other_args.extend(
         [
-        "--dynamic-batch-tokenizer-batch-size",
-        str(batch_size),
-        "--dynamic-batch-tokenizer-batch-timeout",
-        str(batch_timeout),
+            "--dynamic-batch-tokenizer-batch-size",
+            str(batch_size),
+            "--dynamic-batch-tokenizer-batch-timeout",
+            str(batch_timeout),
         ]
     )
     if extra_args:
@@ -151,7 +152,7 @@ class TestBatchSize64Timeout0p001(CustomTestCase):
         prompts = [
             "The capital of France is",
             "The largest planet is",
-            "The speed of light is"
+            "The speed of light is",
         ]
         results, lock = [], threading.Lock()
 
@@ -332,7 +333,7 @@ class TestBatchSize1Timeout0p005(CustomTestCase):
 
     def test_streaming_requests(self):
         prompts = [
-            "The capital of France is"
+            "The capital of France is",
             "The largest planet is",
             "The speed of light is",
         ]
