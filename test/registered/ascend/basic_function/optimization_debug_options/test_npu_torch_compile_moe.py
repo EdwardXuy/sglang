@@ -34,7 +34,7 @@ class TestTorchCompileMoe(CustomTestCase):
             "ascend",
             "--torch-compile-max-bs",
             "4",
-            "--enable-torch-compile"
+            "--enable-torch-compile",
         ]
 
         cls.process = popen_launch_server(

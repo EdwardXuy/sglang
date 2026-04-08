@@ -25,7 +25,6 @@ class TestTokenizerBatchEncode(CustomTestCase):
     [Test Target] --enable-tokenizer-batch-encode
     """
 
-
     @classmethod
     def setUpClass(cls):
         cls.model = QWEN3_0_6B_WEIGHTS_PATH
@@ -33,7 +32,7 @@ class TestTokenizerBatchEncode(CustomTestCase):
         other_args = [
             "--attention-backend",
             "ascend",
-            "--enable-tokenizer-batch-encode"
+            "--enable-tokenizer-batch-encode",
         ]
         cls.process = popen_launch_server(
             cls.model,

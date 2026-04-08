@@ -15,17 +15,17 @@ import asyncio
 import copy
 import logging
 import os
-import subprocess
-import time
-import threading
-import torch
 import random
+import subprocess
+import threading
+import time
 from types import SimpleNamespace
-from typing import Awaitable, Callable, NamedTuple, List, Optional
+from typing import Awaitable, Callable, List, NamedTuple, Optional
+
 
 from sglang.bench_serving import run_benchmark
-from sglang.test.run_eval import run_eval
 from sglang.srt.utils import kill_process_tree
+from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
     DEFAULT_URL_FOR_TEST,
@@ -583,6 +583,7 @@ def create_attention_monitor_hook_factory(config):
 
     return attention_monitor_hook
 
+
 def read_output(output_lines: List[str], filename: str = STDERR_FILENAME):
     """Print the output in real time with another thread."""
     while not os.path.exists(filename):
@@ -602,6 +603,7 @@ def read_output(output_lines: List[str], filename: str = STDERR_FILENAME):
             output_lines.append(line)
             pt += 1
         time.sleep(0.1)
+
 
 def run_and_check_memory_leak(
     workload_func,
@@ -676,6 +678,7 @@ def run_and_check_memory_leak(
     assert not has_leak
     if assert_has_abort:
         assert has_abort
+
 
 def run_mmlu_test(
     disable_radix_cache=False,
