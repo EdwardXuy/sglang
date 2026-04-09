@@ -16,7 +16,7 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
-register_npu_ci(est_time=400, suite="nightly-2-npu-a3", nightly=True)
+register_npu_ci(est_time=400, suite="nightly-4-npu-a3", nightly=True)
 
 _ASCEND_BACKEND = "ascend"
 
@@ -56,7 +56,7 @@ _COMMON_ARGS = [
 #   draft model. Valid range: any valid git ref string; None means default branch.
 _SERVER_ARGS = _COMMON_ARGS + [
     "--tp-size",
-    "2",
+    "4",
     "--speculative-draft-load-format",
     "dummy",
     "--speculative-draft-model-revision",

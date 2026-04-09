@@ -106,16 +106,13 @@ LLAMA_4_SCOUT_17B_16E_INSTRUCT_WEIGHTS_PATH = os.path.join(
 META_LLAMA_3_1_8B_INSTRUCT = os.path.join(
     MODEL_WEIGHTS_DIR, "LLM-Research/Meta-Llama-3.1-8B-Instruct"
 )
-
 LLAMA_3_8B_INSTRUCT_WEIGHTS_PATH = os.path.join(
-    MODEL_WEIGHTS_DIR, "LLM-Research/Meta-Llama-3-8B-Instruct"
+    MODEL_WEIGHTS_DIR, "meta-llama/Meta-Llama-3-8B-Instruct"
 )
-
-EAGLE_LLAMA3_8B_DRAFT_WEIGHTS_PATH = os.path.join(
+LLAMA_3_8B_EAGLE_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "lmsys/sglang-EAGLE-LLaMA3-Instruct-8B"
 )
-
-FR_SPEC_TOKEN_MAP_HF_PATH = "thunlp/LLaMA3-Instruct-8B-FR-Spec/freq_32768.pt"
+FR_SPEC_TOKEN_MAP_PATH = "thunlp/LLaMA3-Instruct-8B-FR-Spec/freq_32768.pt"
 MIMO_7B_RL_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "XiaomiMiMo/MiMo-7B-RL")
 MINICPM3_4B_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "OpenBMB/MiniCPM3-4B")
 MISTRAL_7B_INSTRUCT_V0_2_WEIGHTS_PATH = os.path.join(
