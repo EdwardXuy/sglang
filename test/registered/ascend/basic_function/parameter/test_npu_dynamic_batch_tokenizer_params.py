@@ -232,7 +232,9 @@ class TestBatchSize64Timeout0p001(CustomTestCase):
         logger.info(
             f"GSM8K accuracy with batch_size=64 timeout=0.001: {metrics['score']}"
         )
-        logger.info(f"GSM8K latency: {metrics['latency']:.2f}s, throughput: {metrics['output_throughput']:.2f} tok/s")
+        logger.info(
+            f"GSM8K latency: {metrics['latency']:.2f}s, throughput: {metrics['output_throughput']:.2f} tok/s"
+        )
 
 
 class TestBatchSize1Timeout0p005(CustomTestCase):
@@ -288,7 +290,9 @@ class TestBatchSize1Timeout0p005(CustomTestCase):
         logger.info(
             f"GSM8K accuracy with batch_size=1 timeout=0.005: {metrics['score']}"
         )
-        logger.info(f"GSM8K latency: {metrics['latency']:.2f}s, throughput: {metrics['output_throughput']:.2f} tok/s")
+        logger.info(
+            f"GSM8K latency: {metrics['latency']:.2f}s, throughput: {metrics['output_throughput']:.2f} tok/s"
+        )
 
 
 if __name__ == "__main__":
