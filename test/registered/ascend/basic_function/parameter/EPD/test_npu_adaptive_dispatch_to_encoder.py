@@ -13,7 +13,7 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
-register_npu_ci(est_time=400, suite="nightly-2-npu-a3", nightly=True)
+register_npu_ci(est_time=400, suite="nightly-8-npu-a3", nightly=True)
 
 
 _INLINE_IMAGE_URL = (
@@ -127,6 +127,124 @@ class TestAdaptiveDispatchToEncoder(CustomTestCase):
             f"Response body: {response.text[:300]}",
         )
 
+class TestAdaptiveDispatchToEncoderMultiImage(CustomTestCase):
+    """Test multi-image request with adaptive dispatch: should be forwarded to encoder server.
+
+    This test starts both an encoder-only server and a language-only server with
+    --enable-adaptive-dispatch-to-encoder. For a multi-image request (two images),
+    the adaptive dispatch should forward the encoding task to the remote encoder
+    server, not process locally. The test verifies that the request succeeds
+    (HTTP 200) and returns non-empty content.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        # Use different ports to avoid conflict with single-image test
+        cls.encoder_port = 31100
+        cls.language_port = 21100
+        cls.encoder_url = f"http://127.0.0.1:{cls.encoder_port}"
+        cls.language_url = f"http://127.0.0.1:{cls.language_port}"
+        cls.model = QWEN3_VL_30B_A3B_INSTRUCT_WEIGHTS_PATH
+
+        env = os.environ.copy()
+        env["SGLANG_MM_SKIP_COMPUTE_HASH"] = "True"
+
+        # Start encoder-only server (with zmq_to_scheduler backend)
+        encoder_args = [
+            "--encoder-only",
+            "--encoder-transfer-backend", "zmq_to_scheduler",
+            "--tp-size", "2",
+            "--base-gpu-id", "2",           # Adjust if needed
+            "--attention-backend", "ascend",
+            "--disable-cuda-graph",
+            "--trust-remote-code",
+            "--mem-fraction-static", "0.8",
+        ]
+        cls.encoder_process = popen_launch_server(
+            cls.model,
+            cls.encoder_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            env=env,
+            other_args=encoder_args,
+        )
+
+        # Start language-only server with adaptive dispatch and encoder URLs
+        language_args = [
+            "--language-only",
+            "--enable-adaptive-dispatch-to-encoder",
+            "--encoder-urls", cls.encoder_url,
+            "--encoder-transfer-backend",
+            "zmq_to_scheduler",
+            "--tp-size", "2",
+            "--base-gpu-id", "4",           # Different from encoder
+            "--attention-backend", "ascend",
+            "--disable-cuda-graph",
+            "--trust-remote-code",
+            "--mem-fraction-static", "0.8",
+        ]
+        cls.language_process = popen_launch_server(
+            cls.model,
+            cls.language_url,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            env=env,
+            other_args=language_args,
+        )
+
+        # Wait for both servers to be ready
+        cls.wait_server_ready(cls.encoder_url + "/health")
+        cls.wait_server_ready(cls.language_url + "/health")
+
+    @classmethod
+    def tearDownClass(cls):
+        kill_process_tree(cls.encoder_process.pid)
+        kill_process_tree(cls.language_process.pid)
+
+    @classmethod
+    def wait_server_ready(cls, url, timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH):
+        import time
+        start = time.time()
+        while True:
+            try:
+                r = requests.get(url, timeout=5)
+                if r.status_code == 200:
+                    return
+            except Exception:
+                pass
+            if time.time() - start > timeout:
+                raise RuntimeError(f"Server {url} not ready")
+            time.sleep(1)
+
+    def test_multi_image_forwarded_to_encoder(self):
+        """Send a request with two identical images. Adaptive dispatch should
+        forward to encoder server. Expect HTTP 200 and non-empty content."""
+        payload = {
+            "model": self.model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "image_url", "image_url": {"url": _INLINE_IMAGE_URL}},
+                        {"type": "image_url", "image_url": {"url": _INLINE_IMAGE_URL}},
+                        {"type": "text", "text": "Describe these two images briefly."},
+                    ],
+                }
+            ],
+            "temperature": 0,
+            "max_tokens": 64,
+        }
+        response = requests.post(
+            f"{self.language_url}/v1/chat/completions",
+            json=payload,
+            timeout=180,
+        )
+        self.assertEqual(
+            response.status_code,
+            200,
+            f"Multi-image request failed with status {response.status_code}. "
+            f"Response: {response.text[:300]}"
+        )
+        content = response.json().get("choices", [{}])[0].get("message", {}).get("content", "")
+        self.assertGreater(len(content), 0, "Response content is empty")
 
 if __name__ == "__main__":
     unittest.main()
