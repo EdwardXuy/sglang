@@ -163,7 +163,7 @@ class TestDotsOcr(CustomTestCase):
             detected_texts_set,
             expected_texts_set,
             f"Missing texts: {expected_texts_set - detected_texts_set}",
-)
+        )
 
 
 if __name__ == "__main__":
