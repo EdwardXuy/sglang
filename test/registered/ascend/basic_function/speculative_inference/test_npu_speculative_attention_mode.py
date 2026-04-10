@@ -173,7 +173,7 @@ class TestAscendSpeculativeAttentionMode(TestDisaggregationBase):
         self.assertGreaterEqual(
             metrics["score"],
             self.accuracy,
-            f"GSM8K score {metrics['score']} below threshold {self.accuracy}"
+            f"GSM8K score {metrics['score']} below threshold {self.accuracy}",
         )
 
     @classmethod
