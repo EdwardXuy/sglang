@@ -1,6 +1,7 @@
 import os
 import unittest
 from types import SimpleNamespace
+from urllib.parse import urlparse
 
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ascend.test_ascend_utils import (
@@ -16,7 +17,7 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
-register_npu_ci(est_time=400, suite="full-16-npu-a3", nightly=True)
+register_npu_ci(est_time=600, suite="full-16-npu-a3", nightly=True)
 
 
 class TestDeepepLowlatencyDeepseekR1(CustomTestCase):
@@ -26,8 +27,7 @@ class TestDeepepLowlatencyDeepseekR1(CustomTestCase):
     [Test Target] --speculative-algorithm; --deepep-mode
     """
 
-    accuracy = 0.81
-
+    accuracy = 0.96
     @classmethod
     def setUpClass(cls):
         cls.model = DEEPSEEK_R1_0528_W4A8_PER_CHANNEL_WEIGHTS_PATH
@@ -35,7 +35,7 @@ class TestDeepepLowlatencyDeepseekR1(CustomTestCase):
         cls.process = popen_launch_server(
             cls.model,
             cls.base_url,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH * 5,
             other_args=[
                 "--tp",
                 "16",
@@ -125,13 +125,15 @@ class TestDeepepLowlatencyDeepseekR1(CustomTestCase):
             num_shots=8,
             data_path=None,
             num_questions=200,
-            max_new_tokens=128,
+            max_new_tokens=512,
             parallel=8,
-            host="http://127.0.0.1",
-            port=int(self.base_url.split(":")[-1]),
+            eval_name="gsm8k",
+            host=urlparse(self.base_url).hostname,
+            port=urlparse(self.base_url).port,
         )
+        # Execute GSM8K evaluation and get metrics
         metrics = run_eval_gsm8k(args)
-        # Assertion: Ensure the GSM8K accuracy is not lower than the preset threshold
+        # Assertion: The GSM8K accuracy is not lower than the preset threshold (0.96)
         self.assertGreaterEqual(
             metrics["accuracy"],
             self.accuracy,
