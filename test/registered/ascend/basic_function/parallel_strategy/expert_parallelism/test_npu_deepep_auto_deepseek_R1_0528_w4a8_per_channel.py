@@ -17,7 +17,7 @@ from sglang.test.test_utils import (
     popen_launch_server,
 )
 
-register_npu_ci(est_time=600, suite="full-16-npu-a3", nightly=True)
+register_npu_ci(est_time=400, suite="full-16-npu-a3", nightly=True)
 
 
 class TestDeepEpAutoDeepseekR1(CustomTestCase):
@@ -36,7 +36,7 @@ class TestDeepEpAutoDeepseekR1(CustomTestCase):
         cls.process = popen_launch_server(
             cls.model,
             cls.base_url,
-            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH * 5,
+            timeout=DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
             other_args=[
                 "--tp",
                 "16",
@@ -100,7 +100,6 @@ class TestDeepEpAutoDeepseekR1(CustomTestCase):
                 "SGLANG_ENABLE_OVERLAP_PLAN_STREAM": "1",
                 **os.environ,
             },
-
         )
 
     @classmethod
