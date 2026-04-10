@@ -126,7 +126,7 @@ class TestDeepEpAutoDeepseekR1(CustomTestCase):
         args = SimpleNamespace(
             num_shots=5,
             data_path=None,
-            num_questions=200,
+            num_examples=200,
             max_new_tokens=512,
             parallel=300,
             eval_name="gsm8k",
@@ -137,9 +137,9 @@ class TestDeepEpAutoDeepseekR1(CustomTestCase):
         metrics = run_eval_gsm8k(args)
         # Assertion: The GSM8K accuracy is not lower than the preset threshold (0.96)
         self.assertGreaterEqual(
-            metrics["accuracy"],
+            metrics["score"],
             self.accuracy,
-            f'Accuracy of {self.model} is {str(metrics["accuracy"])}, is lower than {self.accuracy}',
+            f'Accuracy of {self.model} is {str(metrics["score"])}, is lower than {self.accuracy}',
         )
 
 
