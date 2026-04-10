@@ -28,6 +28,7 @@ class TestDeepepLowlatencyDeepseekR1(CustomTestCase):
     """
 
     accuracy = 0.96
+
     @classmethod
     def setUpClass(cls):
         cls.model = DEEPSEEK_R1_0528_W4A8_PER_CHANNEL_WEIGHTS_PATH
