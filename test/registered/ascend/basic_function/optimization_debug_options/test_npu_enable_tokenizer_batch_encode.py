@@ -75,8 +75,8 @@ class TestTokenizerBatchEncode(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
-            num_examples=64,
-            num_threads=32,
+            num_examples=200,
+            num_threads=128,
         )
         metrics = run_eval(args)
         self.assertGreaterEqual(metrics["score"], 0.38)

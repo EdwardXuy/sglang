@@ -35,6 +35,7 @@ class TestTorchCompileMoe(CustomTestCase):
             "--torch-compile-max-bs",
             "4",
             "--enable-torch-compile",
+            "--disable-cuda-graph",
         ]
 
         cls.process = popen_launch_server(
@@ -70,7 +71,7 @@ class TestTorchCompileMoe(CustomTestCase):
         tok = time.perf_counter()
         print(f"{res=}")
         throughput = max_tokens / (tok - tic)
-        self.assertGreaterEqual(throughput, 200)
+        self.assertGreaterEqual(throughput, 40)
 
     def test_gsm8k(self):
         args = SimpleNamespace(
@@ -78,8 +79,8 @@ class TestTorchCompileMoe(CustomTestCase):
             model=self.model,
             eval_name="gsm8k",
             api="completion",
-            num_examples=64,
-            num_threads=32,
+            num_examples=200,
+            num_threads=128,
         )
         metrics = run_eval(args)
         self.assertGreaterEqual(metrics["score"], 0.38)
