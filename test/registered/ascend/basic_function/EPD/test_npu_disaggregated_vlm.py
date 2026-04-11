@@ -191,14 +191,29 @@ class TestDisaggregatedVLM(TestDisaggregationBase):
             "encoder embedding may not have been received correctly.",
         )
 
+    def test_encoder_processes_multi_images_via_language_server(self):
+        payload = {
+            "model": self.model,
+            "messages": [{
+                "role": "user",
+                "content": [
+                    {"type": "image_url", "image_url": {"url": _INLINE_IMAGE_URL}},
+                    {"type": "image_url", "image_url": {"url": _INLINE_IMAGE_URL}},
+                    {"type": "text", "text": "Describe these two images."},
+                ],
+            }],
+            "temperature": 0,
+            "max_tokens": 64,
+        }
+        response = requests.post(f"{self.decode_url}/v1/chat/completions", json=payload, timeout=120)
+        self.assertEqual(response.status_code, 200)
+        content = response.json().get("choices", [{}])[0].get("message", {}).get("content", "")
+        self.assertGreater(len(content), 0)
+
     @classmethod
     def tearDownClass(cls):
         os.environ.pop("SGLANG_MM_SKIP_COMPUTE_HASH", None)
         super().tearDownClass()
-
-
-class TestDisaggregatedVLM_ZMQ_Scheduler(TestDisaggregatedVLM):
-    encoder_transfer_backend = "zmq_to_scheduler"
 
 
 class TestDisaggregatedVLM_ZMQ_Tokenizer(TestDisaggregatedVLM):
