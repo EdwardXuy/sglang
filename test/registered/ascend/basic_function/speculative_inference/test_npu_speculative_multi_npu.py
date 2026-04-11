@@ -116,12 +116,12 @@ class TestNpuSpeculativeDraftParams(CustomTestCase):
         self.assertEqual(
             server_args.get("speculative_draft_load_format"),
             "dummy",
-            "speculative_draft_load_format should be 'dummy'"
+            "speculative_draft_load_format should be 'dummy'",
         )
         self.assertEqual(
             server_args.get("speculative_draft_model_revision"),
             "main",
-            "speculative_draft_model_revision should be 'main'"
+            "speculative_draft_model_revision should be 'main'",
         )
 
         # 3. Simple generation test to ensure service is functional
