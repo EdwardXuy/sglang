@@ -40,6 +40,8 @@ class TestEnableThinking(CustomTestCase):
             0.95,
             "--tp",
             2,
+            "--reasoning-parser",
+            "qwen3",
         ]
         cls.process = popen_launch_server(
             cls.model,
