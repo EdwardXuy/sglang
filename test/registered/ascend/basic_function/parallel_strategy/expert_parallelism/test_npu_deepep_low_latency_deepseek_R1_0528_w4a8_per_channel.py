@@ -1,14 +1,12 @@
 import os
 import unittest
 from types import SimpleNamespace
-from urllib.parse import urlparse
 
 from sglang.srt.utils import kill_process_tree
 from sglang.test.ascend.test_ascend_utils import (
     DEEPSEEK_R1_0528_W4A8_PER_CHANNEL_WEIGHTS_PATH,
 )
 from sglang.test.ci.ci_register import register_npu_ci
-from sglang.test.few_shot_gsm8k import run_eval as run_eval_gsm8k
 from sglang.test.run_eval import run_eval
 from sglang.test.test_utils import (
     DEFAULT_TIMEOUT_FOR_SERVER_LAUNCH,
@@ -121,24 +119,24 @@ class TestDeepepLowlatencyDeepseekR1(CustomTestCase):
         self.assertGreater(metrics["score"], 0.5)
 
     def test_gsm8k(self):
-        # Test Scenario: Verify the model's mathematical reasoning accuracy on the GSM8K dataset
+        # Test Scenario: Verify the model's accuracy on GSM8K dataset (mathematical reasoning evaluation)
         args = SimpleNamespace(
-            num_shots=8,
-            data_path=None,
-            num_questions=200,
-            max_new_tokens=512,
-            parallel=8,
+            ase_url=self.base_url,
+            model=self.model,
             eval_name="gsm8k",
-            host=urlparse(self.base_url).hostname,
-            port=urlparse(self.base_url).port,
+            data_path=None,
+            num_examples=200,
+            num_threads=300,
+            num_shots=5,
+            max_new_tokens=512,
         )
         # Execute GSM8K evaluation and get metrics
-        metrics = run_eval_gsm8k(args)
+        metrics = run_eval(args)
         # Assertion: The GSM8K accuracy is not lower than the preset threshold (0.96)
         self.assertGreaterEqual(
-            metrics["accuracy"],
+            metrics["score"],
             self.accuracy,
-            f'Accuracy of {self.model} is {str(metrics["accuracy"])}, is lower than {self.accuracy}',
+            f'Accuracy of {self.model} is {str(metrics["score"])}, is lower than {self.accuracy}',
         )
 
 
