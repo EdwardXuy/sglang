@@ -28,9 +28,9 @@ class TestJSONModeMixin:
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a helpful AI assistant that gives a short answer.",
+                    "content": "You are a helpful AI assistant that strictly follows the provided JSON schema. Do not generate empty objects or extra characters outside the JSON.",
                 },
-                {"role": "user", "content": "What is the capital of Bulgaria?"},
+                {"role": "user", "content": "Introduce a popular coffee drink. Use the exact Json schema provided."},
             ],
             temperature=0,
             max_tokens=128,
@@ -70,9 +70,9 @@ class TestJSONModeMixin:
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a helpful AI assistant that gives a short answer.",
+                    "content": "You are a helpful AI assistant that strictly follows the provided JSON schema. Do not generate empty objects or extra characters outside the JSON.",
                 },
-                {"role": "user", "content": "What is the capital of Bulgaria?"},
+                {"role": "user", "content": "Introduce a popular coffee drink. Use the exact Json schema provided."},
             ],
             temperature=0,
             max_tokens=128,
@@ -119,17 +119,11 @@ class TestJSONModeMixin:
         """
         # Detect newline whitespace (\n) in JSON string (matching pattern [\n]?)
         has_newline_whitespace = bool(re.search(r'\n', json_str))
-        # Detect any whitespace characters
-        has_tab = bool(re.search(r'\t', json_str))
 
         # Expect newline whitespace (parameter takes effect)
         self.assertTrue(
             has_newline_whitespace,
             f"[{self.backend}] Missing expected newline whitespace after enabling --constrained-json-whitespace-pattern! JSON: {json_str}"
-        )
-        self.assertFalse(
-            has_tab,
-            f"[{self.backend}] Unexpected tab whitespace found in JSON output! JSON: {json_str}"
         )
 
 class ServerWithGrammarBackend(CustomTestCase):

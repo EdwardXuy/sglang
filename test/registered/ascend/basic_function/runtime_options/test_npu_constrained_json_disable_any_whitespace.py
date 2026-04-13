@@ -25,7 +25,7 @@ class TestJSONModeMixin:
         response = self.client.chat.completions.create(
             model=self.model,
             messages=[
-                {"role": "user", "content": "What is the capital of Bulgaria?"},
+                {"role": "user", "content": "Output a user information JSON."},
             ],
             temperature=0,
             max_tokens=128,
@@ -60,7 +60,7 @@ class TestJSONModeMixin:
         stream = self.client.chat.completions.create(
             model=self.model,
             messages=[
-                {"role": "user", "content": "What is the capital of Bulgaria?"},
+                {"role": "user", "content": "Output a user information JSON."},
             ],
             temperature=0,
             max_tokens=128,
