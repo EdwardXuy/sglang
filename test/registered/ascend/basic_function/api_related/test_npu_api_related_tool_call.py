@@ -322,7 +322,7 @@ class TestApiRelatedToolCallParserQwen(CustomTestCase):
             {"role": "system", "content": self.SYSTEM_MESSAGE},
             {
                 "role": "user",
-                "content": "Tell me the temperature in Xi'an, please use celsius"
+                "content": "Tell me the temperature in Xi'an, please use celsius",
             },
         ]
         response = client.chat.completions.create(
