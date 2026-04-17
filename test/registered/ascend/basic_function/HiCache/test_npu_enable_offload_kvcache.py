@@ -105,7 +105,7 @@ class DisaggregationHiCacheBase(PDDisaggregationServerBase):
         return self.tokenizer.decode(selected_tokens)
 
     def send_request(
-            self, prompt: str, max_tokens: int = 100, temperature: float = 0.0
+        self, prompt: str, max_tokens: int = 100, temperature: float = 0.0
     ) -> Dict:
         # Send a generate request and return response
         response = requests.post(
