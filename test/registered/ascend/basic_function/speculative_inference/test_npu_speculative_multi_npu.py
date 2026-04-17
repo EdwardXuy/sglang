@@ -1,5 +1,5 @@
-import os
 import json
+import os
 import unittest
 
 import requests
@@ -114,7 +114,7 @@ class TestNpuSpeculativeDraftParams(CustomTestCase):
         info = info_resp.json()
 
         print("=== /server_info response ===")
-        print(json.dumps(info, indent=2, default=str)) 
+        print(json.dumps(info, indent=2, default=str))
         print("=== end ===")
 
         server_args = info.get("server_args", {})
