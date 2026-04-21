@@ -83,7 +83,7 @@ class TestOffloadMeta(TestOffloadGroupSize):
     takes effect and the inference request succeeds.
 
     [Test Category] Parameter
-    [Test Target] --offload-mode
+    [Test Target] --offload-mode, --offload-num-in-group, --offload-prefetch-step
     """
 
     OTHER_ARGS = [
