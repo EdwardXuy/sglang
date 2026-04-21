@@ -65,7 +65,7 @@ class GSM8KAscendMixin(ABC):
         )
         metrics = run_eval(args)
         self.assertGreaterEqual(
-            metrics["accuracy"],
+            metrics["score"],
             self.accuracy,
-            f'Accuracy of {self.model} is {str(metrics["accuracy"])}, is lower than {self.accuracy}',
+            f'Accuracy of {self.model} is {str(metrics["score"])}, is lower than {self.accuracy}',
         )
