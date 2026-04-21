@@ -17,11 +17,11 @@ register_npu_ci(est_time=400, suite="nightly-2-npu-a3", nightly=True)
 
 
 class TestOffloadGroupSize(CustomTestCase):
-    """Testcase: Test the --offload-group-size parameter and --offload-mode = cpu, the parameter
+    """Testcase: Test the --offload-group-size parameter the parameter
     takes effect and the inference request succeeds.
 
     [Test Category] Parameter
-    [Test Target] --offload-group-size, --offload-mode
+    [Test Target] --offload-group-size
     """
 
     OTHER_ARGS = [
