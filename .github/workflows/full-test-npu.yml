@@ -30,15 +30,14 @@ on:
         type: string
         default: ''
       test_scope:
-        description: 'Test scope: all / func / perf / accuracy'
+        description: 'Test scope: all / func / POC'
         required: true
         type: choice
         options:
           - all
           - func
-          - perf
-          - accuracy
-        default: 'perf'
+          - POC
+        default: 'POC'
 
 concurrency:
   group: full-test-npu-${{ inputs.ref || github.ref }}-${{ inputs.test_scope }}
@@ -52,8 +51,9 @@ jobs:
       job_filter: ${{ steps.set-vars.outputs.job_filter }}
       image_a3: ${{ steps.set-vars.outputs.image_a3 }}
       skip_install_flag: ${{ steps.set-vars.outputs.skip_install_flag }}
-      test_scope: ${{ inputs.test_scope || 'perf' }}
+      test_scope: ${{ inputs.test_scope || 'POC' }}
     steps:
+      # When triggered by PR, no inputs parameters are used. The latest community code is tested by default.
       - name: Set image config
         id: set-vars
         run: |
@@ -79,6 +79,12 @@ jobs:
             echo "skip_install_flag=false" >> $GITHUB_OUTPUT
           else
             echo "skip_install_flag=${{ inputs.skip_install_flag }}" >> $GITHUB_OUTPUT
+          fi
+
+          if [ -z "${{ inputs.test_scope }}" ]; then
+            echo "test_scope=POC" >> $GITHUB_OUTPUT
+          else
+            echo "test_scope=${{ inputs.test_scope }}" >> $GITHUB_OUTPUT
           fi
 
   nighly-test-npu:
@@ -143,6 +149,7 @@ jobs:
           PYTORCH_NPU_ALLOC_CONF: "expandable_segments:True"
           STREAMS_PER_DEVICE: 32
         run: |
+          # speed up by using infra cache services
           pip install sglang_router
           hf download lmms-lab/MMMU --repo-type dataset
           pip install sentence_transformers torchaudio==2.8.0
@@ -295,6 +302,7 @@ jobs:
         env:
           TORCH_CACHE_URL: "http://cache-service.nginx-pypi-cache.svc.cluster.local/whl/cpu"
           PYPI_CACHE_URL: "http://cache-service.nginx-pypi-cache.svc.cluster.local/pypi/simple"
+          UV_INDEX_URL: "http://cache-service.nginx-pypi-cache.svc.cluster.local/pypi/simple"
           GITHUB_PROXY_URL: "https://gh-proxy.test.osinfra.cn/"
         run: |
           CACHING_URL="cache-service.nginx-pypi-cache.svc.cluster.local"
@@ -401,35 +409,53 @@ jobs:
           cd test
           python3 run_suite.py --hw npu --suite full-16-npu-a3 --nightly --continue-on-error --timeout-per-file 3600
 
-  nightly-accuracy-baseline-single-node-tests:
-    name: single-node
+  nightly-poc-single-node-tests:
+    name: single-node-poc
     needs: [set-image-config]
-    if: ${{ !cancelled() && (needs.set-image-config.outputs.test_scope == 'all' || needs.set-image-config.outputs.test_scope == 'accuracy') }}
+    if: ${{ !cancelled() && (needs.set-image-config.outputs.test_scope == 'all' || needs.set-image-config.outputs.test_scope == 'POC') }}
     strategy:
       fail-fast: false
-      max-parallel: 1
+      max-parallel: 3
       matrix:
         test_config:
           - name: test_npu_kimi_k2_5_gpqa
             runner: linux-aarch64-a3-16
             test_case: test/registered/ascend/accuracy/test_npu_kimi_k2_5_gpqa.py
+            test_type: 'accuracy'
           - name: test_npu_kimi_k2_5_aime25
             runner: linux-aarch64-a3-16
             test_case: test/registered/ascend/accuracy/test_npu_kimi_k2_5_aime25.py
+            test_type: 'accuracy'
+          - name: test_npu_qwen3_5_397b_w4a8_16p_in128k_out1k_50ms
+            runner: linux-aarch64-a3-16
+            test_case: test/registered/ascend/performance/test_npu_qwen3_5_397b_w4a8_16p_in128k_out1k_50ms.py
+            test_type: 'perf'
+          - name: test_npu_qwen3_5_397b_w4a8_16p_in3k5_out1k5_50ms
+            runner: linux-aarch64-a3-16
+            test_case: test/registered/ascend/performance/test_npu_qwen3_5_397b_w4a8_16p_in3k5_out1k5_50ms.py
+            test_type: 'perf'
+          - name: test_npu_qwen3_5_397b_w4a8_16p_in64k_out1k_50ms
+            runner: linux-aarch64-a3-16
+            test_case: test/registered/ascend/performance/test_npu_qwen3_5_397b_w4a8_16p_in64k_out1k_50ms.py
+            test_type: 'perf'
+          - name: test_npu_qwen3_5_397b_w4a8_16p_in64k_out1k_prefix_50ms
+            runner: linux-aarch64-a3-16
+            test_case: test/registered/ascend/performance/test_npu_qwen3_5_397b_w4a8_16p_in64k_out1k_prefix_50ms.py
+            test_type: 'perf'
     uses: ./.github/workflows/nightly-test-npu-e2e-single-node.yml
     with:
       runner: ${{ matrix.test_config.runner }}
-      test_type: 'accuracy'
+      test_type: ${{ matrix.test_config.test_type }}
       test_config_name: ${{ matrix.test_config.name }}
       test_case: ${{ matrix.test_config.test_case }}
       image: 'swr.cn-southwest-2.myhuaweicloud.com/base_image/dockerhub/lmsysorg/sglang:cann8.5.0-a3-B121'
       install_sglang_from_source: false
       transformers_version: ''
 
-  nightly-accuracy-baseline-multi-node-tests:
-    name: multi-node-pd-separation
-    needs: [set-image-config, nightly-accuracy-baseline-single-node-tests]
-    if: ${{ !cancelled() && (needs.set-image-config.outputs.test_scope == 'all' || needs.set-image-config.outputs.test_scope == 'accuracy') }}
+  nightly-poc-multi-node-tests:
+    name: multi-node-poc
+    needs: [set-image-config, nightly-poc-single-node-tests]
+    if: ${{ !cancelled() && (needs.set-image-config.outputs.test_scope == 'all' || needs.set-image-config.outputs.test_scope == 'POC') }}
     strategy:
       fail-fast: false
       max-parallel: 1
@@ -440,69 +466,19 @@ jobs:
             decode_size: 2
             router_size: 1
             test_case: test/registered/ascend/accuracy/test_ascend_qwen3_235b_w8a8_1p1d_24p_accuracy.py
-    uses: ./.github/workflows/nightly-test-npu-e2e-multi-node.yml
-    with:
-      runner: linux-aarch64-a3-0
-      test_type: 'accuracy'
-      test_config_name: ${{ matrix.test_config.name }}
-      prefill_size: ${{ matrix.test_config.prefill_size }}
-      decode_size: ${{ matrix.test_config.decode_size }}
-      router_size: ${{ matrix.test_config.router_size }}
-      test_case: ${{ matrix.test_config.test_case }}
-      image: 'swr.cn-southwest-2.myhuaweicloud.com/base_image/dockerhub/lmsysorg/sglang:cann8.5.0-a3-B121'
-      install_sglang_from_source: false
-      prefill_decode_deployment: 'separation'
-      transformers_version: ''
-
-  nightly-performance-baseline-single-node-tests:
-    name: single-node-perf
-    needs: [set-image-config]
-    if: ${{ !cancelled() && (needs.set-image-config.outputs.test_scope == 'all' || needs.set-image-config.outputs.test_scope == 'xxx') }}
-    strategy:
-      fail-fast: false
-      max-parallel: 3
-      matrix:
-        test_config:
-          - name: test_npu_qwen3_5_397b_w4a8_16p_in128k_out1k_50ms
-            runner: linux-aarch64-a3-16
-            test_case: test/registered/ascend/performance/test_npu_qwen3_5_397b_w4a8_16p_in128k_out1k_50ms.py
-          - name: test_npu_qwen3_5_397b_w4a8_16p_in3k5_out1k5_50ms
-            runner: linux-aarch64-a3-16
-            test_case: test/registered/ascend/performance/test_npu_qwen3_5_397b_w4a8_16p_in3k5_out1k5_50ms.py
-          - name: test_npu_qwen3_5_397b_w4a8_16p_in64k_out1k_50ms
-            runner: linux-aarch64-a3-16
-            test_case: test/registered/ascend/performance/test_npu_qwen3_5_397b_w4a8_16p_in64k_out1k_50ms.py
-          - name: test_npu_qwen3_5_397b_w4a8_16p_in64k_out1k_prefix_50ms
-            runner: linux-aarch64-a3-16
-            test_case: test/registered/ascend/performance/test_npu_qwen3_5_397b_w4a8_16p_in64k_out1k_prefix_50ms.py
-    uses: ./.github/workflows/nightly-test-npu-e2e-single-node.yml
-    with:
-      runner: ${{ matrix.test_config.runner }}
-      test_type: 'perf'
-      test_config_name: ${{ matrix.test_config.name }}
-      test_case: ${{ matrix.test_config.test_case }}
-      image: 'swr.cn-southwest-2.myhuaweicloud.com/base_image/dockerhub/lmsysorg/sglang:cann8.5.0-a3-B121'
-      install_sglang_from_source: false
-      transformers_version: ''
-
-  nightly-performance-baseline-multi-node-pd-separation-tests:
-    name: multi-node-pd-separation-perf
-    needs: [set-image-config, nightly-performance-baseline-single-node-tests]
-    if: ${{ !cancelled() && (needs.set-image-config.outputs.test_scope == 'all' || needs.set-image-config.outputs.test_scope == 'perf') }}
-    strategy:
-      fail-fast: false
-      max-parallel: 1
-      matrix:
-        test_config:
+            test_type: 'accuracy'
+            prefill_decode_deployment: 'separation'
           - name: test_ascend_deepseek_r1_w8a8_1p1d_24p_in2k_out2k_50ms
             prefill_size: 1
             decode_size: 2
             router_size: 1
-            test_case: ‎test/registered/ascend/performance/test_ascend_deepseek_r1_w8a8_1p1d_24p_in2k_out2k_50ms.py
+            test_case: test/registered/ascend/performance/v26/test_ascend_deepseek_r1_w8a8_1p1d_24p_in2k_out2k_50ms.py
+            test_type: 'perf'
+            prefill_decode_deployment: 'separation'
     uses: ./.github/workflows/nightly-test-npu-e2e-multi-node.yml
     with:
       runner: linux-aarch64-a3-0
-      test_type: 'perf'
+      test_type: ${{ matrix.test_config.test_type }}
       test_config_name: ${{ matrix.test_config.name }}
       prefill_size: ${{ matrix.test_config.prefill_size }}
       decode_size: ${{ matrix.test_config.decode_size }}
@@ -510,7 +486,7 @@ jobs:
       test_case: ${{ matrix.test_config.test_case }}
       image: 'swr.cn-southwest-2.myhuaweicloud.com/base_image/dockerhub/lmsysorg/sglang:cann8.5.0-a3-B121'
       install_sglang_from_source: false
-      prefill_decode_deployment: 'separation'
+      prefill_decode_deployment: ${{ matrix.test_config.prefill_decode_deployment }}
       transformers_version: ''
 
   check-all-jobs:
@@ -522,10 +498,8 @@ jobs:
       - full-4-npu-a3
       - full-8-npu-a3
       - full-16-npu-a3
-      - nightly-accuracy-baseline-single-node-tests
-      - nightly-accuracy-baseline-multi-node-tests
-      - nightly-performance-baseline-single-node-tests
-      - nightly-performance-baseline-multi-node-pd-separation-tests
+      - nightly-poc-single-node-tests
+      - nightly-poc-multi-node-tests
     runs-on: ubuntu-latest
     if: ${{ always() }}
     steps:
@@ -539,4 +513,4 @@ jobs:
             echo "❌ Some jobs failed or cancelled"
             exit 1
           fi
-          echo " All selected scope jobs passed"
+          echo "✅ All selected scope jobs passed"
