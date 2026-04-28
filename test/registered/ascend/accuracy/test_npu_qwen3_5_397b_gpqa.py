@@ -101,21 +101,21 @@ QWEN3_5_397B_OTHER_ARGS = [
 ]
 
 
-class TestNPUQwen3_5_397B_MMLU(TestAscendAccuracyTestCaseBase):
-    """Test NPU accuracy for Qwen3.5-397B-w4a8 on MMLU"""
+class TestNPUQwen3_5_397B_GPQA(TestAscendAccuracyTestCaseBase):
+    """Test NPU accuracy for Qwen3.5-397B-w4a8 on GPQA"""
 
     benchmark_tool = BENCHMARK_TOOL_DEFAULT
     model = QWEN3_5_397B_W4A8_MODEL_PATH
     other_args = QWEN3_5_397B_OTHER_ARGS
     envs = QWEN3_5_397B_ENVS
-    accuracy = 0.75
-    dataset_type = "mmlu"
-    dataset_name = "mmlu_gen_0_shot_cot_chat_prompt"
+    accuracy = 0.8
+    dataset_type = "gpqa"
+    dataset_name = "gpqa_gen_0_shot_cot_chat_prompt"
     batch_size = 128
     max_out_len = 1024
 
-    def test_npu_qwen3_5_397b_mmlu(self):
-        """Run NPU accuracy test for Qwen3.5-397B on MMLU"""
+    def test_npu_qwen3_5_397b_gpqa(self):
+        """Run NPU accuracy test for Qwen3.5-397B on GPQA"""
         self.run_accuracy()
 
 
