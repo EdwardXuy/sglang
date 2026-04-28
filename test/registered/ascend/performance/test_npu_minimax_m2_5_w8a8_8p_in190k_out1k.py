@@ -101,8 +101,8 @@ class TestNPUMiniMaxM2_5_W8A8_8P_In128k_Out1k_Prefix(TestAscendPerformanceTestCa
     dataset_name = "random"
     max_concurrency = 1
     num_prompts = 4
-    input_len = 128000
-    output_len = 1000
+    input_len = 194560
+    output_len = 1024
     random_range_ratio = 1
     # tpot = 50
     # output_token_throughput = 3000
