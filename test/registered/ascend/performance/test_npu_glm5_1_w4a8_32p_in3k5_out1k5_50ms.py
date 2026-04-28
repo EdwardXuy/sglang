@@ -18,9 +18,13 @@ register_npu_ci(
 GLM_5_1_TWO_NODE_ENVS = {
     "SGLANG_SET_CPU_AFFINITY": "1",
     "STREAMS_PER_DEVICE": "32",
+    "HCCL_SOCKET_IFNAME": "enp196s0f0",
+    "GLOO_SOCKET_IFNAME": "enp196s0f",
     "SGLANG_ENABLE_SPEC_V2": "1",
     "SGLANG_ENABLE_OVERLAP_PLAN_STREAM": "1",
-    "SGLANG_DEEPEP_NUM_MAX_DISPATCH_TOKENS_PER_RANK": "32",
+    "ENABLE_PROFILING": "1",
+    "SGLANG_NPU_USE_MLAPO": "1",
+    "SGLANG_SCHEDULER_DECREASE_PREFILL": "1",
     "HCCL_BUFFSIZE": "2500",
 }
 
@@ -30,11 +34,11 @@ GLM_5_1_TWO_NODE_OTHER_ARGS = [
     "--device",
     "npu",
     "--tp-size",
-    32,
+    8,
     "--nnodes",
     2,
     "--dp-size",
-    16,
+    4,
     "--enable-dp-attention",
     "--chunked-prefill-size",
     131072,
@@ -87,8 +91,8 @@ class TestNPUGLM5_1_W4A8_32P_In3k5_Out1k5(TestAscendPerfMultiNodePdMixTestCaseBa
     benchmark_tool = BENCHMARK_TOOL_DEFAULT
     aisbench_dataset_type = AISBENCHMARK_DATASET_DEFAULT
     dataset_name = "random"
-    max_concurrency = 128
-    num_prompts = 512
+    max_concurrency = 80
+    num_prompts = 320
     input_len = 3500
     output_len = 1500
     random_range_ratio = 1

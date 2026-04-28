@@ -19,9 +19,13 @@ GLM_5_1_SINGLE_NODE_ENVS = {
     "SGLANG_SET_CPU_AFFINITY": "1",
     "STREAMS_PER_DEVICE": "32",
     "SGLANG_ENABLE_SPEC_V2": "1",
+    "HCCL_SOCKET_IFNAME": "lo",
+    "GLOO_SOCKET_IFNAME": "lo",
     "SGLANG_ENABLE_OVERLAP_PLAN_STREAM": "1",
-    "SGLANG_DEEPEP_NUM_MAX_DISPATCH_TOKENS_PER_RANK": "64",
+    "SGLANG_DISAGGREGATION_BOOTSTRAP": "600",
     "HCCL_BUFFSIZE": "2000",
+    "ENABLE_PROFILING": "1",
+    "SGLANG_SCHEDULER_DECREASE_PREFILL": "1",
 }
 
 GLM_5_1_SINGLE_NODE_OTHER_ARGS = [
@@ -30,13 +34,13 @@ GLM_5_1_SINGLE_NODE_OTHER_ARGS = [
     "--device",
     "npu",
     "--tp-size",
-    16,
+    8,
     "--nnodes",
     1,
     "--node-rank",
     0,
     "--dp-size",
-    16,
+    2,
     "--enable-dp-attention",
     "--chunked-prefill-size",
     -1,
@@ -85,8 +89,8 @@ class TestNPUGLM5_1_W4A8_16P_In3k5_Out1k5(TestAscendPerformanceTestCaseBase):
     other_args = GLM_5_1_SINGLE_NODE_OTHER_ARGS
     envs = GLM_5_1_SINGLE_NODE_ENVS
     dataset_name = "random"
-    max_concurrency = 128
-    num_prompts = 512
+    max_concurrency = 26
+    num_prompts = 104
     input_len = 3500
     output_len = 1500
     random_range_ratio = 1

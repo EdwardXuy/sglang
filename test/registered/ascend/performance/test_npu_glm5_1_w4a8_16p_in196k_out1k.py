@@ -1,16 +1,18 @@
 import unittest
 
-from sglang.test.ascend.e2e.test_npu_accuracy_utils import (
+from sglang.test.ascend.e2e.test_npu_performance_utils import (
+    AISBENCHMARK_DATASET_DEFAULT,
     BENCHMARK_TOOL_DEFAULT,
-    TestAscendAccuracyTestCaseBase,
+    GLM_5_1_W4A8_MODEL_PATH,
+    TestAscendPerformanceTestCaseBase,
 )
-from sglang.test.ascend.e2e.test_npu_performance_utils import GLM_5_1_W4A8_MODEL_PATH
 from sglang.test.ci.ci_register import register_npu_ci
 
 register_npu_ci(
     est_time=1800,
     suite="nightly-16-npu-a3",
     nightly=True,
+    disabled="Currently it is executed by the npu performance workflow.",
 )
 
 GLM_5_1_SINGLE_NODE_ENVS = {
@@ -32,13 +34,13 @@ GLM_5_1_SINGLE_NODE_OTHER_ARGS = [
     "--device",
     "npu",
     "--tp-size",
-    8,
+    16,
     "--nnodes",
     1,
     "--node-rank",
     0,
     "--dp-size",
-    2,
+    1,
     "--enable-dp-attention",
     "--chunked-prefill-size",
     -1,
@@ -46,7 +48,7 @@ GLM_5_1_SINGLE_NODE_OTHER_ARGS = [
     280000,
     "--trust-remote-code",
     "--host",
-    "0.0.0.0",
+    "127.0.0.1",
     "--mem-fraction-static",
     0.8,
     "--port",
@@ -78,22 +80,26 @@ GLM_5_1_SINGLE_NODE_OTHER_ARGS = [
 ]
 
 
-class TestNPUGLM5_1_W4A8_16P_GPQA(TestAscendAccuracyTestCaseBase):
-    """Test NPU accuracy for GLM-5.1-w4a8 16p single node on GPQA"""
+class TestNPUGLM5_1_W4A8_16P_In3k5_Out1k5(TestAscendPerformanceTestCaseBase):
+    """Test NPU performance for GLM-5.1-w4a8 16p single node in3k5 out1k5"""
 
     benchmark_tool = BENCHMARK_TOOL_DEFAULT
+    aisbench_dataset_type = AISBENCHMARK_DATASET_DEFAULT
     model = GLM_5_1_W4A8_MODEL_PATH
     other_args = GLM_5_1_SINGLE_NODE_OTHER_ARGS
     envs = GLM_5_1_SINGLE_NODE_ENVS
-    accuracy = 0.8
-    dataset_type = "gpqa"
-    dataset_name = "gpqa_gen_0_shot_cot_chat_prompt"
-    batch_size = 128
-    max_out_len = 1024
+    dataset_name = "random"
+    max_concurrency = 1
+    num_prompts = 4
+    input_len = 200704
+    output_len = 1024
+    random_range_ratio = 1
+    tpot = 50
+    output_token_throughput = 3000
 
-    def test_npu_glm5_1_w4a8_16p_gpqa(self):
-        """Run NPU accuracy test for GLM-5.1-w4a8 single node on GPQA"""
-        self.run_accuracy()
+    def test_npu_glm5_1_w4a8_16p_in3k5_out1k5(self):
+        """Run NPU performance test for GLM-5.1-w4a8 single node"""
+        self.run_throughput()
 
 
 if __name__ == "__main__":

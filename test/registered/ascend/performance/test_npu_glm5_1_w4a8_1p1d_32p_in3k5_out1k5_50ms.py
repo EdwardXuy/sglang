@@ -17,32 +17,42 @@ register_npu_ci(
 
 GLM_5_1_PD_SEP_PREFILL_ENVS = {
     "SGLANG_SET_CPU_AFFINITY": "1",
+    "PYTORCH_NPU_ALLOC_CONF": "expandable_segments:True",
     "STREAMS_PER_DEVICE": "32",
+    "ASCEND_MF_STORE_URL": "tcp://127.0.0.1:24707",
+    "SGLANG_DISAGGREGATION_BOOTSTRAP_TIMEOUT": "600",
     "HCCL_BUFFSIZE": "1200",
     "DEEPEP_NORMAL_LONG_SEQ_ROUND": "72",
     "DEEPEP_NORMAL_LONG_SEQ_PER_ROUND_TOKENS": "1024",
     "DEEPEP_NORMAL_COMBINE_ENABLE_LONG_SEQ": "1",
     "DEEP_NORMAL_MODE_USE_INT8_QUANT": "1",
     "TASK_QUEUE_ENABLE": "2",
+    "ENABLE_PROFILING": "0",
+    "HCCL_SOCKET_IFNAME": "enp196s0f0",
+    "GLOO_SOCKET_IFNAME": "enp196s0f",
 }
 
 GLM_5_1_PD_SEP_DECODE_ENVS = {
-    "SGLANG_SET_CPU_AFFINITY": "1",
+     "SGLANG_SET_CPU_AFFINITY": "1",
+    "PYTORCH_NPU_ALLOC_CONF": "expandable_segments:True",
     "STREAMS_PER_DEVICE": "32",
+    "ASCEND_MF_STORE_URL": "tcp://127.0.0.1:24707",
+    "SGLANG_DISAGGREGATION_BOOTSTRAP_TIMEOUT": "600",
     "SGLANG_SPEC_ENABLE_OVERLAP_REFLOW": "1",
     "SGLANG_ENABLE_OVERLAP_PLAN_STREAM": "1",
     "SGLANG_ENABLE_SPEC_V2": "1",
     "HCCL_BUFFSIZE": "650",
     "SGLANG_DEEPEP_NUM_MAX_DISPATCH_TOKENS_PER_RANK": "64",
     "TASK_QUEUE_ENABLE": "0",
-    "SGLANG_NPU_USE_MULTI_STREAM": "1",
+    "HCCL_SOCKET_IFNAME": "enp196s0f0",
+    "GLOO_SOCKET_IFNAME": "enp196s0f",
 }
 
 GLM_5_1_PD_SEP_PREFILL_ARGS = [
     "--disaggregation-mode",
     "prefill",
     "--tp-size",
-    32,
+    8,
     "--nnodes",
     2,
     "--mem-fraction-static",
@@ -100,11 +110,11 @@ GLM_5_1_PD_SEP_DECODE_ARGS = [
     "--disaggregation-mode",
     "decode",
     "--tp-size",
-    32,
+    4,
     "--nnodes",
     2,
     "--dp-size",
-    32,
+    8,
     "--ep-size",
     32,
     "--enable-dp-attention",
@@ -172,8 +182,8 @@ class TestNPUGLM5_1_W4A8_PD_SEP_In3k5_Out1k5(TestAscendPerfMultiNodePdSepTestCas
     benchmark_tool = BENCHMARK_TOOL_DEFAULT
     aisbench_dataset_type = AISBENCHMARK_DATASET_DEFAULT
     dataset_name = "random"
-    max_concurrency = 128
-    num_prompts = 512
+    max_concurrency = 440
+    num_prompts = 1760
     input_len = 3500
     output_len = 1500
     random_range_ratio = 1
