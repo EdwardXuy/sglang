@@ -173,8 +173,8 @@ GLM_5_1_PD_SEP_MODEL_CONFIG = {
 }
 
 
-class TestNPUGLM5_1_W4A8_PD_SEP_AIME2025(TestAscendAccuracyMultiNodePdSepTestCaseBase):
-    """Test NPU accuracy for GLM-5.1-w4a8 PD separation 4 nodes on AIME 2025"""
+class TestNPUGLM5_1_W4A8_1P1D_64P_AIME2025(TestAscendAccuracyMultiNodePdSepTestCaseBase):
+    """Test NPU accuracy for GLM-5.1-w4a8 1p1d_64p on AIME 2025"""
 
     model_config = GLM_5_1_PD_SEP_MODEL_CONFIG
     benchmark_tool = BENCHMARK_TOOL_DEFAULT
@@ -184,8 +184,8 @@ class TestNPUGLM5_1_W4A8_PD_SEP_AIME2025(TestAscendAccuracyMultiNodePdSepTestCas
     max_concurrency = 64
     output_len = 8192
 
-    def test_npu_glm5_1_w4a8_pd_sep_aime2025(self):
-        """Run NPU accuracy test for GLM-5.1-w4a8 PD separation on AIME 2025"""
+    def test_npu_glm5_1_w4a8_1p1d_64p_aime2025(self):
+        """Run NPU accuracy test for GLM-5.1-w4a8 1p1d_64p on AIME 2025"""
         self.run_accuracy()
 
 

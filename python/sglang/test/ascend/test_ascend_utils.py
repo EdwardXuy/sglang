@@ -198,6 +198,8 @@ STARCODER2_7B_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "bigcode/starcoder2
 TRINITY_MINI_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "arcee-ai/Trinity-Mini")
 XVERSE_MOE_A36B_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "xverse/XVERSE-MoE-A36B")
 MINIMAX_M2_WEIGHTS_PATH = os.path.join(MODEL_WEIGHTS_DIR, "cyankiwi/MiniMax-M2-BF16")
+MINIMAX_M2_5_W8A8_MODEL_PATH = os.path.join(MODEL_WEIGHTS_DIR, "Eco-Tech/MiniMax-M2.5-w8a8-QuaRot")
+MINIMAX_M2_5_EAGLE3_MODEL_PATH = os.path.join(MODEL_WEIGHTS_DIR, "Eco-Tech/MiniMax-M2.5-eagle3")
 EAGLE3_LLAMA3_1_INSTRUCT_8B_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "sglang-EAGLE3-LLaMA3.1-Instruct-8B"
 )
@@ -270,6 +272,9 @@ DEEPSEEK_R1_0528_W8A8_WEIGHTS_PATH = os.path.join(
 )
 QWEN3_30B_MODELSLIM_INT4_WEIGHTS_PATH = os.path.join(
     MODEL_WEIGHTS_DIR, "Eco-Tech/Qwen3-30B-A3B-w4a4-LAOS"
+)
+QWEN3_5_397B_W4A8_MODEL_PATH = os.path.join(
+    MODEL_WEIGHTS_DIR, "Eco-Tech/Qwen3.5-397B-A17B-w4a8-mtp"
 )
 
 # Embedding model weights path
