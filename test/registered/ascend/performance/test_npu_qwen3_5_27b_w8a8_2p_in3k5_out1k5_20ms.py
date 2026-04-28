@@ -101,7 +101,7 @@ class TestNPUQwen3_5_27B_2P_In3k5_Out1k5_Low(TestAscendPerformanceTestCaseBase):
     input_len = 3500
     output_len = 1500
     random_range_ratio = 1
-    tpot = 50
+    tpot = 20
     output_token_throughput = 400
 
     def test_npu_qwen3_5_27b_2p_in3k5_out1k5_low(self):

@@ -14,7 +14,7 @@ register_npu_ci(
     nightly=True,
 )
 
-QWEN3_5_27B_64K_1K_LOW_ENVS = {
+QWEN3_5_27B_128K_LOW_ENVS = {
     "PYTORCH_NPU_ALLOC_CONF": "expandable_segments:True",
     "STREAMS_PER_DEVICE": "32",
     "HCCL_SOCKET_IFNAME": "lo",
@@ -26,7 +26,7 @@ QWEN3_5_27B_64K_1K_LOW_ENVS = {
     "SGLANG_NPU_PROFILING": "1",
 }
 
-QWEN3_5_27B_64K_1K_LOW_OTHER_ARGS = [
+QWEN3_5_27B_128K_LOW_OTHER_ARGS = [
     "--model-path",
     QWEN3_5_27B_W8A8_HOME_MODEL_PATH,
     "--tp-size",
@@ -42,7 +42,7 @@ QWEN3_5_27B_64K_1K_LOW_OTHER_ARGS = [
     "--chunked-prefill-size",
     -1,
     "--max-prefill-tokens",
-    130000,
+    140000,
     "--disable-radix-cache",
     "--trust-remote-code",
     "--max-running-requests",
@@ -53,8 +53,6 @@ QWEN3_5_27B_64K_1K_LOW_OTHER_ARGS = [
     0.5,
     "--cuda-graph-bs",
     2,
-    3,
-    4,
     "--enable-multimodal",
     "--quantization",
     "modelslim",
@@ -77,25 +75,25 @@ QWEN3_5_27B_64K_1K_LOW_OTHER_ARGS = [
 ]
 
 
-class TestNPUQwen3_5_27B_1P_In64k_Out1k_Low(TestAscendPerformanceTestCaseBase):
-    """Test NPU performance for Qwen3.5-27B-W8A8 1p in64k out1k low latency"""
+class TestNPUQwen3_5_27B_1P_In128k_Low(TestAscendPerformanceTestCaseBase):
+    """Test NPU performance for Qwen3.5-27B-W8A8 1p in128k low latency"""
 
     benchmark_tool = BENCHMARK_TOOL_DEFAULT
     aisbench_dataset_type = AISBENCHMARK_DATASET_DEFAULT
     model = QWEN3_5_27B_W8A8_HOME_MODEL_PATH
-    other_args = QWEN3_5_27B_64K_1K_LOW_OTHER_ARGS
-    envs = QWEN3_5_27B_64K_1K_LOW_ENVS
+    other_args = QWEN3_5_27B_128K_LOW_OTHER_ARGS
+    envs = QWEN3_5_27B_128K_LOW_ENVS
     dataset_name = "random"
-    max_concurrency = 2
-    num_prompts = 8
-    input_len = 65536
+    max_concurrency = 1
+    num_prompts = 4
+    input_len = 131072
     output_len = 1024
     random_range_ratio = 1
-    tpot = 50
-    output_token_throughput = 100
+    tpot = 20
+    output_token_throughput = 50
 
-    def test_npu_qwen3_5_27b_1p_in64k_out1k_low(self):
-        """Run NPU performance test for Qwen3.5-27B-W8A8 in64k out1k low latency"""
+    def test_npu_qwen3_5_27b_1p_in128k_low(self):
+        """Run NPU performance test for Qwen3.5-27B-W8A8 in128k low latency"""
         self.run_throughput()
 
 
